@@ -1,5 +1,4 @@
 # CLAUDE.md
-# CLAUDE.md
 
 # SMART-6 智能协作系统
 
