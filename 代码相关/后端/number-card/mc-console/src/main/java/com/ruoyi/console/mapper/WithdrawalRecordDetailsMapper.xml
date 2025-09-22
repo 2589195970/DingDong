@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.console.mapper.WithdrawalRecordDetailsMapper">
+
+
+    <select id="selectWithdrawalAmountCount" resultType="java.lang.Integer">
+        SELECT
+            SUM( withdrawal_amount ) AS withdrawalAmount
+        FROM
+            t_withdrawal_record_details
+        WHERE
+            withdrawal_record_id = #{withdrawalRecordId}
+    </select>
+
+    <select id="selectWithdrawalAPPStatistics" resultType="com.ruoyi.common.order.vo.AgentWithdrawalAPPStatisticsVO">
+        SELECT
+        SUM(CASE WHEN create_time >= UNIX_TIMESTAMP(CURRENT_DATE) * 1000 THEN withdrawal_amount ELSE 0 END)  AS todayWithdrawalAmount,
+        SUM(CASE WHEN create_time >= UNIX_TIMESTAMP(CURRENT_DATE - INTERVAL 1 DAY) * 1000 AND create_time &lt; UNIX_TIMESTAMP(CURRENT_DATE) * 1000 THEN withdrawal_amount ELSE 0 END)  AS yesterdayWithdrawalAmount,
+        SUM(withdrawal_amount)  AS totalWithdrawalAmount
+        FROM
+        t_withdrawal_record_details w
+        WHERE
+        w.agent_code =  #{agentCode}
+    </select>
+
+
+    <select id="selectRevenue" resultType="com.ruoyi.common.order.vo.RevenueVO">
+        SELECT
+            sys_user_id  as userId,
+            SUM( withdrawal_amount ) AS balance,
+			SUM( CASE WHEN amount_type = 1 THEN withdrawal_amount ELSE 0 END ) AS depositAmount,
+			SUM( CASE WHEN amount_type = 0 THEN withdrawal_amount ELSE 0 END ) AS withdrawalAmount
+        FROM
+            t_withdrawal_record_details
+         WHERE
+            sys_user_id = #{userId}
+    </select>
+
+</mapper>

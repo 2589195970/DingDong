@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.console.mapper.AgentAccountMapper">
+
+    <select id="selectAgentAccountListCount" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        t_agent_account a1 LEFT JOIN t_agent_account a2 ON a1.parent_agent_code = a2.agent_code
+        LEFT JOIN sys_user s on a1.sys_user_id = s.user_id LEFT JOIN t_withdrawal_record r on a1.agent_code = r.agent_code
+        WHERE
+        a1.sys_user_id != 1
+        <if test="parentAgentName != null and parentAgentName != ''">
+            AND a2.agent_name like concat('%', #{parentAgentName}, '%')
+        </if>
+        <if test="agentName != null and agentName != ''">
+            AND a1.agent_name like concat('%', #{agentName}, '%')
+        </if>
+        <if test="isRealName != null">
+            AND a1.is_real_name = #{isRealName}
+        </if>
+        <if test="isEnabled != null">
+            AND a1.is_enabled = #{isEnabled}
+        </if>
+        <if test="level != null">
+            AND a1.level = #{level}
+        </if>
+        ORDER BY a1.create_time desc
+    </select>
+
+    <select id="selectAgentAccountList" resultType="com.ruoyi.common.order.vo.AgentAccountListVO">
+        SELECT
+        a1.agent_account_id as agentAccountId,
+        s.user_id as sysUserId,
+        s.user_name as sysUserName,
+        a1.parent_agent_code as parentAgentCode,
+        a2.agent_name as parentAgentName,
+        a1.agent_code as agentCode,
+        a1.agent_name as agentName,
+        a1.level as level,
+        a1.is_real_name as isRealName,
+        a1.phone as phone,
+        a1.is_enabled as isEnabled,
+        a1.is_encrypt as isEncrypt,
+        a1.create_time as createTime,
+        r.balance as balance
+        FROM
+        t_agent_account a1 LEFT JOIN t_agent_account a2 ON a1.parent_agent_code = a2.agent_code
+        LEFT JOIN sys_user s on a1.sys_user_id = s.user_id LEFT JOIN t_withdrawal_record r on a1.agent_code = r.agent_code
+        WHERE
+        a1.sys_user_id != 1
+        <if test="parentAgentName != null and parentAgentName != ''">
+            AND a2.agent_name like concat('%', #{parentAgentName}, '%')
+        </if>
+        <if test="agentName != null and agentName != ''">
+            AND a1.agent_name like concat('%', #{agentName}, '%')
+        </if>
+        <if test="isRealName != null">
+            AND a1.is_real_name = #{isRealName}
+        </if>
+        <if test="isEnabled != null">
+            AND a1.is_enabled = #{isEnabled}
+        </if>
+        <if test="level != null">
+            AND a1.level = #{level}
+        </if>
+        ORDER BY a1.create_time desc
+        limit #{offset},#{pageSize}
+    </select>
+
+</mapper>

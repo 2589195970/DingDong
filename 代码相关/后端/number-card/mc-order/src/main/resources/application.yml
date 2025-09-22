@@ -1,0 +1,36 @@
+server:
+  port: 8081
+
+# 日志配置
+logging:
+  level:
+    com.ruoyi: debug
+    org.springframework: warn
+
+
+# PageHelper分页插件
+pagehelper:
+  helperDialect: mysql
+  supportMethodsArguments: true
+  params: count=countSql
+
+# MyBatisPlus配置
+mybatis-plus:
+  # 搜索指定包别名
+  typeAliasesPackage: com.ruoyi.**.domain
+  # 配置mapper的扫描，找到所有的mapper.xml映射文件
+  mapperLocations: classpath*:mapper/*Mapper.xml
+  # 加载全局的配置文件
+  # configLocation: classpath:mybatis/mybatis-config.xml
+  type-handlers-package: com.ruoyi.common.pojo.main.handler.AESEncipherTypeHandler
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+
+okhttp:
+  timeout: 15000
+  maxConnection: 20
+  maxIdleConnections: 5
+  keepAliveDurationMill: 15000
+  resetConnection: true
+  maxHostConnection: 20

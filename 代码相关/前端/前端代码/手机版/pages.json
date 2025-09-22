@@ -1,0 +1,205 @@
+{ // pages.json
+	"easycom": {
+		"^u-(.*)": "@/uview-ui/components/u-$1/u-$1.vue"
+	},
+	"pages": [{
+			"path": "pages/login",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/login-sjihao",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/register",
+			"style": {
+				"navigationBarTitleText": "注册",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/index",
+			"style": {
+				"navigationBarTitleText": "叮咚号卡",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/work/index",
+			"style": {
+				"navigationBarTitleText": "工作台",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/mine/index",
+			"style": {
+				"navigationBarTitleText": "我的",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/mine/avatar/index",
+			"style": {
+				"navigationBarTitleText": "修改头像",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/mine/info/index",
+			"style": {
+				"navigationBarTitleText": "个人信息",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/mine/info/edit",
+			"style": {
+				"navigationBarTitleText": "编辑资料",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/mine/commission/index",
+			"style": {
+				"navigationBarTitleText": "佣金设置",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/mine/product/index",
+			"style": {
+				"navigationBarTitleText": "下游产品设置",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/mine/payouts/index",
+			"style": {
+				"navigationBarTitleText": "佣金提现",
+				"navigationStyle": "custom"
+			}
+		},{
+			"path": "pages/mine/pwd/index",
+			"style": {
+				"navigationBarTitleText": "修改密码",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/mine/setting/index",
+			"style": {
+				"navigationBarTitleText": "应用设置",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/mine/help/index",
+			"style": {
+				"navigationBarTitleText": "常见问题",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/mine/about/index",
+			"style": {
+				"navigationBarTitleText": "推广",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/common/webview/index",
+			"style": {
+				"navigationBarTitleText": "浏览网页",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/common/textview/index",
+			"style": {
+				"navigationBarTitleText": "浏览文本",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/Product/index",
+			"style": {
+				"navigationBarTitleText": "商品",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/Product/cpxiangqing",
+			"style": {
+				"navigationBarTitleText": "商品详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/Order/orderxiangqing",
+			"style": {
+				"navigationBarTitleText": "订单详情",
+				"navigationStyle": "custom",
+				"backgroundTextStyle": "dark"
+			}
+		},
+		{
+			"path": "pages/Order/index",
+			"style": {
+				"navigationBarTitleText": "订单",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/home/use",
+			"style": {
+				"navigationBarTitleText": "代理管理",
+				"backgroundColor": "#f1f1f1",
+				"navigationStyle": "custom"
+			}
+		}
+	],
+	"tabBar": {
+		"color": "#000000",
+		"selectedColor": "#4F97F6",
+		"borderStyle": "white",
+		"backgroundColor": "#f1f1f1",
+		"list": [{
+				"pagePath": "pages/index",
+				"iconPath": "static/images/tabbar/home.png",
+				"selectedIconPath": "static/images/tabbar/home-1.png",
+				"text": "首页"
+			},
+			{
+				"pagePath": "pages/Order/index",
+				"iconPath": "static/images/tabbar/dingdan.png",
+				"selectedIconPath": "static/images/tabbar/dingdan-1.png",
+				"text": "订单"
+			},
+			{
+				"pagePath": "pages/Product/index",
+				"iconPath": "static/images/tabbar/work.png",
+				"selectedIconPath": "static/images/tabbar/work-1.png",
+				"text": "商品"
+			},
+			// {
+			// 	"pagePath": "pages/mine/index",
+			// 	"iconPath": "/static/images/tabbar/daili.png",
+			// 	"selectedIconPath": "static/images/tabbar/daili-1.png",
+			// 	"text": "代理"
+			// },
+			// {
+			// 	"pagePath": "pages/work/index",
+			// 	"iconPath": "static/images/tabbar/work.png",
+			// 	"selectedIconPath": "static/images/tabbar/work_.png",
+			// 	"text": "工作台"
+			// },
+			{
+				"pagePath": "pages/mine/index",
+				"iconPath": "static/images/tabbar/mine.png",
+				"selectedIconPath": "static/images/tabbar/mine-1.png",
+				"text": "我的"
+			}
+		]
+	},
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		// "navigationBarTitleText": "",
+		"navigationBarBackgroundColor": "#FFFFFF"
+	}
+}

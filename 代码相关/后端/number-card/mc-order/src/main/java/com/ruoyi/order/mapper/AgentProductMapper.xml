@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.order.mapper.AgentProductMapper">
+
+
+    <select id="selectAdminAgentProductList" resultType="com.ruoyi.common.order.vo.ProductListVO">
+        SELECT
+            p.product_id as productId,
+            p.product_code as productCode,
+            p.product_name as productName,
+            p.operator_type as operatorType,
+            p.product_type as productType,
+            p.product_demand as productDemand,
+            p.product_master_map as productMasterMap,
+            p.product_template_json as productTemplateJson,
+            p.product_master_map as productMasterMap,
+            p.product_detail_map as productDetailMap,
+            p.product_placard_map as productPlacardMap,
+            p.operator_type as operatorType,
+            p.product_tyll as productTyll,
+            p.product_dxll as productDxll,
+            p.product_thfz as productThfz,
+            p.product_scsm as productScsm,
+            p.product_gsdq as productGsdq,
+            p.product_fafs as productFafs,
+            p.product_hyqx as productHyqx,
+            p.product_qrcode_map as productQrcodeMap
+        FROM
+            t_product p
+        WHERE
+        p.product_status = '1'
+        <if test="operatorType != null">
+            AND p.operator_type = #{operatorType}
+        </if>
+        ORDER BY p.product_sort,p.create_time desc
+    </select>
+
+
+    <select id="selectAgentProductList" resultType="com.ruoyi.common.order.vo.ProductListVO">
+        SELECT
+        p.product_id as productId,
+        p.product_code as productCode,
+        p.product_name as productName,
+        p.operator_type as operatorType,
+        p.product_type as productType,
+        p.product_demand as productDemand,
+        p.product_master_map as productMasterMap,
+        p.product_template_json as productTemplateJson,
+        p.product_master_map as productMasterMap,
+        p.product_detail_map as productDetailMap,
+        p.product_placard_map as productPlacardMap,
+        p.operator_type as operatorType,
+        p.product_tyll as productTyll,
+        p.product_dxll as productDxll,
+        p.product_thfz as productThfz,
+        p.product_scsm as productScsm,
+        p.product_gsdq as productGsdq,
+        p.product_fafs as productFafs,
+        p.product_hyqx as productHyqx,
+        a.product_qrcode_map as productQrcodeMap,
+        a.agent_product_id as agentProductId,
+        a.product_status as productStatus,
+        a.agent_code as agentCode,
+        a.agent_name as agentName
+        FROM
+        t_product p INNER JOIN t_agent_product a ON p.product_code = a.parent_product_code
+        WHERE
+        p.product_status = '1' and
+        a.agent_code = #{agentCode}
+        <if test="operatorType != null">
+            AND p.operator_type = #{operatorType}
+        </if>
+        ORDER BY a.product_sort,a.create_time desc
+    </select>
+</mapper>

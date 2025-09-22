@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-cn">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+		content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>官方包邮</title>
+	<!-- <link rel="shortcut icon" type="image/x-icon" href="./img/log.png" /> -->
+	<link rel="stylesheet" href="./css/vant@2.9.min.css" />
+	<link rel="stylesheet" href="./css/from.css">
+	<script src="./js/vue.js"></script>
+	<script src="./js/vant.js"></script>
+	<link rel="stylesheet" href="./index.css">
+</head>
+
+<body>
+	<div id="app">
+
+		<div id="p-con">
+			<div style="position: relative;">
+				<img class="full-img" :src="productList.productMasterMap" alt="" />
+			</div>
+			<div class="form-con">
+				<div class="form">
+					<van-form class="van-form" style="width: calc(100% - 0.7rem);border-radius: 10px;">
+						<div class="chais1">
+							<img class="chais" v-show="xiaos"
+								src="https://staticcdn.xwtec.cn/static/taobaoH5/common/images/landing/cmcc/styles/lbjt19jrtt/chai1.gif"
+								alt="">
+						</div>
+						<van-field @blur="loseName" @focus='focusName' v-model="name" label="姓名"
+							placeholder="请输入收件人姓名(已加密)" required clearable></van-field>
+						<div class="regname" v-if='xiaos1'>&nbsp;&nbsp;&nbsp;&nbsp;*姓名<span>未填写</span>，请填写办理人的姓名
+						</div>
+						<van-field v-model="phone" type="number" label="联系方式" placeholder="请输入收件人电话，并保持畅通" required
+							clearable :maxlength="11" @blur="lose"></van-field>
+						<div class="regname" v-if='xiaos2'>
+							&nbsp;&nbsp;&nbsp;&nbsp;*收货号码<span>未填写</span>，请填写办理人常用号码作为收货号码</div>
+						<van-field v-model="idCardNo" label="身份证" placeholder="未满18周岁请勿下单(已加密)" required clearable
+							:maxlength="18"></van-field>
+
+						<van-field v-model="region" label="配送地区" placeholder="请选择所在地区" required
+							@click="areaVisible=true">
+							<template #right-icon>
+								<van-icon name="arrow" />
+							</template>
+						</van-field>
+
+
+						<!-- <div class="diz1"
+							style="border-radius: 20px; width: calc(100% - 0.5rem); margin: 0 auto; display: flex; flex-wrap: wrap; background-color: #fff ">
+							<p class="regname1"><i class="red" style="font-size: 16px;">*</i> <i
+									style="padding: 10px;">详细地址 </i><i class="red">（本人可收货详细地址，精确到门牌号）</i></p> -->
+						<van-field v-model="address" rows="1" label="详细地址" required
+							placeholder="如街道/小区/门牌号" @blur="loseAddress"></van-field>
+						<!-- </div> -->
+						<div>
+							<img src="./img/an.gif" class="btn-primary-img" id="btnPrimary" alt="" @click="submit" />
+							<!-- <van-button type="primary" class="btn-primary" id="btnPrimary"
+								@click="submit">立即提交</van-button> -->
+						</div>
+
+						<p class="protocol">
+							<van-checkbox v-model="protocolChecked" checked-color="#4EAAEF"
+								class="checkbox"></van-checkbox>
+							<span>我已阅读</span>
+							<a @click="protocolVisible1=true">《入网协议》</a>
+							<span>和</span>
+							<a @click="protocolVisible2=true">《信息收集公告》</a>
+						</p>
+					</van-form>
+				</div>
+			</div>
+
+			<!-- 默认展开图片 -->
+			<img class="full-img" :src="productList.productDetailMap" alt="" />
+
+			<!-- 隐藏说明 -->
+			<!-- <div class="noneHref" @click="noneHref()">
+				<p class="noneHref_p">免流规则 >></p>
+				<div class="noneDiv" v-if="noneDiv">
+					
+				</div>
+			</div> -->
+
+			<img v-if="config.submitBtnImg && backTopBtnVisible" :src="config.submitBtnImg.url" class="back-btn" alt=""
+				@click="scrollToTop()" />
+
+			<!-- 地区弹窗 -->
+			<van-popup v-model="areaVisible" class="area-popup" position="bottom">
+				<van-area title="选择地区" :area-list="areaList" @confirm="handleAreaConfirm"
+					@cancel="areaVisible=false"></van-area>
+			</van-popup>
+
+			<!-- 提交成功弹窗 -->
+			<van-popup v-model="successModalVisible" class="success-popup" :close-on-click-overlay="false"
+				:overlay-style="{ backgroundColor: 'rgba(0,0,0,.5)' }">
+				<div class="success-modal-con">
+					<div class="success-modal">
+						<img src="./img/cg.jpg" alt="">
+						<p class="tip1">办理成功</p>
+						<p class="tip2">请保持电话畅通，稍后工作人员将与您联系！</p>
+					</div>
+					<van-icon class="icon" name="close" @click="successModalVisible=false" />
+				</div>
+			</van-popup>
+			<!-- 协议弹窗 -->
+			<van-dialog v-model="protocolVisible1" title="隐私权政策、用户协议" confirm-button-text="我知道了">
+				<div class="dialog-content-con" v-html="protocolHtml1">
+				</div>
+			</van-dialog>
+
+			<!-- 产品信息及权益 -->
+			<van-dialog v-model="protocolVisible2" title="产品信息及会员权益" confirm-button-text="我知道了">
+				<div class="dialog-content-con" v-html="protocolHtml2">
+				</div>
+		</div>
+	</div>
+</body>
+<script src="./js/axios.js"></script>
+<script src="./js/util.js"></script>
+<script src="./js/area.js"></script>
+<script type="text/javascript" src="./index.js"></script>
+
+</html>

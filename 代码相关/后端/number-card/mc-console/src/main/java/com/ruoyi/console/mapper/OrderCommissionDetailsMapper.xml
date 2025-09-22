@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.console.mapper.OrderCommissionDetailsMapper">
+
+    <select id="selectAgentCommissionListCount" resultType="java.lang.Integer">
+        SELECT
+        count(*)
+        FROM
+        t_order_commission_details d LEFT JOIN t_order_commission c ON d.order_commission_id = c.order_commission_id
+        WHERE
+        d.agent_code = #{agentCode}
+        <if test="orderId != null and orderId != ''">
+            AND c.order_id like concat('%', #{orderId}, '%')
+        </if>
+        <if test="cardName != null and cardName != ''">
+            AND c.card_name like concat('%', #{cardName}, '%')
+        </if>
+        <if test="cardPhone != null and cardPhone != ''">
+            AND c.card_phone like concat('%', #{cardPhone}, '%')
+        </if>
+        <if test="cardId != null and cardId != ''">
+            AND c.card_id like concat('%', #{cardId}, '%')
+        </if>
+        <if test="cardName != null and cardName != ''">
+            AND c.card_name like concat('%', #{cardName}, '%')
+        </if>
+        <if test="orderStatus != null">
+            AND c.order_status = #{orderStatus}
+        </if>
+        <if test="isRecharged != null">
+            AND c.is_recharged = #{isRecharged}
+        </if>
+        <if test="orderCommissionStatus != null">
+            AND c.order_commission_status = #{orderCommissionStatus}
+        </if>
+        <if test="starTime != null and starTime != ''"><!-- 开始时间检索 -->
+            AND c.order_create_time &gt;= #{starTime}
+        </if>
+        <if test="endTime != null and endTime != ''"><!-- 结束时间检索 -->
+            AND c.order_create_time &lt;= #{endTime}
+        </if>
+        ORDER BY c.create_time desc
+    </select>
+
+    <select id="selectAgentCommissionList" resultType="com.ruoyi.common.order.vo.AgentCommissionSelectVO">
+        SELECT
+        c.order_commission_id as orderCommissionId,
+        c.order_id as orderId,
+        c.order_downstream_id as orderDownstreamId,
+        c.card_name as cardName,
+        c.card_phone as cardPhone,
+        c.card_id as cardId,
+        c.province_code as provinceCode,
+        c.province_name as provinceName,
+        c.city_code as cityCode,
+        c.city_name as cityName,
+        c.county_code as countyCode,
+        c.county_name as countyName,
+        c.order_status as orderStatus,
+        c.order_message as orderMessage,
+        c.is_recharged as isRecharged,
+        c.recharge_amount as rechargeAmount,
+        c.recharge_time as rechargeTime,
+        c.order_create_time as orderCreateTime,
+        c.active_time as active_time,
+        c.order_commission_status as orderCommissionStatus,
+        c.commission_time as commissionTime,
+        c.product_code as productCode,
+        c.product_name as productName,
+        c.product_type as productType,
+        c.remark as remark,
+        d.agent_code as agentCode,
+        d.agent_name as agentName,
+        d.create_time as createTime,
+        d.product_commission as productCommission,
+        d.revenue_product_commission AS revenueProductCommission,
+        d.distribution_product_commission as distributionProductCommission,
+        d.agent_source_code as agentSourceCode,
+        d.agent_source_name as agentSourceName
+        FROM
+        t_order_commission_details d LEFT JOIN t_order_commission c ON d.order_commission_id = c.order_commission_id
+        WHERE
+        d.agent_code = #{agentCode}
+        <if test="orderId != null and orderId != ''">
+            AND c.order_id like concat('%', #{orderId}, '%')
+        </if>
+        <if test="cardName != null and cardName != ''">
+            AND c.card_name like concat('%', #{cardName}, '%')
+        </if>
+        <if test="cardPhone != null and cardPhone != ''">
+            AND c.card_phone like concat('%', #{cardPhone}, '%')
+        </if>
+        <if test="cardId != null and cardId != ''">
+            AND c.card_id like concat('%', #{cardId}, '%')
+        </if>
+        <if test="cardName != null and cardName != ''">
+            AND c.card_name like concat('%', #{cardName}, '%')
+        </if>
+        <if test="orderStatus != null">
+            AND c.order_status = #{orderStatus}
+        </if>
+        <if test="isRecharged != null">
+            AND c.is_recharged = #{isRecharged}
+        </if>
+        <if test="orderCommissionStatus != null">
+            AND c.order_commission_status = #{orderCommissionStatus}
+        </if>
+        <if test="starTime != null and starTime != ''"><!-- 开始时间检索 -->
+            AND c.order_create_time &gt;= #{starTime}
+        </if>
+        <if test="endTime != null and endTime != ''"><!-- 结束时间检索 -->
+            AND c.order_create_time &lt;= #{endTime}
+        </if>
+        ORDER BY c.create_time desc
+        limit #{offset},#{pageSize}
+    </select>
+
+</mapper>
