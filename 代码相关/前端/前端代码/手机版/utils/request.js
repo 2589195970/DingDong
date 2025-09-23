@@ -36,7 +36,7 @@ const request = config => {
           return
         }
         const code = res.data.code || 200
-        const msg = errorCode[code] || res.data.message || errorCode['default']
+        const msg = res.data.msg || res.data.message || errorCode[code] || errorCode['default']
         if (code === 401) {
           showConfirm('登录状态已过期，您可以继续留在该页面，或者重新登录?').then(res => {
             if (res.confirm) {

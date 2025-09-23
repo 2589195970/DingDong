@@ -1,7 +1,9 @@
 package com.ruoyi.system.service.impl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.validation.Validator;
 import org.slf4j.Logger;
@@ -568,5 +570,93 @@ public class SysUserServiceImpl implements ISysUserService
             successMsg.insert(0, "恭喜您，数据已全部导入成功！共 " + successNum + " 条，数据如下：");
         }
         return successMsg.toString();
+    }
+
+    /**
+     * 获取用户实名认证信息
+     *
+     * @param userId 用户ID
+     * @return 实名认证信息
+     */
+    @Override
+    public Map<String, Object> getUserRealNameInfo(Long userId)
+    {
+        Map<String, Object> realNameInfo = new HashMap<>();
+
+        // 默认值
+        realNameInfo.put("isRealName", false);
+        realNameInfo.put("realNameStatus", 0); // 0未认证 1认证中 2已认证 3认证失败
+        realNameInfo.put("realName", "");
+        realNameInfo.put("cardId", "");
+        realNameInfo.put("parentAgentList", "");
+        realNameInfo.put("auditTime", "");
+
+        if (userId == null) {
+            return realNameInfo;
+        }
+
+        try {
+            // 查询代理商账号信息
+            Map<String, Object> agentInfo = userMapper.selectAgentAccountByUserId(userId);
+            if (agentInfo != null) {
+                Integer isRealName = (Integer) agentInfo.get("is_real_name");
+                String agentCode = (String) agentInfo.get("agent_code");
+
+                realNameInfo.put("isRealName", isRealName != null && isRealName == 1);
+                realNameInfo.put("realNameStatus", isRealName != null ? isRealName : 0);
+                if (agentInfo.get("parent_agent_code") != null) {
+                    // 查询上级代理
+                    Map<String, Object> parentAgentCode = userMapper.selectAgentAccountByAgentCode(String.valueOf(agentInfo.get("parent_agent_code")));
+                    realNameInfo.put("parentAgentCode", parentAgentCode.get("agent_code"));
+                    realNameInfo.put("parentAgentPhone", parentAgentCode.get("phone"));
+                }
+                // 如果已实名或认证中，查询详细的实名审核信息
+                if (isRealName != null && isRealName > 0 && StringUtils.isNotEmpty(agentCode)) {
+                    Map<String, Object> nameAuditInfo = userMapper.selectNameAuditByAgentCode(agentCode);
+                    if (nameAuditInfo != null) {
+                        String cardName = (String) nameAuditInfo.get("card_name");
+                        String cardId = (String) nameAuditInfo.get("card_id");
+                        Long createTime = (Long) nameAuditInfo.get("create_time");
+
+                        // 脱敏处理
+                        if (StringUtils.isNotEmpty(cardName)) {
+                            realNameInfo.put("realName", desensitizeName(cardName));
+                        }
+                        if (StringUtils.isNotEmpty(cardId)) {
+                            realNameInfo.put("cardId", desensitizeIdCard(cardId));
+                        }
+                        if (createTime != null) {
+                            realNameInfo.put("auditTime", java.time.Instant.ofEpochMilli(createTime)
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .toLocalDate().toString());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("查询用户实名信息失败", e);
+        }
+
+        return realNameInfo;
+    }
+
+    /**
+     * 姓名脱敏处理
+     */
+    private String desensitizeName(String name) {
+        if (StringUtils.isEmpty(name) || name.length() < 2) {
+            return name;
+        }
+        return name.charAt(0) + "*".repeat(name.length() - 1);
+    }
+
+    /**
+     * 身份证号脱敏处理
+     */
+    private String desensitizeIdCard(String idCard) {
+        if (StringUtils.isEmpty(idCard) || idCard.length() < 8) {
+            return idCard;
+        }
+        return idCard.substring(0, 4) + "****" + idCard.substring(idCard.length() - 4);
     }
 }

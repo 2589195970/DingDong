@@ -37,8 +37,8 @@
 }
 
 .selected-node-item-active {
-  color: #007aff;
-  border-bottom-color: #007aff;
+  color: #f09b7f;
+  border-bottom-color: #f09b7f;
 }
 
 .list-view {
@@ -66,7 +66,7 @@
 
 .check {
   margin-right: 5px;
-  border: 2px solid #007aff;
+  border: 2px solid #f09b7f;
   border-left: 0;
   border-top: 0;
   height: 12px;

@@ -16,9 +16,9 @@
 		<view style="background-color: #fff; ">
 			<u-collapse :value="['Docs guide']">
 				<u-collapse-item title="筛选" name="Docs guide">
-					<u-tabs :list="list1" lineWidth="30" :scrollable="false" lineColor="#f56c6c" @click="click1"
+					<u-tabs :list="list1" lineWidth="30" :scrollable="false" lineColor="#f09b7f" @click="click1"
 						></u-tabs>
-					<u-tabs :list="list2" lineWidth="30" :scrollable="false" lineColor="#f56c6c" @click="click2"
+					<u-tabs :list="list2" lineWidth="30" :scrollable="false" lineColor="#f09b7f" @click="click2"
 						></u-tabs>
 					</uni-collapse>
 				</u-collapse-item>
@@ -371,7 +371,7 @@
 
 	/* 激活状态 */
 	.active .tab-text {
-		color: #007AFF;
+		color: #f09b7f;
 		/* 激活文字颜色 */
 		font-weight: bold;
 	}
@@ -381,7 +381,7 @@
 		position: absolute;
 		bottom: 0;
 		height: 4rpx;
-		background: #007AFF;
+		background: #f09b7f;
 		transition: transform 0.3s ease;
 	}
 

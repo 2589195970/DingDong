@@ -20,6 +20,8 @@ import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.domain.SysNotice;
 import com.ruoyi.system.service.ISysNoticeService;
 
+import javax.annotation.Resource;
+
 /**
  * 公告 信息操作处理
  * 
@@ -29,13 +31,12 @@ import com.ruoyi.system.service.ISysNoticeService;
 @RequestMapping("/system/notice")
 public class SysNoticeController extends BaseController
 {
-    @Autowired
+    @Resource
     private ISysNoticeService noticeService;
 
     /**
      * 获取通知公告列表
      */
-    @PreAuthorize("@ss.hasPermi('system:notice:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysNotice notice)
     {
@@ -47,7 +48,6 @@ public class SysNoticeController extends BaseController
     /**
      * 根据通知公告编号获取详细信息
      */
-    @PreAuthorize("@ss.hasPermi('system:notice:query')")
     @GetMapping(value = "/{noticeId}")
     public AjaxResult getInfo(@PathVariable Long noticeId)
     {

@@ -1,5 +1,7 @@
 <template>
-	<view>
+	<view class="page-container">
+		<app-navbar title="下游产品设置"></app-navbar>
+		<view>
 		<view style="background-color: #fff; ">
 			<view class="tab-bar">
 				<view v-for="(item, index) in list" :key="index" class="tab-item"
@@ -15,9 +17,9 @@
 		<view style="background-color: #fff; ">
 			<u-collapse>
 				<u-collapse-item title="筛选" name="Docs guide">
-					<u-tabs :list="list1" lineWidth="30" :scrollable="false" lineColor="#f56c6c" @click="click1"
+					<u-tabs :list="list1" lineWidth="30" :scrollable="false" lineColor="#f09b7f" @click="click1"
 						></u-tabs>
-					<u-tabs :list="list2" lineWidth="30" :scrollable="false" lineColor="#f56c6c" @click="click2"
+					<u-tabs :list="list2" lineWidth="30" :scrollable="false" lineColor="#f09b7f" @click="click2"
 						></u-tabs>
 					</uni-collapse>
 				</u-collapse-item>
@@ -124,6 +126,7 @@
 				<view class="dakalianjie" @click="handlefuzhi(fzhi)">复制链接</view>
 			</view>
 		</u-popup>
+		</view>
 	</view>
 </template>
 
@@ -359,7 +362,7 @@
 
 	/* 激活状态 */
 	.active .tab-text {
-		color: #007AFF;
+		color: #f09b7f;
 		/* 激活文字颜色 */
 		font-weight: bold;
 	}
@@ -369,7 +372,7 @@
 		position: absolute;
 		bottom: 0;
 		height: 4rpx;
-		background: #007AFF;
+		background: #f09b7f;
 		transition: transform 0.3s ease;
 	}
 

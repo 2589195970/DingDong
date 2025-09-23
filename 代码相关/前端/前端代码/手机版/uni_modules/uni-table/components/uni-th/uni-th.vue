@@ -216,7 +216,7 @@ export default {
 
 <style lang="scss">
 $border-color: #ebeef5;
-$uni-primary: #007aff !default;
+$uni-primary: #f09b7f !default;
 
 .uni-table-th {
 	padding: 12px 10px;

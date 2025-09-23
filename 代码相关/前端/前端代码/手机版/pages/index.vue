@@ -1,5 +1,11 @@
 <template>
   <view class="content">
+    <!-- 通知弹窗 -->
+    <NoticePopup
+      :visible="noticePopupVisible"
+      :noticeData="currentNotice"
+      @close="handleNoticeClose"
+    />
 
     <view class="header-section">
       <view class="flex padding justify-between">
@@ -8,14 +14,17 @@
           <image :src="avatar" class="cu-avatar">
           </image>
           <view class="user-info">
-            <view class="u_title" style="color: #fff; margin-left: 10px;">
+            <view class="u_title" style="color: #fff; margin-left: 10px; display: flex; align-items: center;">
               {{ name }}
+              <view v-if="realNameInfo.realNameStatus === 2" class="real-name-badge">
+                ✓已实名
+              </view>
             </view>
           </view>
         </view>
 
       </view>
-      <view style="display: flex; text-align: center; background-color: #4F97F6; padding-bottom: 20px;">
+      <view style="display: flex; text-align: center; background-color: #f09b7f; padding-bottom: 20px;">
         <view style="flex: 1 1 0%; line-height: 1rem;">
           <view style="color: #fff;height: 30px; font-size: 14px; font-weight: bold; line-height: 30px;">
             {{ productList.totalWithdrawalAmount * 0.01 }}元
@@ -45,11 +54,11 @@
     <view class="item">
       <view style="display: flex;justify-content: space-between;">
         <view class="shu1">
-          <u-icon name="order" color="#5C98F9"></u-icon>
+          <u-icon name="order" color="#f09b7f"></u-icon>
           订单统计
         </view>
         <u-subsection :list="list" mode="subsection" :current="current" @change="sectionChange"
-                      style="width: 150px;"></u-subsection>
+                      activeColor="#f09b7f" style="width: 150px;"></u-subsection>
       </view>
       <view class=""
             style="display: flex; flex-wrap: nowrap; justify-content: space-around;margin-top: 32px; padding-bottom: 8px;">
@@ -86,11 +95,11 @@
     <view class="item1">
       <view style="display: flex;justify-content: space-between;">
         <view class="shu1">
-          <u-icon name="list-dot" color="#5C98F9"></u-icon>
+          <u-icon name="list-dot" color="#f09b7f"></u-icon>
           激活统计
         </view>
         <u-subsection :list="list" mode="subsection" :current="current1" @change="sectionChange1"
-                      style="width: 150px;"></u-subsection>
+                      activeColor="#f09b7f" style="width: 150px;"></u-subsection>
       </view>
       <view class="orderclass" style="margin-top: 20px;">
         <div ref="chart" style="width: 100px; height: 100px;"></div>
@@ -107,7 +116,7 @@
     <view class="item3" @click="xianqing">
       <view style="display: flex;justify-content: space-between;">
         <view class="shu1">
-          <u-icon name="integral" color="#5C98F9"></u-icon>
+          <u-icon name="integral" color="#f09b7f"></u-icon>
           代理商管理
         </view>
         <view class="shu1">
@@ -145,7 +154,7 @@
     <view class="item3" @click="xianqing">
       <view style="display: flex;justify-content: space-between;">
         <view class="shu1">
-          <u-icon name="man-add" color="#5C98F9"></u-icon>
+          <u-icon name="man-add" color="#f09b7f"></u-icon>
           注册数据
         </view>
       </view>
@@ -180,25 +189,34 @@
       </view>
     </view>
 
-    <view class="item2-oo" @click="xianqing">
-      <view style="display: flex;justify-content: space-between;">
+    <view class="item2-oo">
+      <view style="display: flex;justify-content: space-between;" @click="goToNoticeList">
         <view class="shu1">
-          <u-icon name="bell" color="#5C98F9"></u-icon>
+          <u-icon name="bell" color="#f09b7f"></u-icon>
           系统通知
         </view>
+        <view class="shu1" style="color: #999;">
+          查看更多
+        </view>
       </view>
-      <view>
-        <view class="dt-item">
+      <view v-if="noticeList.length > 0">
+        <view
+          class="dt-item"
+          v-for="(notice, index) in noticeList"
+          :key="notice.noticeId"
+          @click="goToNoticeDetail(notice.noticeId)"
+        >
           <view class="dt-item-dot"></view>
-          <view>新用户，首充优惠活动，月租仅需150元/月；优惠数量有限，快来抢购吧！</view>
+          <view class="notice-content">
+            <view class="notice-title">{{ notice.noticeTitle }}</view>
+            <view class="notice-summary">{{ notice.noticeContent ? notice.noticeContent.replace(/<[^>]*>/g, '').substring(0, 50) + '...' : '' }}</view>
+          </view>
         </view>
+      </view>
+      <view v-else class="no-notice">
         <view class="dt-item">
           <view class="dt-item-dot"></view>
-          <view>国庆节送流量活动，充值50元话费送1G流量，充100元话费宋1.5G流量，充越多送的越多！</view>
-        </view>
-        <view class="dt-item">
-          <view class="dt-item-dot"></view>
-          <view>中秋节满减优惠活动，消费满500元可领取1元优惠券，优惠券可抵扣话费。</view>
+          <view>暂无系统通知</view>
         </view>
       </view>
     </view>
@@ -216,15 +234,19 @@ import {
   selectActivateAgentOrderAPPStatistics,
   selectChildAgentStatistics,
 } from "@/api/home/home.js";
-
-import {
-  login
-} from '../api/login';
+import NoticePopup from '@/components/NoticePopup/NoticePopup.vue';
+import { listNotice } from '@/api/system/notice.js';
 
 export default {
+  components: {
+    NoticePopup
+  },
   data() {
     return {
-
+      noticePopupVisible: false,
+      currentNotice: {},
+      noticeList: [], // 通知列表数据
+      noticeShownThisSession: false, // 本次会话是否已显示过通知
       productList: {
         totalWithdrawalAmount: 0,
         todayWithdrawalAmount: 0,
@@ -245,14 +267,20 @@ export default {
     }
   },
   mounted() {
-
-
     this.getdata();
     this.dail();
     this.AgentOrderdata();
     this.ActivateOrder();
+    this.loadNoticeList(); // 加载通知列表
+    this.loadNotices(); // 初始加载时检查通知
+  },
+  onShow() {
+    // 移除每次显示页面时的通知检查，避免重复弹出
   },
   computed: {
+    realNameInfo() {
+      return this.$store.state.user.realNameInfo || {}
+    },
 
     avatar() {
       return this.$store.state.user.avatar
@@ -318,15 +346,15 @@ export default {
           roundCap: 1,
           color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [{
             offset: 0,
-            color: '#0062d8'
+            color: '#f09b7f'
           },
             {
               offset: 0.5,
-              color: '#008cec'
+              color: '#d87d63'
             },
             {
               offset: 1,
-              color: '#5bd9ff'
+              color: '#ffc4ae'
             }
           ])
         },
@@ -338,7 +366,7 @@ export default {
             coordinateSystem: 'polar',
             barMaxWidth: 10,
             roundCap: true,
-            color: '#cee7f9',
+            color: '#fff2ed',
             barGap: '-100%',
           },
           {
@@ -433,6 +461,60 @@ export default {
       const chartElement = this.$refs.chart;
       const myChart = echarts.init(chartElement);
       myChart.setOption(this.chartOption);
+    },
+
+    // 加载通知公告
+    loadNotices() {
+      // 如果本次会话已经显示过通知，则不再显示
+      if (this.noticeShownThisSession) {
+        return;
+      }
+
+      listNotice({
+        pageNum: 1,
+        pageSize: 1 // 只取第一条
+      }).then(res => {
+        if (res.code === 200 && res.rows && res.rows.length > 0) {
+          this.currentNotice = res.rows[0];
+          this.noticePopupVisible = true;
+        }
+      }).catch(err => {
+      });
+    },
+
+    // 关闭通知弹窗
+    handleNoticeClose() {
+      this.noticePopupVisible = false;
+      // 标记本次会话已显示过通知
+      this.noticeShownThisSession = true;
+    },
+
+    // 加载通知列表（首页显示前3条）
+    loadNoticeList() {
+      listNotice({
+        pageNum: 1,
+        pageSize: 3 // 首页只显示3条
+      }).then(res => {
+        if (res.code === 200 && res.rows) {
+          this.noticeList = res.rows;
+        }
+      }).catch(err => {
+        console.error('加载通知列表失败:', err);
+      });
+    },
+
+    // 点击通知区域跳转到通知列表
+    goToNoticeList() {
+      uni.navigateTo({
+        url: '/pages/notice/list'
+      });
+    },
+
+    // 点击单个通知跳转到详情
+    goToNoticeDetail(noticeId) {
+      uni.navigateTo({
+        url: `/pages/notice/detail?noticeId=${noticeId}`
+      });
     }
   },
 }
@@ -476,6 +558,12 @@ export default {
   flex-direction: row;
   justify-content: flex-start;
   align-items: flex-start;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #f8f8f8;
+  }
 }
 
 .dt-item-dot {
@@ -485,6 +573,35 @@ export default {
   background-color: red;
   margin-top: 8px;
   margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.notice-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.notice-title {
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.notice-summary {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.no-notice {
+  opacity: 0.6;
 }
 
 .item2-oo {
@@ -626,13 +743,23 @@ page {
 }
 
 .header-section {
-  background-color: #4F97F6;
+  background-color: #f09b7f;
 }
 
 .cu-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
+}
+
+.real-name-badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .mine-container {
@@ -642,7 +769,7 @@ page {
 
   .header-section {
     padding: 15px 15px 45px 15px;
-    background-color: #3c96f3;
+    background-color: #d87d63;
     color: white;
 
     .login-tip {

@@ -2,38 +2,43 @@
 // uni.scss中引入的样式会同时混入到全局样式文件和单独每一个页面的样式中，造成微信程序包太大，
 // 故uni.scss只建议放scss变量名相关样式，其他的样式可以通过main.js或者App.vue引入
 
-$u-main-color: #303133;
-$u-content-color: #606266;
-$u-tips-color: #909193;
-$u-light-color: #c0c4cc;
-$u-border-color: #dadbde;
-$u-bg-color: #f3f4f6;
-$u-disabled-color: #c8c9cc;
+// 引入统一主题变量
+@import "../static/scss/theme-variables.scss";
 
-$u-primary: #3c9cff;
-$u-primary-dark: #398ade;
-$u-primary-disabled: #9acafc;
-$u-primary-light: #ecf5ff;
+// 使用统一主题色
+$u-main-color: $text-primary;
+$u-content-color: $text-regular;
+$u-tips-color: $text-secondary;
+$u-light-color: $text-disabled;
+$u-border-color: $border-color-base;
+$u-bg-color: $background-color-base;
+$u-disabled-color: $text-disabled;
 
-$u-warning: #f9ae3d;
-$u-warning-dark: #f1a532;
-$u-warning-disabled: #f9d39b;
-$u-warning-light: #fdf6ec;
+// 基础颜色 - 使用统一主题色
+$u-primary: $primary-color;
+$u-primary-dark: $primary-dark;
+$u-primary-disabled: $primary-light;
+$u-primary-light: $primary-lighter;
 
-$u-success: #5ac725;
-$u-success-dark: #53c21d;
-$u-success-disabled: #a9e08f;
-$u-success-light: #f5fff0;
+$u-warning: $warning-color;
+$u-warning-dark: darken($warning-color, 8%);
+$u-warning-disabled: lighten($warning-color, 25%);
+$u-warning-light: $warning-light;
 
-$u-error: #f56c6c;
-$u-error-dark: #e45656;
-$u-error-disabled: #f7b2b2;
-$u-error-light: #fef0f0;
+$u-success: $success-color;
+$u-success-dark: darken($success-color, 8%);
+$u-success-disabled: lighten($success-color, 25%);
+$u-success-light: $success-light;
 
-$u-info: #909399;
-$u-info-dark: #767a82;
-$u-info-disabled: #c4c6c9;
-$u-info-light: #f4f4f5;
+$u-error: $error-color;
+$u-error-dark: darken($error-color, 8%);
+$u-error-disabled: lighten($error-color, 25%);
+$u-error-light: $error-light;
+
+$u-info: $info-color;
+$u-info-dark: darken($info-color, 8%);
+$u-info-disabled: lighten($info-color, 25%);
+$u-info-light: $info-light;
 
 // scss混入，为了少写几行#ifndef
 @mixin flex($direction: row) {

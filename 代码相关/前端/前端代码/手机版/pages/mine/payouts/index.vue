@@ -1,80 +1,141 @@
 <template>
-	<u-form :model="queryParams" label-width="100px" class="demo-ruleForm" :inline="true">
-		<div class="topss">
-			<p class="pz">账户余额:{{pz.balance * 0.01}}元</p>
-			<p class="pz">增值税发票税费:{{pz.withdrawRate}}%</p>
-			<p class="pz">最低提现金额:{{pz.withdrawMinAmount}}元</p>
-		</div>
-		<div class="topss">
-			<u-form-item label="提现模式" prop="resource">
-				<!-- 			<u-radio-group v-model="queryParams.withdrawalType">
-					<u-radio label="微信">微信</u-radio>
-					<u-radio label="支付宝">支付宝</u-radio>
-					<u-radio label="银行卡"></u-radio>
-				</u-radio-group> -->
+	<view class="page-container">
+		<app-navbar title="佣金提现"></app-navbar>
 
-				<u-radio-group v-model="radiovalue" placement="row" @change="groupChange">
-					<u-radio :customStyle="{marginBottom: '8px'}" v-for="(item, index) in radiolist" :key="index"
-						:label="item.name" :name="item.name">
-					</u-radio>
-				</u-radio-group>
-			</u-form-item>
-			<br>
-			<div v-if="queryParams.withdrawalType=='0'" class="wxskm">
-				<u-form-item label="微信收款码" prop="resource">
-					<!-- 					<u-upload class="avatar-uploader" :action="uploadUrl" :show-file-list="false"
-						:on-success="handleAvatarSuccess" :before-upload="handlesuccess" :headers=headers>
-						<img v-if="queryParams.wxUrl" :src="queryParams.wxUrl" class="avatar">
-						<i v-else class="el-icon-plus avatar-uploader-icon"></i>
-					</u-upload> -->
+		<!-- 实名认证提示区域 -->
+		<view v-if="!isRealNameVerified" class="container">
+			<view class="realname-tip-card">
+				<view class="tip-icon">
+					<u-icon name="warning-fill" color="#ff9900" size="40"></u-icon>
+				</view>
+				<view class="tip-content">
+					<view class="tip-title">需要实名认证</view>
+					<view class="tip-desc">提现功能需要完成实名认证后才能使用</view>
+					<view class="tip-status">当前状态：{{ getRealNameStatusText() }}</view>
+				</view>
+			</view>
 
-					<!-- <img v-if="queryParams.wxUrl" :src="queryParams.wxUrl" class="avatar"> -->
-					<u-upload :fileList="fileList1" @afterRead="afterRead" @delete="deletePic" name="1" :headers="headers" multiple
-						:maxCount="1"></u-upload>
-				</u-form-item>
+			<view class="action-button" @click="showRealNameModal">
+				<text class="action-text">前往实名认证</text>
+			</view>
+		</view>
 
-			</div>
-			<div v-if="queryParams.withdrawalType=='1'">
-				<u-form-item label="支付宝账号">
-					<u-input v-model="queryParams.zfbAccount" placeholder="支付宝账号"></u-input>
-				</u-form-item>
-				<br>
-				<u-form-item label="真实姓名">
-					<u-input v-model="queryParams.zfbAccountName" placeholder="真实姓名"></u-input>
-				</u-form-item>
-			</div>
-			<div v-if="queryParams.withdrawalType=='2'">
-				<u-form-item label="银行开户行">
-					<u-input v-model="queryParams.bankName" placeholder="银行开户行" style="width: 100%;"></u-input>
-				</u-form-item>
-				<br>
-				<u-form-item label="真实姓名">
-					<u-input v-model="queryParams.bankNumberName" placeholder="真实姓名"></u-input>
-				</u-form-item>
-				<br>
-				<u-form-item label="银行卡号">
-					<u-input v-model="queryParams.bankNumber" placeholder="银行卡号"></u-input>
-				</u-form-item>
-				<br>
-				<u-form-item label="手机号">
-					<u-input v-model="queryParams.bankNumberPhone" placeholder="手机号"></u-input>
-				</u-form-item>
-			</div>
-			<u-form-item label="提现金额">
-				<u-input v-model="queryParams.withdrawalAmount" placeholder="提现金额" @input="hlv"></u-input>
-				<p v-if="querwithd.withdrawalRate">提现费率:{{querwithd.withdrawalRate}}%</p>
-				<p v-if="querwithd.withdrawalRateAmount">提现手续费:{{querwithd.withdrawalRateAmount * 0.01}}元</p>
-				<p v-if="querwithd.receivedAmount">实际到账:{{querwithd.receivedAmount * 0.01}}元</p>
-			</u-form-item>
-			<br>
-			<u-form-item
-				style="position: relative; bottom:-70px;padding: 10px 0;height: 50px;text-align: center;width: 100%;">
-				<u-button type="primary" @click="submitForm(queryParams)">提交申请</u-button>
-				<!-- <el-button @click="resetForm()">重置</el-button> -->
-			</u-form-item>
+		<!-- 提现表单区域 -->
+		<view v-if="isRealNameVerified" class="container">
+			<!-- 账户信息卡片 -->
+			<view class="info-card">
+				<view class="info-item" v-for="(item, index) in accountInfoList" :key="index"
+					  :class="{ 'has-border': index < accountInfoList.length - 1 }">
+					<view class="item-left">{{ item.label }}</view>
+					<view class="item-right">
+						<text class="item-value" :class="item.valueClass">{{ item.value }}</text>
+					</view>
+				</view>
+			</view>
 
-		</div>
-	</u-form>
+			<!-- 提现模式选择卡片 -->
+			<view class="info-card">
+				<view class="info-item">
+					<view class="item-left">提现模式</view>
+					<view class="item-right">
+						<u-radio-group v-model="radiovalue" placement="row" @change="groupChange">
+							<u-radio :customStyle="{marginBottom: '8px'}" v-for="(item, index) in radiolist" :key="index"
+								:label="item.name" :name="item.name">
+							</u-radio>
+						</u-radio-group>
+					</view>
+				</view>
+			</view>
+
+			<!-- 微信收款码 -->
+			<view v-if="queryParams.withdrawalType=='0'" class="info-card">
+				<view class="info-item">
+					<view class="item-left">微信收款码</view>
+					<view class="item-right">
+						<u-upload :fileList="fileList1" @afterRead="afterRead" @delete="deletePic" name="1" :headers="headers" multiple
+							:maxCount="1"></u-upload>
+					</view>
+				</view>
+			</view>
+
+			<!-- 支付宝信息 -->
+			<view v-if="queryParams.withdrawalType=='1'" class="info-card">
+				<view class="info-item has-border">
+					<view class="item-left">支付宝账号</view>
+					<view class="item-right">
+						<input v-model="queryParams.zfbAccount" placeholder="请输入支付宝账号" class="form-input" />
+					</view>
+				</view>
+				<view class="info-item">
+					<view class="item-left">真实姓名</view>
+					<view class="item-right">
+						<input v-model="queryParams.zfbAccountName" placeholder="请输入真实姓名" class="form-input" />
+					</view>
+				</view>
+			</view>
+
+			<!-- 银行卡信息 -->
+			<view v-if="queryParams.withdrawalType=='2'" class="info-card">
+				<view class="info-item has-border">
+					<view class="item-left">银行开户行</view>
+					<view class="item-right">
+						<input v-model="queryParams.bankName" placeholder="请输入银行开户行" class="form-input" />
+					</view>
+				</view>
+				<view class="info-item has-border">
+					<view class="item-left">真实姓名</view>
+					<view class="item-right">
+						<input v-model="queryParams.bankNumberName" placeholder="请输入真实姓名" class="form-input" />
+					</view>
+				</view>
+				<view class="info-item has-border">
+					<view class="item-left">银行卡号</view>
+					<view class="item-right">
+						<input v-model="queryParams.bankNumber" placeholder="请输入银行卡号" class="form-input" />
+					</view>
+				</view>
+				<view class="info-item">
+					<view class="item-left">手机号</view>
+					<view class="item-right">
+						<input v-model="queryParams.bankNumberPhone" placeholder="请输入手机号" class="form-input" />
+					</view>
+				</view>
+			</view>
+
+			<!-- 提现金额卡片 -->
+			<view class="info-card">
+				<view class="info-item" :class="{ 'has-border': querwithd.withdrawalRate }">
+					<view class="item-left">提现金额</view>
+					<view class="item-right">
+						<input v-model="queryParams.withdrawalAmount" placeholder="请输入提现金额" class="form-input" @input="hlv" />
+					</view>
+				</view>
+				<view v-if="querwithd.withdrawalRate" class="info-item has-border">
+					<view class="item-left">提现费率</view>
+					<view class="item-right">
+						<text class="item-value">{{querwithd.withdrawalRate}}%</text>
+					</view>
+				</view>
+				<view v-if="querwithd.withdrawalRateAmount" class="info-item has-border">
+					<view class="item-left">提现手续费</view>
+					<view class="item-right">
+						<text class="item-value">{{querwithd.withdrawalRateAmount * 0.01}}元</text>
+					</view>
+				</view>
+				<view v-if="querwithd.receivedAmount" class="info-item">
+					<view class="item-left">实际到账</view>
+					<view class="item-right">
+						<text class="item-value text-primary">{{querwithd.receivedAmount * 0.01}}元</text>
+					</view>
+				</view>
+			</view>
+
+			<!-- 提交按钮 -->
+			<view class="submit-button" @click="submitForm(queryParams)">
+				<text class="submit-text">提交申请</text>
+			</view>
+		</view>
+	</view>
 </template>
 <script>
 	import {
@@ -95,6 +156,9 @@
 		dicts: ['sys_oper_type', 'sys_common_status'],
 		data() {
 			return {
+				// 实名认证检查相关
+				isRealNameVerified: false,
+				showRealNameTip: false,
 				radiolist: [{
 						name: '微信',
 						disabled: false
@@ -136,6 +200,14 @@
 			};
 		},
 		async created() {
+			// 首先检查实名认证状态
+			this.checkRealNameStatus();
+
+			// 如果未实名认证，直接返回不加载数据
+			if (!this.isRealNameVerified) {
+				return;
+			}
+
 			try {
 				// 获取配置数据
 				const configRes = await selectWithdrawalConfig({});
@@ -159,8 +231,79 @@
 		//         this.$set(this.pz, 'balance', res.data.balance);
 		//     })
 		// },
-		computed: {},
+		computed: {
+			// 从 Vuex 获取实名认证信息
+			realNameInfo() {
+				return this.$store.state.user.realNameInfo || {}
+			},
+
+			// 账户信息列表
+			accountInfoList() {
+				return [
+					{
+						label: '账户余额',
+						value: `${(this.pz.balance * 0.01) || 0}元`,
+						valueClass: 'text-primary'
+					},
+					{
+						label: '增值税发票税费',
+						value: `${this.pz.withdrawRate || 0}%`,
+						valueClass: ''
+					},
+					{
+						label: '最低提现金额',
+						value: `${this.pz.withdrawMinAmount || 0}元`,
+						valueClass: ''
+					}
+				]
+			}
+		},
 		methods: {
+			// 检查实名认证状态
+			checkRealNameStatus() {
+				const realNameInfo = this.realNameInfo;
+
+				// 检查是否已通过实名认证（状态为 2）
+				this.isRealNameVerified = realNameInfo.realNameStatus === 2;
+
+				if (!this.isRealNameVerified) {
+					this.showRealNameTip = true;
+					this.showRealNameModal();
+				}
+			},
+
+			// 显示实名认证提示弹窗
+			showRealNameModal() {
+				const statusText = this.getRealNameStatusText();
+				const content = statusText === '未认证'
+					? '您还未进行实名认证，提现功能需要完成实名认证后才能使用。是否前往实名认证？'
+					: `您的实名认证状态为"${statusText}"，提现功能需要通过实名认证后才能使用。`;
+
+				this.$modal.confirm(content).then(() => {
+					if (statusText === '未认证') {
+						// 跳转到实名认证页面
+						this.$tab.navigateTo('/pages/mine/realname/index');
+					} else {
+						// 其他状态暂时返回上一页
+						uni.navigateBack();
+					}
+				}).catch(() => {
+					// 用户取消，返回上一页
+					uni.navigateBack();
+				});
+			},
+
+			// 获取实名认证状态文本
+			getRealNameStatusText() {
+				const status = this.realNameInfo.realNameStatus;
+				const statusMap = {
+					0: '未认证',
+					1: '认证中',
+					2: '已认证',
+					3: '认证失败'
+				}
+				return statusMap[status] || '未认证';
+			},
 			deletePic(event) {
 				this[`fileList${event.name}`].splice(event.index, 1);
 			},
@@ -251,50 +394,145 @@
 		},
 	}
 </script>
-<style>
-	.pz {
-		color: red;
-		font-weight: 700;
+<style lang="scss" scoped>
+page {
+	background-color: #f5f6f7;
+}
+
+.container {
+	padding: 15px;
+}
+
+/* 实名认证提示样式 */
+.realname-tip-card {
+	background-color: #fff;
+	border-radius: 8rpx;
+	padding: 30rpx;
+	margin-bottom: 20rpx;
+	display: flex;
+	align-items: center;
+}
+
+.tip-icon {
+	margin-right: 20rpx;
+	flex-shrink: 0;
+}
+
+.tip-content {
+	flex: 1;
+}
+
+.tip-title {
+	font-size: 32rpx;
+	font-weight: 500;
+	color: #333;
+	margin-bottom: 8rpx;
+}
+
+.tip-desc {
+	font-size: 28rpx;
+	color: #666;
+	margin-bottom: 8rpx;
+}
+
+.tip-status {
+	font-size: 24rpx;
+	color: #909399;
+}
+
+.action-button {
+	background-color: #f09b7f;
+	border-radius: 8rpx;
+	padding: 26rpx 30rpx;
+	text-align: center;
+	&:active {
+		background-color: #d87d63;
+	}
+}
+
+.action-text {
+	font-size: 32rpx;
+	color: #fff;
+}
+
+/* 单卡片多项目模式样式 */
+.info-card {
+	background-color: #fff;
+	border-radius: 8rpx;
+	overflow: hidden;
+	margin-bottom: 20rpx;
+}
+
+.info-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 26rpx 30rpx;
+	min-height: 88rpx;
+	box-sizing: border-box;
+
+	&.has-border {
+		border-bottom: 1rpx solid #eaeef1;
 	}
 
-	.topss {
-		margin: 20px;
-		padding: 10px;
-		border: 1px solid #F2F2F2;
+	.item-left {
+		font-size: 32rpx;
+		color: #333;
+		flex-shrink: 0;
+		width: 140rpx;
 	}
 
-	.avatar-uploader .el-upload {
-		border: 1px dashed #d9d9d9;
-		border-radius: 6px;
-		cursor: pointer;
-		position: relative;
-		overflow: hidden;
-	}
+	.item-right {
+		display: flex;
+		align-items: center;
+		flex: 1;
+		justify-content: flex-end;
 
-	.avatar-uploader .el-upload:hover {
-		border-color: #409EFF;
-	}
+		.item-value {
+			font-size: 32rpx;
+			color: #666;
+			margin-right: 12rpx;
 
-	.avatar-uploader-icon {
-		font-size: 28px;
-		color: #8c939d;
-		width: 178px;
-		height: 178px;
-		line-height: 178px;
-		text-align: center;
+			&.text-primary {
+				color: #f09b7f;
+				font-weight: 500;
+			}
+		}
 	}
+}
 
-	.wxskm .el-icon-plus:before {
-		line-height: 178px;
-	}
+/* 表单输入框样式 */
+.form-input {
+	width: 100%;
+	font-size: 32rpx;
+	color: #333;
+	text-align: right;
+	border: none;
+	outline: none;
+	background: transparent;
 
-	.avatar {
-		width: 178px;
-		height: 178px;
-		display: block;
+	&::placeholder {
+		color: #c0c0c0;
+		font-size: 32rpx;
 	}
+}
 
-	.u-input--suffix {
-		width: 202px;
+/* 提交按钮样式 */
+.submit-button {
+	background-color: #f09b7f;
+	border-radius: 8rpx;
+	padding: 26rpx 30rpx;
+	text-align: center;
+	margin-top: 40rpx;
+
+	&:active {
+		background-color: #d87d63;
 	}
+}
+
+.submit-text {
+	font-size: 32rpx;
+	color: #fff;
+	font-weight: 500;
+}
 </style>

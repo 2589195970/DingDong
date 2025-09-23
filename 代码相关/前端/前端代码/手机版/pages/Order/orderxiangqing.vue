@@ -1,5 +1,7 @@
 <template>
-	<view style="margin: 10px;background-color: #fff; ">
+	<view class="page-container">
+		<app-navbar title="订单详情"></app-navbar>
+		<view style="margin: 10px;background-color: #fff; ">
 		<H3 style="display: flex;"><u-icon name="star-fill" color='#3374EB'></u-icon>订单详情</H3>
 		<view class="">
 			订单号:{{xqdata.orderId}}<br>
@@ -37,6 +39,7 @@
 		</view>
 
 		<!-- <H3 style="display: flex;"><u-icon name="star-fill" color='#3374EB'></u-icon>不发货地区</H3> -->
+		</view>
 	</view>
 </template>
 

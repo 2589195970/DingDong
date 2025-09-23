@@ -1,5 +1,7 @@
 <template>
-	<view>
+	<view class="page-container">
+		<app-navbar title="佣金设置"></app-navbar>
+		<view>
 
 		<u-radio-group v-model="queryParams.commissionConfigType" placement="row">
 			佣金模式：<u-radio :customStyle="{marginBottom: '8px'}" v-for="(item, index) in radiolist1" :key="index"
@@ -11,6 +13,7 @@
 		<u--input placeholder="百分比佣金" border="surround" shape="circle" v-model="queryParams.scaleCommission"
 			style="margin: 5px;" v-if="queryParams.commissionConfigType==1"></u--input>
 		<u-button type="primary" shape="circle" text="提交设置" @click="submitForm(queryParams)"></u-button>
+		</view>
 	</view>
 
 </template>

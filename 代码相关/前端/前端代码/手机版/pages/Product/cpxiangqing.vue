@@ -1,5 +1,7 @@
 <template>
-	<view style="margin: 10px;">
+	<view class="page-container">
+		<app-navbar title="商品详情"></app-navbar>
+		<view style="margin: 10px;">
 		<H3 style="display: flex;"><u-icon name="star-fill" color='#3374EB'></u-icon>产品套餐：{{xqdata.productName}}</H3>
 		<view class="">
 			<p style="border: 1px solid #3374EB; margin: 10px;padding: 10px; border-radius: 10rpx">
@@ -34,6 +36,7 @@
 		</view>
 		
 		<!-- <H3 style="display: flex;"><u-icon name="star-fill" color='#3374EB'></u-icon>不发货地区</H3> -->
+		</view>
 	</view>
 </template>
 

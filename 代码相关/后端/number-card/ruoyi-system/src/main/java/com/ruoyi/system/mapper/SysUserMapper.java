@@ -1,6 +1,7 @@
 package com.ruoyi.system.mapper;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.ibatis.annotations.Param;
 import com.ruoyi.common.core.domain.entity.SysUser;
 
@@ -149,4 +150,28 @@ public interface SysUserMapper
      * @return 结果
      */
     public SysUser checkEmailUnique(String email);
+
+    /**
+     * 根据用户ID查询代理商账号信息
+     *
+     * @param userId 用户ID
+     * @return 代理商账号信息
+     */
+    public Map<String, Object> selectAgentAccountByUserId(Long userId);
+
+   /**
+     * 根据用户ID查询代理商账号信息
+     *
+     * @param agentCode 代理商编码
+     * @return 代理商账号信息
+     */
+    public Map<String, Object> selectAgentAccountByAgentCode(String agentCode);
+
+    /**
+     * 根据代理商编码查询实名审核信息
+     *
+     * @param agentCode 代理商编码
+     * @return 实名审核信息
+     */
+    public Map<String, Object> selectNameAuditByAgentCode(String agentCode);
 }

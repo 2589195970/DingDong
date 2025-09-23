@@ -14,7 +14,14 @@ const user = {
     name: storage.get(constant.name),
     avatar: storage.get(constant.avatar),
     roles: storage.get(constant.roles),
-    permissions: storage.get(constant.permissions)
+    permissions: storage.get(constant.permissions),
+    realNameInfo: storage.get(constant.realNameInfo) || {
+      isRealName: false,
+      realNameStatus: 0,
+      realName: '',
+      cardId: '',
+      auditTime: ''
+    }
   },
 
   mutations: {
@@ -36,6 +43,10 @@ const user = {
     SET_PERMISSIONS: (state, permissions) => {
       state.permissions = permissions
       storage.set(constant.permissions, permissions)
+    },
+    SET_REALNAME_INFO: (state, realNameInfo) => {
+      state.realNameInfo = realNameInfo
+      storage.set(constant.realNameInfo, realNameInfo)
     }
   },
 
@@ -89,6 +100,12 @@ const user = {
           }
           commit('SET_NAME', username)
           commit('SET_AVATAR', avatar)
+
+          // 处理实名认证信息
+          if (res.realNameInfo) {
+            commit('SET_REALNAME_INFO', res.realNameInfo)
+          }
+
           resolve(res)
         }).catch(error => {
           reject(error)
@@ -103,6 +120,13 @@ const user = {
           commit('SET_TOKEN', '')
           commit('SET_ROLES', [])
           commit('SET_PERMISSIONS', [])
+          commit('SET_REALNAME_INFO', {
+            isRealName: false,
+            realNameStatus: 0,
+            realName: '',
+            cardId: '',
+            auditTime: ''
+          })
           removeToken()
           storage.clean()
           resolve()

@@ -1,6 +1,7 @@
 package com.ruoyi.system.service;
 
 import java.util.List;
+import java.util.Map;
 import com.ruoyi.common.core.domain.entity.SysUser;
 
 /**
@@ -212,11 +213,20 @@ public interface ISysUserService
 
     /**
      * 导入用户数据
-     * 
+     *
      * @param userList 用户数据列表
      * @param isUpdateSupport 是否更新支持，如果已存在，则进行更新数据
      * @param operName 操作用户
      * @return 结果
      */
     public String importUser(List<SysUser> userList, Boolean isUpdateSupport, String operName);
+
+    /**
+     * 获取用户实名认证信息
+     *
+     * @param userId 用户ID
+     * @return 实名认证信息
+     */
+    public Map<String, Object> getUserRealNameInfo(Long userId);
+
 }

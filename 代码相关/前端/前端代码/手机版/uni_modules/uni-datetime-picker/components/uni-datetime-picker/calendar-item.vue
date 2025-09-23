@@ -58,7 +58,7 @@
 </script>
 
 <style lang="scss" >
-	$uni-primary: #007aff !default;
+	$uni-primary: #f09b7f !default;
 
 	.uni-calendar-item__weeks-box {
 		flex: 1;

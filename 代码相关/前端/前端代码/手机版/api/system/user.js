@@ -10,7 +10,7 @@ export function updateUserPwd(oldPassword, newPassword) {
   return request({
     url: '/system/user/profile/updatePwd',
     method: 'put',
-    data: data
+    params: data  // 改为 params，与后端接口匹配
   })
 }
 
@@ -37,5 +37,31 @@ export function uploadAvatar(data) {
     url: '/system/user/profile/avatar',
     name: data.name,
     filePath: data.filePath
+  })
+}
+
+// 新增实名认证
+export function addNameAudit(data) {
+  return request({
+    url: '/agentNameAudit/addNameAudit',
+    method: 'post',
+    data: data
+  })
+}
+
+// 更新实名认证
+export function updateNameAudit(data) {
+  return request({
+    url: '/agentNameAudit/updateNameAudit',
+    method: 'post',
+    data: data
+  })
+}
+
+// 查询实名认证信息
+export function selectNameAudit() {
+  return request({
+    url: '/agentNameAudit/selectNameAudit',
+    method: 'post'
   })
 }

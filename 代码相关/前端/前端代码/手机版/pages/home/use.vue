@@ -1,9 +1,11 @@
 <template>
-	<view class="">
+	<view class="page-container">
+		<app-navbar title="代理管理"></app-navbar>
+		<view class="">
 		<view class="item2" v-for="dict in productList" :key="dict.productId">
 			<view style="display: flex;justify-content: space-between;">
 				<view class="shu1">
-					<u-icon name="account-fill" color="#5C98F9"></u-icon>
+					<u-icon name="account-fill" color="#f09b7f"></u-icon>
 					账号：{{dict.agentName}}
 					<br />
 					手机号：{{dict.phone}}
@@ -11,6 +13,7 @@
 					注册时间：{{formatTimestamp(dict.createTime)}}
 				</view>
 			</view>
+		</view>
 		</view>
 	</view>
 

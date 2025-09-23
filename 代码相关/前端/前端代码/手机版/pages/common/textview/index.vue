@@ -1,8 +1,11 @@
 <template>
-  <view>
+  <view class="page-container">
+    <app-navbar title="浏览文本"></app-navbar>
+    <view>
     <uni-card class="view-title" :title="title">
       <text class="uni-body view-content">{{ content }}</text>
     </uni-card>
+    </view>
   </view>
 </template>
 

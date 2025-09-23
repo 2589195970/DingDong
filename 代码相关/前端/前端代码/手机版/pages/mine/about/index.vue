@@ -1,5 +1,7 @@
 <template>
-	<view style="margin: 10px;">
+	<view class="page-container">
+		<app-navbar title="推广"></app-navbar>
+		<view style="margin: 10px;">
 		<H3 style="display: flex;">
 			<u-icon name="star-fill" color='#3374EB'></u-icon>
 			我的店铺
@@ -21,6 +23,7 @@
 			confirmText="保存图片" :asyncClose="true">
 			<image :src="productList.shopQrcodeMap" alt="" style="height: 400px;" />
 		</u-modal>
+		</view>
 	</view>
 </template>
 
