@@ -15,7 +15,7 @@ const user = {
     avatar: storage.get(constant.avatar),
     roles: storage.get(constant.roles),
     permissions: storage.get(constant.permissions),
-    realNameInfo: storage.get(constant.realNameInfo) || {
+    agentAccount: storage.get(constant.agentAccount) || {
       isRealName: false,
       realNameStatus: 0,
       realName: '',
@@ -44,9 +44,9 @@ const user = {
       state.permissions = permissions
       storage.set(constant.permissions, permissions)
     },
-    SET_REALNAME_INFO: (state, realNameInfo) => {
-      state.realNameInfo = realNameInfo
-      storage.set(constant.realNameInfo, realNameInfo)
+    SET_AGENT_ACCOUNT: (state, agentAccount) => {
+      state.agentAccount = agentAccount
+      storage.set(constant.agentAccount, agentAccount)
     }
   },
 
@@ -101,9 +101,9 @@ const user = {
           commit('SET_NAME', username)
           commit('SET_AVATAR', avatar)
 
-          // 处理实名认证信息
-          if (res.realNameInfo) {
-            commit('SET_REALNAME_INFO', res.realNameInfo)
+          // 处理代理商信息
+          if (res.agentAccount) {
+            commit('SET_AGENT_ACCOUNT', res.agentAccount)
           }
 
           resolve(res)
@@ -120,7 +120,7 @@ const user = {
           commit('SET_TOKEN', '')
           commit('SET_ROLES', [])
           commit('SET_PERMISSIONS', [])
-          commit('SET_REALNAME_INFO', {
+          commit('SET_AGENT_ACCOUNT', {
             isRealName: false,
             realNameStatus: 0,
             realName: '',

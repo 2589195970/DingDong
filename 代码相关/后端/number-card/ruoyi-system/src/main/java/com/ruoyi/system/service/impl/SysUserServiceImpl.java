@@ -579,20 +579,19 @@ public class SysUserServiceImpl implements ISysUserService
      * @return 实名认证信息
      */
     @Override
-    public Map<String, Object> getUserRealNameInfo(Long userId)
+    public Map<String, Object> getUserAgentAccountInfo(Long userId)
     {
-        Map<String, Object> realNameInfo = new HashMap<>();
+        Map<String, Object> agentAccountInfo = new HashMap<>();
 
         // 默认值
-        realNameInfo.put("isRealName", false);
-        realNameInfo.put("realNameStatus", 0); // 0未认证 1认证中 2已认证 3认证失败
-        realNameInfo.put("realName", "");
-        realNameInfo.put("cardId", "");
-        realNameInfo.put("parentAgentList", "");
-        realNameInfo.put("auditTime", "");
+        agentAccountInfo.put("isRealName", false);
+        agentAccountInfo.put("realNameStatus", 0); // 0未认证 1认证中 2已认证 3认证失败
+        agentAccountInfo.put("realName", "");
+        agentAccountInfo.put("cardId", "");
+        agentAccountInfo.put("auditTime", "");
 
         if (userId == null) {
-            return realNameInfo;
+            return agentAccountInfo;
         }
 
         try {
@@ -601,14 +600,25 @@ public class SysUserServiceImpl implements ISysUserService
             if (agentInfo != null) {
                 Integer isRealName = (Integer) agentInfo.get("is_real_name");
                 String agentCode = (String) agentInfo.get("agent_code");
-
-                realNameInfo.put("isRealName", isRealName != null && isRealName == 1);
-                realNameInfo.put("realNameStatus", isRealName != null ? isRealName : 0);
+                agentAccountInfo.put("agentCode", agentCode);
+                // 数据库和前端状态定义一致，直接使用数据库值
+                // 统一标准: 0=未认证, 1=已认证, 2=认证中, 3=认证失败
+                agentAccountInfo.put("isRealName", isRealName != null && isRealName == 1);
+                agentAccountInfo.put("realNameStatus", isRealName != null ? isRealName : 0);
                 if (agentInfo.get("parent_agent_code") != null) {
                     // 查询上级代理
                     Map<String, Object> parentAgentCode = userMapper.selectAgentAccountByAgentCode(String.valueOf(agentInfo.get("parent_agent_code")));
-                    realNameInfo.put("parentAgentCode", parentAgentCode.get("agent_code"));
-                    realNameInfo.put("parentAgentPhone", parentAgentCode.get("phone"));
+                    agentAccountInfo.put("parentAgentCode", parentAgentCode.get("agent_code"));
+                    agentAccountInfo.put("sysUserId", parentAgentCode.get("sys_user_id"));
+                    // 查询上级用户信息
+                    SysUser parentUser = userMapper.selectUserById(Long.valueOf(String.valueOf(parentAgentCode.get("sys_user_id"))));
+                    if (parentUser != null) {
+                        agentAccountInfo.put("parentAgentName", parentUser.getUserName());
+                        agentAccountInfo.put("parentAgentPhone", parentAgentCode.get("phone"));
+                    } else {
+                        agentAccountInfo.put("parentAgentName", "");
+                        agentAccountInfo.put("parentAgentPhone", "");
+                    }
                 }
                 // 如果已实名或认证中，查询详细的实名审核信息
                 if (isRealName != null && isRealName > 0 && StringUtils.isNotEmpty(agentCode)) {
@@ -620,13 +630,13 @@ public class SysUserServiceImpl implements ISysUserService
 
                         // 脱敏处理
                         if (StringUtils.isNotEmpty(cardName)) {
-                            realNameInfo.put("realName", desensitizeName(cardName));
+                            agentAccountInfo.put("realName", desensitizeName(cardName));
                         }
                         if (StringUtils.isNotEmpty(cardId)) {
-                            realNameInfo.put("cardId", desensitizeIdCard(cardId));
+                            agentAccountInfo.put("cardId", desensitizeIdCard(cardId));
                         }
                         if (createTime != null) {
-                            realNameInfo.put("auditTime", java.time.Instant.ofEpochMilli(createTime)
+                            agentAccountInfo.put("auditTime", java.time.Instant.ofEpochMilli(createTime)
                                 .atZone(java.time.ZoneId.systemDefault())
                                 .toLocalDate().toString());
                         }
@@ -637,7 +647,7 @@ public class SysUserServiceImpl implements ISysUserService
             log.error("查询用户实名信息失败", e);
         }
 
-        return realNameInfo;
+        return agentAccountInfo;
     }
 
     /**

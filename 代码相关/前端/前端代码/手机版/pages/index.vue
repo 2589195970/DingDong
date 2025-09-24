@@ -16,7 +16,7 @@
           <view class="user-info">
             <view class="u_title" style="color: #fff; margin-left: 10px; display: flex; align-items: center;">
               {{ name }}
-              <view v-if="realNameInfo.realNameStatus === 2" class="real-name-badge">
+              <view v-if="agentAccount.realNameStatus === constant.REAL_NAME_STATUS.VERIFIED" class="real-name-badge">
                 ✓已实名
               </view>
             </view>
@@ -102,7 +102,7 @@
                       activeColor="#f09b7f" style="width: 150px;"></u-subsection>
       </view>
       <view class="orderclass" style="margin-top: 20px;">
-        <div ref="chart" style="width: 100px; height: 100px;"></div>
+        <div ref="chart" style="width: 120px; height: 120px; min-width: 120px; min-height: 120px;"></div>
         <view class="ordercust" style="margin-top: 20px; width: 60%;">
           <span>年度订单数量 {{ activateOrder.totalOrderNumber }}</span>
           <br/>
@@ -236,6 +236,7 @@ import {
 } from "@/api/home/home.js";
 import NoticePopup from '@/components/NoticePopup/NoticePopup.vue';
 import { listNotice } from '@/api/system/notice.js';
+import constant from "@/utils/constant";
 
 export default {
   components: {
@@ -243,6 +244,7 @@ export default {
   },
   data() {
     return {
+      constant, // 添加constant到data中
       noticePopupVisible: false,
       currentNotice: {},
       noticeList: [], // 通知列表数据
@@ -278,8 +280,8 @@ export default {
     // 移除每次显示页面时的通知检查，避免重复弹出
   },
   computed: {
-    realNameInfo() {
-      return this.$store.state.user.realNameInfo || {}
+    agentAccount() {
+      return this.$store.state.user.agentAccount || {}
     },
 
     avatar() {
@@ -458,9 +460,19 @@ export default {
     },
 
     initChart() {
-      const chartElement = this.$refs.chart;
-      const myChart = echarts.init(chartElement);
-      myChart.setOption(this.chartOption);
+      this.$nextTick(() => {
+        const chartElement = this.$refs.chart;
+        if (!chartElement) {
+          console.warn('Chart element not found');
+          return;
+        }
+        try {
+          const myChart = echarts.init(chartElement);
+          myChart.setOption(this.chartOption);
+        } catch (error) {
+          console.error('ECharts initialization failed:', error);
+        }
+      });
     },
 
     // 加载通知公告

@@ -227,6 +227,6 @@ public interface ISysUserService
      * @param userId 用户ID
      * @return 实名认证信息
      */
-    public Map<String, Object> getUserRealNameInfo(Long userId);
+    public Map<String, Object> getUserAgentAccountInfo(Long userId);
 
 }

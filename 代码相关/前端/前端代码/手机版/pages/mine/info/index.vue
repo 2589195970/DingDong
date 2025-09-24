@@ -58,6 +58,7 @@
 
 <script>
 import { getUserProfile } from "@/api/system/user"
+import constant from "@/utils/constant"
 
 export default {
   name: 'UserInfo',
@@ -66,7 +67,7 @@ export default {
       user: {},
       roleGroup: "",
       postGroup: "",
-      realNameInfo: {},
+      agentAccountData: {},
       logoutButtonStyle: {
         width: '100%',
         height: '45px',
@@ -75,31 +76,31 @@ export default {
     }
   },
   computed: {
-    // 从 Vuex 获取实名认证信息
-    realNameInfo() {
-      return this.$store.state.user.realNameInfo || {}
+    // 从 Vuex 获取代理商信息
+    agentAccount() {
+      return this.$store.state.user.agentAccount || {}
     },
 
     // 格式化实名状态显示
     realNameStatusText() {
-      const status = this.realNameInfo.realNameStatus
+      const status = this.agentAccount.realNameStatus
       const statusMap = {
-        0: '未认证',
-        1: '认证中',
-        2: '已认证',
-        3: '认证失败'
+        [constant.REAL_NAME_STATUS.UNVERIFIED]: '未认证',
+        [constant.REAL_NAME_STATUS.VERIFYING]: '认证中',
+        [constant.REAL_NAME_STATUS.VERIFIED]: '已认证',
+        [constant.REAL_NAME_STATUS.FAILED]: '认证失败'
       }
       return statusMap[status] || '未认证'
     },
 
     // 实名状态样式类
     realNameStatusClass() {
-      const status = this.realNameInfo.realNameStatus
+      const status = this.agentAccount.realNameStatus
       const classMap = {
-        0: 'text-gray',
-        1: 'text-warning',
-        2: 'text-success',
-        3: 'text-danger'
+        [constant.REAL_NAME_STATUS.UNVERIFIED]: 'text-gray',
+        [constant.REAL_NAME_STATUS.VERIFYING]: 'text-warning',
+        [constant.REAL_NAME_STATUS.VERIFIED]: 'text-success',
+        [constant.REAL_NAME_STATUS.FAILED]: 'text-danger'
       }
       return classMap[status] || 'text-gray'
     },
@@ -118,20 +119,20 @@ export default {
           clickable: false
         },
         // 只有已认证时才显示脱敏信息
-        ...(this.realNameInfo.realNameStatus === 2 ? [
+        ...(this.agentAccount.realNameStatus === constant.REAL_NAME_STATUS.VERIFIED ? [
           {
             label: '真实姓名',
-            value: this.realNameInfo.realName,
+            value: this.agentAccount.realName,
             clickable: false
           },
           {
             label: '身份证号',
-            value: this.realNameInfo.cardId,
+            value: this.agentAccount.cardId,
             clickable: false
           },
           {
             label: '认证时间',
-            value: this.realNameInfo.auditTime,
+            value: this.agentAccount.auditTime,
             clickable: false
           }
         ] : []),
@@ -140,7 +141,19 @@ export default {
           value: this.user.phonenumber ?
             this.user.phonenumber.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : '暂无',
           clickable: false
-        }
+        },
+        ...(this.agentAccount.parentAgentCode ? [
+          {
+            label: '上级账号',
+            value: this.agentAccount.parentAgentName,
+            clickable: false
+          },
+          {
+            label: '上级联系方式',
+            value: this.agentAccount.parentAgentPhone,
+            clickable: false
+          }
+        ] : [])
       ]
     }
   },
@@ -155,9 +168,9 @@ export default {
         this.roleGroup = response.roleGroup
         this.postGroup = response.postGroup
 
-        // 更新 Vuex 中的实名认证信息
-        if (response.realNameInfo) {
-          this.$store.commit('SET_REALNAME_INFO', response.realNameInfo)
+        // 更新 Vuex 中的代理商信息
+        if (response.agentAccount) {
+          this.$store.commit('SET_AGENT_ACCOUNT', response.agentAccount)
         }
       } catch (error) {
         this.$modal.showToast('获取用户信息失败')

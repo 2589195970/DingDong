@@ -173,6 +173,43 @@
 				"navigationBarTitleText": "通知详情",
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/mine/commission-detail/index",
+			"style": {
+				"navigationBarTitleText": "佣金明细",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/mine/customer-service/index",
+			"style": {
+				"navigationBarTitleText": "我的客服",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/mine/my-agents/index",
+			"style": {
+				"navigationBarTitleText": "我的代理",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/mine/invite/index",
+			"style": {
+				"navigationBarTitleText": "推广邀请",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/mine/live-connect/index",
+			"style": {
+				"navigationBarTitleText": "直播对接",
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"tabBar": {

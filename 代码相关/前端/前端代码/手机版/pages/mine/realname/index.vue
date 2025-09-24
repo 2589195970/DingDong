@@ -130,9 +130,11 @@
 </template>
 
 <script>
-import { addNameAudit, updateNameAudit, selectNameAudit } from "@/api/system/user"
+import {addNameAudit, updateNameAudit, selectNameAudit} from "@/api/system/user"
 import upload from '@/utils/upload'
 import appNavbar from '@/components/app-navbar/app-navbar.vue'
+import {getUserProfile} from "@/api/system/user"
+import constant from "@/utils/constant"
 
 export default {
   name: 'RealNameAuth',
@@ -165,17 +167,17 @@ export default {
       // 实名认证状态信息
       realNameStatus: 0,
       statusTipConfig: {
-        0: {
+        [constant.REAL_NAME_STATUS.UNVERIFIED]: {
           icon: 'icon-warning',
           title: '还未进行实名认证',
           desc: '请填写真实信息并上传身份证照片完成认证'
         },
-        1: {
+        [constant.REAL_NAME_STATUS.VERIFYING]: {
           icon: 'icon-time',
           title: '实名认证审核中',
           desc: '您的认证信息正在审核中，请耐心等待'
         },
-        3: {
+        [constant.REAL_NAME_STATUS.FAILED]: {
           icon: 'icon-close-circle',
           title: '实名认证失败',
           desc: '认证信息审核未通过，请重新提交正确信息'
@@ -185,14 +187,15 @@ export default {
   },
 
   computed: {
-    // 从 Vuex 获取实名认证信息
-    realNameInfo() {
-      return this.$store.state.user.realNameInfo || {}
+    // 从 Vuex 获取代理商信息
+    agentAccount() {
+      console.log(this.$store.state.user.agentAccount )
+      return this.$store.state.user.agentAccount || {}
     },
 
     // 是否显示状态提示
     showStatusTip() {
-      return this.realNameStatus !== 2 && this.statusTipConfig[this.realNameStatus]
+      return this.realNameStatus !== constant.REAL_NAME_STATUS.VERIFIED && this.statusTipConfig[this.realNameStatus]
     },
 
     // 状态提示图标
@@ -241,14 +244,31 @@ export default {
   },
 
   methods: {
+    async getUser() {
+      try {
+        const response = await getUserProfile()
+        this.user = response.data
+        this.roleGroup = response.roleGroup
+        this.postGroup = response.postGroup
+
+        // 更新 Vuex 中的代理商信息
+        if (response.agentAccount) {
+          this.$store.commit('SET_AGENT_ACCOUNT', response.agentAccount)
+        }
+      } catch (error) {
+        this.$modal.showToast('获取用户信息失败')
+        console.error('获取用户信息失败:', error)
+      }
+    },
     // 初始化页面
     async initPage() {
+      await this.getUser();
       try {
         // 获取当前实名认证状态
-        this.realNameStatus = this.realNameInfo.realNameStatus || 0
+        this.realNameStatus = this.agentAccount.realNameStatus || 0
 
         // 如果是重新认证（状态为3-认证失败），需要获取之前的认证信息
-        if (this.realNameStatus === 3) {
+        if (this.realNameStatus === constant.REAL_NAME_STATUS.FAILED) {
           this.isEdit = true
           await this.loadExistingData()
         }
@@ -375,11 +395,8 @@ export default {
           cardId: this.formData.cardId.trim(),
           cardIdUrlFront: this.formData.cardIdUrlFront,
           cardIdUrlBack: this.formData.cardIdUrlBack,
-          agentCode: userInfo.agentCode || userInfo.userName,
+          agentCode: this.agentAccount.agentCode,
           sysUserId: userInfo.userId || userInfo.id, // 用户ID
-          agentName: userInfo.nickName || userInfo.agentName || userInfo.userName, // 代理商名称
-          status: 0, // 待审核状态
-          remark: null // 备注字段
         }
 
         // 如果是编辑模式，需要添加nameAuditId
@@ -393,10 +410,10 @@ export default {
           : await addNameAudit(submitData)
 
         if (response.code === 200) {
-          // 更新 Vuex 中的实名认证状态
-          this.$store.commit('SET_REALNAME_INFO', {
-            ...this.realNameInfo,
-            realNameStatus: 1, // 设置为认证中状态
+          // 更新 Vuex 中的代理商信息状态
+          this.$store.commit('SET_AGENT_ACCOUNT', {
+            ...this.agentAccount,
+            realNameStatus: constant.REAL_NAME_STATUS.VERIFYING, // 设置为认证中状态（2）
             cardName: submitData.cardName,
             cardId: this.maskIdCard(submitData.cardId)
           })
