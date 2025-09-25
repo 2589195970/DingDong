@@ -33,6 +33,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -503,5 +504,78 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             }
     }
 
+    /**
+     * 查询产品分类数统计
+     *
+     * @return 产品分类统计Map
+     */
+    @Override
+    public Map<String, Object> getProductCategoryCount() throws BizException {
+        Map<String, Object> result = new HashMap<>();
+        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_CATEGORY_COUNT_API);
+        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
+        
+        if (StrUtil.isBlankIfStr(json)) {
+            // 查询各产品类型的产品数量
+            Map<String, Integer> productTypeCount = new HashMap<>();
+            
+            try {
+                // 日结秒返产品数量
+                int dailySettlementCount = baseMapper.selectCount(
+                    new LambdaQueryWrapper<Product>()
+                        .eq(Product::getProductType, ProductEnum.DAILY_SETTLEMENT.getStatus())
+                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+                ).intValue();
+                productTypeCount.put("dailySettlement", dailySettlementCount);
+                
+                // 月结产品数量
+                int monthlyStatementCount = baseMapper.selectCount(
+                    new LambdaQueryWrapper<Product>()
+                        .eq(Product::getProductType, ProductEnum.MONTHLY_STATEMENT.getStatus())
+                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+                ).intValue();
+                productTypeCount.put("monthlyStatement", monthlyStatementCount);
+                
+                // 长期产品数量
+                int longTimeCount = baseMapper.selectCount(
+                    new LambdaQueryWrapper<Product>()
+                        .eq(Product::getProductType, ProductEnum.LONG_TIME.getStatus())
+                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+                ).intValue();
+                productTypeCount.put("longTime", longTimeCount);
+                
+                // 其他产品数量
+                int otherCount = baseMapper.selectCount(
+                    new LambdaQueryWrapper<Product>()
+                        .eq(Product::getProductType, ProductEnum.OTHER.getStatus())
+                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+                ).intValue();
+                productTypeCount.put("other", otherCount);
+                
+                // 组合返佣产品数量
+                int combinationCount = baseMapper.selectCount(
+                    new LambdaQueryWrapper<Product>()
+                        .eq(Product::getProductType, ProductEnum.COMBINATION.getStatus())
+                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+                ).intValue();
+                productTypeCount.put("combination", combinationCount);
+                
+                // 计算总产品数量
+                int totalCount = dailySettlementCount + monthlyStatementCount + longTimeCount + otherCount + combinationCount;
+                
+                result.put("productTypeCount", productTypeCount);
+                result.put("totalCount", totalCount);
+                
+                // 缓存结果，10分钟过期
+                configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(result), 10, TimeUnit.MINUTES);
+            } catch (Exception e) {
+                throw new BizException(e.getMessage());
+            }
+        } else {
+            result = JSONObject.parseObject(json, Map.class);
+        }
+        
+        return result;
+    }
 
 }

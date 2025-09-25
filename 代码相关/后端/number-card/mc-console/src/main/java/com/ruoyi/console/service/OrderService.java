@@ -14,6 +14,7 @@ import com.ruoyi.common.order.vo.OrderSelectVO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -77,5 +78,25 @@ public interface OrderService extends IService<Order> {
       */
      String selectOrderBalance(String orderId) throws Exception;
 
+    /**
+     * 获取订单统计数据
+     *
+     * @return 订单统计数据Map
+     */
+    Map<String, Object> getOrderStatistics() throws BizException;
+
+    /**
+     * 获取今日代理订单排名
+     *
+     * @return 今日代理订单排名数据Map
+     */
+    Map<String, Object> getTodayAgentOrderRanking() throws BizException;
+
+    /**
+     * 获取订单趋势数据（30天）
+     *
+     * @return 订单趋势数据数组
+     */
+    List<Map<String, Object>> getOrderTrend() throws BizException;
 
 }

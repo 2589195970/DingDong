@@ -8,6 +8,7 @@ import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ruoyi.common.constant.BaseConstant;
@@ -41,7 +42,11 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -502,5 +507,359 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return "号码"+order.getAccNumber()+"当前余额为"+numberStatusLog.getMobileFee();
     }
 
+    /**
+     * 获取订单统计数据
+     *
+     * @return 订单统计数据Map
+     */
+    @Override
+    public Map<String, Object> getOrderStatistics() throws BizException {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 获取当前时间戳
+        long now = System.currentTimeMillis();
+        
+        // 今日开始和结束时间戳
+        long todayStart = getTodayStartTimestamp();
+        long todayEnd = getTodayEndTimestamp();
+        
+        // 昨日开始和结束时间戳
+        long yesterdayStart = todayStart - 24 * 60 * 60 * 1000L;
+        long yesterdayEnd = todayEnd - 24 * 60 * 60 * 1000L;
+        
+        // 本月开始和结束时间戳
+        long thisMonthStart = getMonthStartTimestamp(now);
+        long thisMonthEnd = getMonthEndTimestamp(now);
+        
+        // 上月开始和结束时间戳
+        long lastMonthStart = getLastMonthStartTimestamp(now);
+        long lastMonthEnd = getLastMonthEndTimestamp(now);
+        
+        // 本年度开始和结束时间戳
+        long thisYearStart = getYearStartTimestamp(now);
+        long thisYearEnd = getYearEndTimestamp(now);
+        
+        try {
+            // 今日统计
+            Map<String, Object> todayStats = getPeriodStatistics(todayStart, todayEnd);
+            result.put("today", todayStats);
+            
+            // 昨日统计
+            Map<String, Object> yesterdayStats = getPeriodStatistics(yesterdayStart, yesterdayEnd);
+            result.put("yesterday", yesterdayStats);
+            
+            // 本月统计
+            Map<String, Object> thisMonthStats = getPeriodStatistics(thisMonthStart, thisMonthEnd);
+            result.put("thisMonth", thisMonthStats);
+            
+            // 上月统计
+            Map<String, Object> lastMonthStats = getPeriodStatistics(lastMonthStart, lastMonthEnd);
+            result.put("lastMonth", lastMonthStats);
+            
+            // 本年度统计
+            Map<String, Object> thisYearStats = getPeriodStatistics(thisYearStart, thisYearEnd);
+            result.put("thisYear", thisYearStats);
+            
+        } catch (Exception e) {
+            log.error("获取订单统计数据异常: {}", e.getMessage(), e);
+            throw new BizException("获取订单统计数据失败: " + e.getMessage());
+        }
+        
+        return result;
+    }
+
+    /**
+     * 获取今日代理订单排名
+     *
+     * @return 今日代理订单排名数据Map
+     */
+    @Override
+    public Map<String, Object> getTodayAgentOrderRanking() throws BizException {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 获取今日开始和结束时间戳
+            long todayStart = getTodayStartTimestamp();
+            long todayEnd = getTodayEndTimestamp();
+            
+            // 查询今日所有订单，按downstream_name分组统计
+            // 使用QueryWrapper进行原生SQL查询
+            QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
+            queryWrapper.select(
+                "downstream_name as downstreamName",
+                "COUNT(*) as totalOrders", 
+                "SUM(CASE WHEN order_status = " + OrderEnum.ACTIVATED.getStatus() + " THEN 1 ELSE 0 END) as activatedOrders"
+            )
+            .ge("create_time", todayStart)
+            .le("create_time", todayEnd)
+            .isNotNull("downstream_name")
+            .ne("downstream_name", "")
+            .groupBy("downstream_name")
+            .orderByDesc("activatedOrders");
+            
+            List<Map<String, Object>> agentRankingList = baseMapper.selectMaps(queryWrapper);
+            
+            result.put("agentRankingList", agentRankingList);
+            result.put("totalAgents", agentRankingList.size());
+            
+        } catch (Exception e) {
+            log.error("获取今日代理订单排名异常: {}", e.getMessage(), e);
+            throw new BizException("获取今日代理订单排名失败: " + e.getMessage());
+        }
+        
+        return result;
+    }
+
+    /**
+     * 获取订单趋势数据（30天）
+     *
+     * @return 订单趋势数据数组
+     */
+    @Override
+    public List<Map<String, Object>> getOrderTrend() throws BizException {
+        
+        try {
+            // 获取30天前的时间戳
+            long thirtyDaysAgo = getThirtyDaysAgoTimestamp();
+            long todayEnd = getTodayEndTimestamp();
+            
+            // 查询30天内的订单数据，按日期分组统计
+            QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
+            queryWrapper.select(
+                "DATE(FROM_UNIXTIME(create_time/1000)) as orderDate",
+                "COUNT(*) as totalOrders",
+                "SUM(CASE WHEN order_status = " + OrderEnum.ACTIVATED.getStatus() + " THEN 1 ELSE 0 END) as activatedOrders",
+                "SUM(CASE WHEN order_status != " + OrderEnum.INVALID.getStatus() + " THEN 1 ELSE 0 END) as validOrders"
+            )
+            .ge("create_time", thirtyDaysAgo)
+            .le("create_time", todayEnd)
+            .groupBy("DATE(FROM_UNIXTIME(create_time/1000))")
+            .orderByAsc("orderDate");
+            
+            List<Map<String, Object>> trendData = baseMapper.selectMaps(queryWrapper);
+            
+            // 填充缺失的日期数据
+            List<Map<String, Object>> filledTrendData = fillMissingDates(trendData, thirtyDaysAgo, todayEnd);
+            
+            // 直接返回数组数据
+            return filledTrendData;
+            
+        } catch (Exception e) {
+            log.error("获取订单趋势数据异常: {}", e.getMessage(), e);
+            throw new BizException("获取订单趋势数据失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取30天前的时间戳
+     */
+    private long getThirtyDaysAgoTimestamp() {
+        LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
+        return thirtyDaysAgo.atStartOfDay().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+    
+    /**
+     * 填充缺失的日期数据
+     */
+    private List<Map<String, Object>> fillMissingDates(List<Map<String, Object>> trendData, long startTimestamp, long endTimestamp) {
+        List<Map<String, Object>> filledData = new ArrayList<>();
+        
+        // 创建日期到数据的映射
+        Map<String, Map<String, Object>> dataMap = new HashMap<>();
+        for (Map<String, Object> data : trendData) {
+            String orderDate = (String) data.get("orderDate");
+            dataMap.put(orderDate, data);
+        }
+        
+        // 生成30天的日期范围
+        LocalDate startDate = LocalDate.ofInstant(
+            java.time.Instant.ofEpochMilli(startTimestamp), 
+            java.time.ZoneId.systemDefault()
+        );
+        LocalDate endDate = LocalDate.ofInstant(
+            java.time.Instant.ofEpochMilli(endTimestamp), 
+            java.time.ZoneId.systemDefault()
+        );
+        
+        LocalDate currentDate = startDate;
+        while (!currentDate.isAfter(endDate)) {
+            String dateStr = currentDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            
+            Map<String, Object> dayData = dataMap.getOrDefault(dateStr, new HashMap<>());
+            dayData.put("orderDate", dateStr);
+            dayData.putIfAbsent("totalOrders", 0L);
+            dayData.putIfAbsent("activatedOrders", 0L);
+            dayData.putIfAbsent("validOrders", 0L);
+            
+            filledData.add(dayData);
+            currentDate = currentDate.plusDays(1);
+        }
+        
+        return filledData;
+    }
+    
+    /**
+     * 获取指定时间段的统计数据
+     */
+    private Map<String, Object> getPeriodStatistics(long startTimestamp, long endTimestamp) {
+        Map<String, Object> stats = new HashMap<>();
+        
+        try {
+            // 订单总数
+            Long totalOrders = baseMapper.selectCount(
+                new LambdaQueryWrapper<Order>()
+                    .ge(Order::getCreateTime, startTimestamp)
+                    .le(Order::getCreateTime, endTimestamp)
+            );
+            stats.put("totalOrders", totalOrders);
+            
+            // 激活订单数（订单状态为已激活）
+            Long activatedOrders = baseMapper.selectCount(
+                new LambdaQueryWrapper<Order>()
+                    .ge(Order::getCreateTime, startTimestamp)
+                    .le(Order::getCreateTime, endTimestamp)
+                    .eq(Order::getOrderStatus, OrderEnum.ACTIVATED.getStatus())
+            );
+            stats.put("activatedOrders", activatedOrders);
+            
+            // 佣金相关统计（根据订单佣金状态统计）
+            // 已结算订单数
+            Long settledOrders = baseMapper.selectCount(
+                new LambdaQueryWrapper<Order>()
+                    .ge(Order::getCreateTime, startTimestamp)
+                    .le(Order::getCreateTime, endTimestamp)
+                    .eq(Order::getOrderStatus, OrderEnum.ACTIVATED.getStatus())
+                    .eq(Order::getOrderCommissionStatus, OrderEnum.OrderCommissionEnum.TYPE_3.getCommissionType())
+            );
+            stats.put("settledOrders", settledOrders);
+            
+            // 待结算订单数
+            Long pendingSettlementOrders = baseMapper.selectCount(
+                new LambdaQueryWrapper<Order>()
+                    .ge(Order::getCreateTime, startTimestamp)
+                    .le(Order::getCreateTime, endTimestamp)
+                    .eq(Order::getOrderStatus, OrderEnum.ACTIVATED.getStatus())
+                    .eq(Order::getOrderCommissionStatus, OrderEnum.OrderCommissionEnum.TYPE_1.getCommissionType())
+            );
+            stats.put("pendingSettlementOrders", pendingSettlementOrders);
+            
+            // 代理数（去重统计下游代理商数量）
+            // 使用downstreamCode字段进行统计
+            List<Order> distinctDownstreamOrders = baseMapper.selectList(
+                new LambdaQueryWrapper<Order>()
+                    .select(Order::getDownstreamCode)
+                    .ge(Order::getCreateTime, startTimestamp)
+                    .le(Order::getCreateTime, endTimestamp)
+                    .isNotNull(Order::getDownstreamCode)
+                    .groupBy(Order::getDownstreamCode)
+            );
+            stats.put("agentCount", distinctDownstreamOrders.size());
+            
+        } catch (Exception e) {
+            log.error("获取时间段统计数据异常: startTimestamp={}, endTimestamp={}, error={}", 
+                startTimestamp, endTimestamp, e.getMessage(), e);
+            // 返回默认值
+            stats.put("totalOrders", 0L);
+            stats.put("activatedOrders", 0L);
+            stats.put("settledOrders", 0L);
+            stats.put("pendingSettlementOrders", 0L);
+            stats.put("agentCount", 0);
+        }
+        
+        return stats;
+    }
+    
+    /**
+     * 获取今日开始时间戳（00:00:00）
+     */
+    private long getTodayStartTimestamp() {
+        LocalDate today = LocalDate.now();
+        return today.atStartOfDay().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+    
+    /**
+     * 获取今日结束时间戳（23:59:59.999）
+     */
+    private long getTodayEndTimestamp() {
+        LocalDate today = LocalDate.now();
+        return today.atTime(23, 59, 59, 999_000_000).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+    
+    /**
+     * 获取指定时间戳所在月份的开始时间戳
+     */
+    private long getMonthStartTimestamp(long timestamp) {
+        LocalDateTime dateTime = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(timestamp), 
+            java.time.ZoneId.systemDefault()
+        );
+        return dateTime.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0)
+            .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+    
+    /**
+     * 获取指定时间戳所在月份的结束时间戳
+     */
+    private long getMonthEndTimestamp(long timestamp) {
+        LocalDateTime dateTime = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(timestamp), 
+            java.time.ZoneId.systemDefault()
+        );
+        return dateTime.withDayOfMonth(dateTime.toLocalDate().lengthOfMonth())
+            .withHour(23).withMinute(59).withSecond(59).withNano(999_000_000)
+            .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+    
+    /**
+     * 获取指定时间戳所在月份的上个月开始时间戳
+     */
+    private long getLastMonthStartTimestamp(long timestamp) {
+        LocalDateTime dateTime = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(timestamp), 
+            java.time.ZoneId.systemDefault()
+        );
+        LocalDateTime lastMonth = dateTime.minusMonths(1);
+        return lastMonth.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0)
+            .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+    
+    /**
+     * 获取指定时间戳所在月份的上个月结束时间戳
+     */
+    private long getLastMonthEndTimestamp(long timestamp) {
+        LocalDateTime dateTime = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(timestamp), 
+            java.time.ZoneId.systemDefault()
+        );
+        LocalDateTime lastMonth = dateTime.minusMonths(1);
+        return lastMonth.withDayOfMonth(lastMonth.toLocalDate().lengthOfMonth())
+            .withHour(23).withMinute(59).withSecond(59).withNano(999_000_000)
+            .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+    
+    /**
+     * 获取指定时间戳所在年度的开始时间戳
+     */
+    private long getYearStartTimestamp(long timestamp) {
+        LocalDateTime dateTime = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(timestamp), 
+            java.time.ZoneId.systemDefault()
+        );
+        return dateTime.withDayOfYear(1).withHour(0).withMinute(0).withSecond(0).withNano(0)
+            .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+    
+    /**
+     * 获取指定时间戳所在年度的结束时间戳
+     */
+    private long getYearEndTimestamp(long timestamp) {
+        LocalDateTime dateTime = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(timestamp), 
+            java.time.ZoneId.systemDefault()
+        );
+        return dateTime.withDayOfYear(dateTime.toLocalDate().lengthOfYear())
+            .withHour(23).withMinute(59).withSecond(59).withNano(999_000_000)
+            .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
 
 }

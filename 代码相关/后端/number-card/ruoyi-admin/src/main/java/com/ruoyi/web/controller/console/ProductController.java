@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Map;
 
 import static com.ruoyi.common.utils.SecurityUtils.getLoginUser;
 
@@ -223,5 +224,23 @@ public class ProductController {
             return ResponseEntity.error("出错了,请稍候重试:"+e.getMessage(), null);
         }
     }*/
+
+    /**
+     * 查询产品分类数统计
+     * @return
+     */
+    @GetMapping("/getProductCategoryCount")
+    @ApiOperation("查询产品分类数统计")
+    public ResponseEntity<Map<String, Object>> getProductCategoryCount() {
+        try {
+            return ResponseEntity.success(productService.getProductCategoryCount());
+        } catch (BizException e) {
+            log.info("{} getProductCategoryCount方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{} getProductCategoryCount方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error("查询产品分类数出错,请稍候重试",null);
+        }
+    }
 
 }
