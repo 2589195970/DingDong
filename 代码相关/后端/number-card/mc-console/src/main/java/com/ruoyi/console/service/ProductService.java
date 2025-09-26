@@ -12,6 +12,8 @@ import com.ruoyi.common.order.bo.ProductUpdateStatusBO;
 import com.ruoyi.common.order.entity.Product;
 import com.ruoyi.common.order.vo.ProductSelectVO;
 
+import java.util.Map;
+
 
 /**
  * @Description
@@ -102,5 +104,12 @@ public interface ProductService extends IService<Product> {
 
 
      void refreshProductCommission(LoginUser loginUser) throws InterruptedException;
+
+     /**
+      * 查询产品分类数统计
+      *
+      * @return 产品分类统计Map
+      */
+     Map<String, Object> getProductCategoryCount() throws BizException;
 
 }

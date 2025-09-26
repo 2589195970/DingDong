@@ -113,4 +113,9 @@ public class CacheKeyConstants {
      * 号码发送短信次数
      */
     public static final String SEND_SMS_NUMBER = "SEND_SMS_NUMBER";
+
+    /**
+     * 产品分类统计缓存
+     */
+    public static final String PRODUCT_CATEGORY_COUNT_API = "PRODUCT_CATEGORY_COUNT_API";
 }

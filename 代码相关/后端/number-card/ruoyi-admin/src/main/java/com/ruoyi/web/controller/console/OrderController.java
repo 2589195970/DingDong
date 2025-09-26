@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/order")
@@ -163,5 +165,61 @@ public class OrderController {
         }
     }
 
+    /**
+     * 获取订单统计数据
+     *
+     * @return
+     */
+    @GetMapping("/getOrderStatistics")
+    @ApiOperation("获取订单统计数据")
+    public ResponseEntity<Map<String, Object>> getOrderStatistics() {
+        try {
+            return ResponseEntity.success(orderService.getOrderStatistics());
+        } catch (BizException e) {
+            log.info("{} getOrderStatistics方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{} getOrderStatistics方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error("获取订单统计数据出错,请稍候重试",null);
+        }
+    }
+
+    /**
+     * 获取今日代理订单排名
+     *
+     * @return
+     */
+    @GetMapping("/getTodayAgentOrderRanking")
+    @ApiOperation("获取今日代理订单排名")
+    public ResponseEntity<Map<String, Object>> getTodayAgentOrderRanking() {
+        try {
+            return ResponseEntity.success(orderService.getTodayAgentOrderRanking());
+        } catch (BizException e) {
+            log.info("{} getTodayAgentOrderRanking方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{} getTodayAgentOrderRanking方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error("获取今日代理订单排名出错,请稍候重试",null);
+        }
+    }
+
+    /**
+     * 获取订单趋势数据（30天）
+     *
+     * @return
+     */
+    @GetMapping("/getOrderTrend")
+    @ApiOperation("获取订单趋势数据（30天）")
+    public ResponseEntity<List<Map<String, Object>>> getOrderTrend() {
+        try {
+            return ResponseEntity.success(orderService.getOrderTrend());
+        } catch (BizException e) {
+            log.info("{} getOrderTrend方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{} getOrderTrend方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error("获取订单趋势数据出错,请稍候重试",null);
+        }
+    }
 
 }
