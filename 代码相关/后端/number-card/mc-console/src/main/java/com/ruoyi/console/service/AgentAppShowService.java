@@ -2,9 +2,14 @@ package com.ruoyi.console.service;
 
 
 import com.ruoyi.common.core.domain.model.LoginUser;
+import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.exception.BizException;
+import com.ruoyi.common.order.bo.AgentAccountSelectBO;
+import com.ruoyi.common.order.bo.AgentTeamQueryBO;
+import com.ruoyi.common.order.vo.AgentAccountListVO;
 import com.ruoyi.common.order.vo.AgentActivateOrderAPPStatisticsVO;
 import com.ruoyi.common.order.vo.AgentOrderAPPStatisticsVO;
+import com.ruoyi.common.order.vo.AgentTeamListVO;
 import com.ruoyi.common.order.vo.AgentWithdrawalAPPStatisticsVO;
 
 /**
@@ -40,4 +45,23 @@ public interface AgentAppShowService {
      * @throws BizException
      */
     AgentWithdrawalAPPStatisticsVO selectWithdrawalAPPStatistics(LoginUser loginUser) throws BizException;
+
+    /**
+     * 代理商列表查询
+     *
+     * @return
+     * @throws BizException
+     */
+    PageResult<AgentAccountListVO> selectAgentAccountListPage(AgentAccountSelectBO agentAccountSelectBO) throws BizException;
+
+    /**
+     * 获取我的直接团队列表（包含团队统计）
+     *
+     * @param queryBO 查询参数
+     * @param loginUser 当前登录用户
+     * @return 团队列表
+     * @throws BizException 业务异常
+     */
+    PageResult<AgentTeamListVO> getMyDirectTeamList(AgentTeamQueryBO queryBO, LoginUser loginUser) throws BizException;
+
 }

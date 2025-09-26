@@ -166,7 +166,7 @@ export default {
       if (this.registerForm.phone) {
         if (this.countdown == "获取验证码") {
           sendSms(this.encryptAndEncode({
-            phoneNumber: this.loginForm.username,
+            phoneNumber: this.registerForm.phone,
             smsTemplateType: 0,
           })).then((res) => {
             this.$message({

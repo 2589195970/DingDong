@@ -2,91 +2,69 @@
   <view class="page-container">
     <app-navbar title="我的代理"></app-navbar>
 
-    <!-- 统计概览 -->
-    <view class="stats-section">
-      <view class="stats-grid">
-        <view class="stats-item">
-          <text class="stats-value">{{ agentStats.totalCount }}</text>
-          <text class="stats-label">总代理数</text>
-        </view>
-        <view class="stats-item">
-          <text class="stats-value active">{{ agentStats.activeCount }}</text>
-          <text class="stats-label">活跃代理</text>
-        </view>
-        <view class="stats-item">
-          <text class="stats-value verified">{{ agentStats.verifiedCount }}</text>
-          <text class="stats-label">已实名</text>
-        </view>
-        <view class="stats-item">
-          <text class="stats-value commission">¥{{ agentStats.totalCommission }}</text>
-          <text class="stats-label">总佣金</text>
-        </view>
-      </view>
-    </view>
 
     <!-- 筛选工具栏 -->
     <view class="filter-section">
-      <view class="filter-bar">
-        <u-subsection
-          :list="statusList"
-          v-model="queryParams.isEnabled"
-          @change="handleStatusChange"
-          :activeColor="'#f09b7f'"
-        ></u-subsection>
-
-        <u-icon
-          name="search"
-          @click="showSearch = !showSearch"
-          :color="showSearch ? '#f09b7f' : '#c0c4cc'"
-          size="20"
-        ></u-icon>
+      <!-- 搜索框 -->
+      <view class="search-bar">
+        <u-search
+            v-model="searchKeyword"
+            placeholder="搜索代理商名称或手机号"
+            @search="handleSearch"
+            @clear="handleClear"
+            :show-action="false"
+            bg-color="#f5f5f5"
+        ></u-search>
       </view>
 
-      <!-- 搜索框 -->
-      <view v-if="showSearch" class="search-bar">
-        <u-search
-          v-model="searchKeyword"
-          placeholder="搜索代理商名称或手机号"
-          @search="handleSearch"
-          @clear="handleClear"
-          :show-action="false"
-          bg-color="#f5f5f5"
-        ></u-search>
+      <!-- 筛选条件 -->
+      <view class="filter-bar">
+        <view class="status-tabs">
+          <view
+            v-for="(item, index) in statusList"
+            :key="index"
+            class="status-tab"
+            :class="{ active: activeStatusIndex === index }"
+            @click="handleStatusChange(index)"
+          >
+            {{ item.name }}
+          </view>
+        </view>
       </view>
     </view>
 
     <!-- 代理列表 -->
     <view class="agent-list-section">
       <scroll-view
-        scroll-y
-        class="scroll-view"
-        :refresher-enabled="true"
-        :refresher-triggered="isRefreshing"
-        @refresherrefresh="onRefresh"
-        @scrolltolower="onLoadMore"
+          scroll-y
+          class="scroll-view"
+          :refresher-enabled="true"
+          :refresher-triggered="isRefreshing"
+          @refresherrefresh="onRefresh"
+          @scrolltolower="onLoadMore"
       >
         <view v-if="agentList.length > 0" class="agent-list">
           <view
-            v-for="agent in agentList"
-            :key="agent.agentAccountId"
-            class="agent-item"
-            @click="showAgentDetail(agent)"
+              v-for="agent in agentList"
+              :key="agent.agentAccountId"
+              class="agent-item"
+              @click="showAgentDetail(agent)"
           >
             <!-- 代理基本信息 -->
             <view class="agent-header">
               <view class="agent-avatar">
                 <u-avatar
-                  :text="agent.agentName ? agent.agentName.charAt(0) : 'A'"
-                  bg-color="#f09b7f"
-                  color="#fff"
-                  size="40"
+                    :text="agent.agentName ? agent.agentName.charAt(0) : 'A'"
+                    bg-color="#f09b7f"
+                    color="#fff"
+                    size="40"
                 ></u-avatar>
                 <!-- 等级标识 -->
                 <view class="agent-level">
                   <u-tag
-                    :text="`L${agent.level}`"
-                    type="warning"
-                    size="mini"
+                      :text="`L${agent.level}`"
+                      type="warning"
+                      size="mini"
                   ></u-tag>
                 </view>
               </view>
@@ -97,16 +75,16 @@
                   <!-- 状态标识 -->
                   <view class="status-badges">
                     <u-tag
-                      :text="agent.isRealName ? '已实名' : '未实名'"
-                      :type="agent.isRealName ? 'success' : 'error'"
-                      size="mini"
-                      plain
+                        :text="agent.isRealName ? '已实名' : '未实名'"
+                        :type="agent.isRealName ? 'success' : 'error'"
+                        size="mini"
+                        plain
                     ></u-tag>
                     <u-tag
-                      :text="agent.isEnabled ? '正常' : '禁用'"
-                      :type="agent.isEnabled ? 'success' : 'info'"
-                      size="mini"
-                      plain
+                        :text="agent.isEnabled === 0 ? '启用' : '禁用'"
+                        :type="agent.isEnabled === 0 ? 'success' : 'info'"
+                        size="mini"
+                        plain
                     ></u-tag>
                   </view>
                 </view>
@@ -124,9 +102,9 @@
                     <text class="balance-label">余额:</text>
                     <text class="balance-value">¥{{ (agent.balance * 0.01).toFixed(2) }}</text>
                   </view>
-                  <view class="commission-info" v-if="agent.totalCommission">
-                    <text class="commission-label">累计佣金:</text>
-                    <text class="commission-value">¥{{ (agent.totalCommission * 0.01).toFixed(2) }}</text>
+                  <view class="team-info">
+                    <text class="team-label">团队:</text>
+                    <text class="team-value">{{ agent.teamMemberCount || 0 }}人</text>
                   </view>
                 </view>
               </view>
@@ -141,10 +119,10 @@
               <text class="register-time">注册时间: {{ formatTime(agent.createTime) }}</text>
               <view class="encrypt-status">
                 <u-tag
-                  :text="agent.isEncrypt ? '订单解密' : '订单加密'"
-                  :type="agent.isEncrypt ? 'warning' : 'success'"
-                  size="mini"
-                  plain
+                    :text="agent.isEncrypt ? '订单解密' : '订单加密'"
+                    :type="agent.isEncrypt ? 'warning' : 'success'"
+                    size="mini"
+                    plain
                 ></u-tag>
               </view>
             </view>
@@ -154,15 +132,15 @@
         <!-- 空状态 -->
         <view v-else-if="!isLoading" class="empty-state">
           <u-empty
-            text="暂无代理数据"
-            mode="data"
-            :show="true"
+              text="暂无代理数据"
+              mode="data"
+              :show="true"
           ></u-empty>
         </view>
 
         <!-- 加载更多提示 -->
         <view v-if="hasMore && agentList.length > 0" class="load-more">
-          <u-loadmore :status="loadStatus" />
+          <u-loadmore :status="loadStatus"/>
         </view>
       </scroll-view>
     </view>
@@ -208,6 +186,10 @@
               <text class="detail-label">累计佣金</text>
               <text class="detail-value commission">¥{{ (selectedAgent.totalCommission * 0.01).toFixed(2) }}</text>
             </view>
+            <view class="detail-row" v-if="selectedAgent.teamMemberCount">
+              <text class="detail-label">团队人数</text>
+              <text class="detail-value">{{ selectedAgent.teamMemberCount }}人</text>
+            </view>
             <view class="detail-row" v-if="selectedAgent.totalOrders">
               <text class="detail-label">总订单数</text>
               <text class="detail-value">{{ selectedAgent.totalOrders }}</text>
@@ -220,25 +202,25 @@
             <view class="detail-row">
               <text class="detail-label">账户状态</text>
               <u-tag
-                :text="selectedAgent.isEnabled ? '正常' : '禁用'"
-                :type="selectedAgent.isEnabled ? 'success' : 'error'"
-                size="mini"
+                  :text="selectedAgent.isEnabled === 0 ? '启用' : '禁用'"
+                  :type="selectedAgent.isEnabled === 0 ? 'success' : 'error'"
+                  size="mini"
               ></u-tag>
             </view>
             <view class="detail-row">
               <text class="detail-label">实名状态</text>
               <u-tag
-                :text="selectedAgent.isRealName ? '已实名' : '未实名'"
-                :type="selectedAgent.isRealName ? 'success' : 'warning'"
-                size="mini"
+                  :text="selectedAgent.isRealName ? '已实名' : '未实名'"
+                  :type="selectedAgent.isRealName ? 'success' : 'warning'"
+                  size="mini"
               ></u-tag>
             </view>
             <view class="detail-row">
               <text class="detail-label">订单加密</text>
               <u-tag
-                :text="selectedAgent.isEncrypt ? '解密' : '加密'"
-                :type="selectedAgent.isEncrypt ? 'warning' : 'success'"
-                size="mini"
+                  :text="selectedAgent.isEncrypt ? '解密' : '加密'"
+                  :type="selectedAgent.isEncrypt ? 'warning' : 'success'"
+                  size="mini"
               ></u-tag>
             </view>
             <view class="detail-row">
@@ -250,44 +232,28 @@
           <!-- 操作按钮 -->
           <view class="detail-actions">
             <u-button
-              type="primary"
-              size="small"
-              @click="viewCommissionDetail"
-              plain
-            >佣金明细</u-button>
+                type="primary"
+                size="small"
+                @click="viewCommissionDetail"
+                plain
+            >佣金明细
+            </u-button>
             <u-button
-              type="success"
-              size="small"
-              @click="contactAgent"
-              plain
-            >联系代理</u-button>
+                type="success"
+                size="small"
+                @click="contactAgent"
+                plain
+            >联系代理
+            </u-button>
           </view>
         </view>
       </view>
     </u-popup>
-
-    <!-- 悬浮操作按钮 -->
-    <view class="fab-container">
-      <u-icon
-        name="plus"
-        @click="showInviteActions"
-        color="#fff"
-        size="24"
-        :custom-style="fabStyle"
-      ></u-icon>
-    </view>
-
-    <!-- 邀请操作选择 -->
-    <u-action-sheet
-      :list="inviteActions"
-      v-model="showInviteSheet"
-      @click="handleInviteAction"
-    ></u-action-sheet>
   </view>
 </template>
 
 <script>
-import { selectChildAgentList, getAgentStats } from '@/api/mine/agent.js';
+import {selectChildAgentList} from '@/api/mine/agent.js';
 
 export default {
   name: 'MyAgents',
@@ -295,22 +261,25 @@ export default {
     return {
       // 查询参数
       queryParams: {
-        isEnabled: '',
+        searchKeyword: '',
         isRealName: '',
-        agentName: '',
+        isEnabled: '',
+        level: '',
         pageNo: 1,
         pageSize: 10
       },
 
+      // 当前状态索引
+      activeStatusIndex: 0,
+
       // 筛选条件
       statusList: [
-        { name: '全部' },
-        { name: '正常' },
-        { name: '禁用' }
+        {name: '全部'},
+        {name: '启用'},
+        {name: '禁用'}
       ],
 
       // 搜索
-      showSearch: false,
       searchKeyword: '',
 
       // 列表数据
@@ -321,13 +290,6 @@ export default {
       loadStatus: 'loadmore',
       total: 0,
 
-      // 统计数据
-      agentStats: {
-        totalCount: 0,
-        activeCount: 0,
-        verifiedCount: 0,
-        totalCommission: '0.00'
-      },
 
       // 详情弹窗
       showDetailPopup: false,
@@ -370,7 +332,6 @@ export default {
 
   onLoad() {
     this.loadAgentList();
-    this.loadAgentStats();
   },
 
   methods: {
@@ -386,7 +347,7 @@ export default {
 
       try {
         const response = await selectChildAgentList(this.queryParams);
-        const agents = response.data || [];
+        const agents = response.data?.list || [];
 
         if (refresh) {
           this.agentList = agents;
@@ -394,7 +355,7 @@ export default {
           this.agentList.push(...agents);
         }
 
-        this.total = agents.length;
+        this.total = response.data?.total || 0;
         this.hasMore = agents.length >= this.queryParams.pageSize;
 
       } catch (error) {
@@ -407,21 +368,11 @@ export default {
       }
     },
 
-    // 加载统计数据
-    async loadAgentStats() {
-      try {
-        const response = await getAgentStats();
-        this.agentStats = { ...this.agentStats, ...response.data };
-      } catch (error) {
-        console.error('加载统计数据失败:', error);
-      }
-    },
 
     // 下拉刷新
     onRefresh() {
       this.isRefreshing = true;
       this.loadAgentList(true);
-      this.loadAgentStats();
     },
 
     // 上拉加载更多
@@ -434,24 +385,29 @@ export default {
 
     // 状态筛选
     handleStatusChange(index) {
+      console.log('状态切换:', index);
+      this.activeStatusIndex = index;
       if (index === 0) {
-        this.queryParams.isEnabled = '';
+        this.queryParams.isEnabled = '';  // 全部
+      } else if (index === 1) {
+        this.queryParams.isEnabled = 0;   // 0-启用
       } else {
-        this.queryParams.isEnabled = index === 1 ? 0 : 1;
+        this.queryParams.isEnabled = 1;   // 1-禁用
       }
+      console.log('查询参数:', this.queryParams.isEnabled);
       this.loadAgentList(true);
     },
 
     // 搜索
     handleSearch() {
-      this.queryParams.agentName = this.searchKeyword;
+      this.queryParams.searchKeyword = this.searchKeyword;
       this.loadAgentList(true);
     },
 
     // 清除搜索
     handleClear() {
       this.searchKeyword = '';
-      this.queryParams.agentName = '';
+      this.queryParams.searchKeyword = '';
       this.loadAgentList(true);
     },
 
@@ -544,62 +500,53 @@ export default {
   min-height: 100vh;
 }
 
-.stats-section {
-  background: white;
-  padding: 20px 15px;
-  margin-bottom: 10px;
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-
-    .stats-item {
-      text-align: center;
-
-      .stats-value {
-        display: block;
-        font-size: 18px;
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 5px;
-
-        &.active {
-          color: #4cd964;
-        }
-
-        &.verified {
-          color: #007aff;
-        }
-
-        &.commission {
-          color: #ff9500;
-        }
-      }
-
-      .stats-label {
-        display: block;
-        font-size: 12px;
-        color: #666;
-      }
-    }
-  }
-}
 
 .filter-section {
   background: white;
   padding: 15px;
   margin-bottom: 10px;
 
-  .filter-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+  .search-bar {
+    margin-bottom: 15px;
   }
 
-  .search-bar {
-    margin-top: 10px;
+  .filter-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .status-tabs {
+      display: flex;
+      background-color: #f5f5f5;
+      border-radius: 6px;
+      padding: 2px;
+
+      .status-tab {
+        flex: 1;
+        text-align: center;
+        padding: 8px 16px;
+        margin: 0 1px;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #666;
+        transition: all 0.3s;
+        cursor: pointer;
+
+        &.active {
+          background-color: #f09b7f;
+          color: #fff;
+          font-weight: 500;
+        }
+
+        &:first-child {
+          margin-left: 0;
+        }
+
+        &:last-child {
+          margin-right: 0;
+        }
+      }
+    }
   }
 }
 
@@ -608,7 +555,7 @@ export default {
   padding: 0 15px;
 
   .scroll-view {
-    height: calc(100vh - 300px);
+    height: calc(100vh - 200px);
   }
 }
 
@@ -618,7 +565,7 @@ export default {
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     .agent-header {
       display: flex;
@@ -677,8 +624,8 @@ export default {
           display: flex;
           justify-content: space-between;
 
-          .balance-info, .commission-info {
-            .balance-label, .commission-label {
+          .balance-info, .commission-info, .team-info {
+            .balance-label, .commission-label, .team-label {
               font-size: 12px;
               color: #666;
             }
@@ -694,6 +641,13 @@ export default {
               font-size: 14px;
               font-weight: bold;
               color: #ff9500;
+              margin-left: 5px;
+            }
+
+            .team-value {
+              font-size: 14px;
+              font-weight: bold;
+              color: #007aff;
               margin-left: 5px;
             }
           }

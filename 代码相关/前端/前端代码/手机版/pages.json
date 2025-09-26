@@ -129,7 +129,7 @@
 			}
 		},
 		{
-			"path": "pages/Product/cpxiangqing",
+			"path": "pages/Product/detail",
 			"style": {
 				"navigationBarTitleText": "商品详情",
 				"navigationStyle": "custom"
@@ -198,16 +198,16 @@
 			}
 		},
 		{
-			"path": "pages/mine/invite/index",
+			"path": "pages/mine/live-connect/index",
 			"style": {
-				"navigationBarTitleText": "推广邀请",
+				"navigationBarTitleText": "直播对接",
 				"navigationStyle": "custom"
 			}
 		},
 		{
-			"path": "pages/mine/live-connect/index",
+			"path": "pages/mine/visual-data/index",
 			"style": {
-				"navigationBarTitleText": "直播对接",
+				"navigationBarTitleText": "可视化数据",
 				"navigationStyle": "custom"
 			}
 		}

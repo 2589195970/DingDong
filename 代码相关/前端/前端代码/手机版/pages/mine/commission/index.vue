@@ -8,13 +8,14 @@
 					<view class="item-left">佣金模式</view>
 					<view class="item-right radio-group">
 						<u-radio-group v-model="queryParams.commissionConfigType" placement="row">
-							<u-radio
-								v-for="(item, index) in radiolist1"
-								:key="index"
-								:label="item.name"
-								:name="item.id"
-								@change="radioChange(item)">
-							</u-radio>
+              <u-radio
+                  style="margin-left: 15px"
+                  v-for="(item, index) in radiolist1"
+                  :key="index"
+                  :label="item.name"
+                  :name="item.id"
+                  @change="radioChange(item)">
+              </u-radio>
 						</u-radio-group>
 					</view>
 				</view>
@@ -23,13 +24,12 @@
 				<view class="info-item" v-if="queryParams.commissionConfigType == 0">
 					<view class="item-left">固定佣金</view>
 					<view class="item-right">
-						<u--input
+						<input
+							type="number"
 							placeholder="请输入固定佣金金额"
-							border="surround"
-							shape="circle"
 							v-model="queryParams.fixedCommission"
-							class="form-input">
-						</u--input>
+							class="form-input" />
+						<text class="unit-text">元</text>
 					</view>
 				</view>
 
@@ -37,26 +37,21 @@
 				<view class="info-item" v-if="queryParams.commissionConfigType == 1">
 					<view class="item-left">百分比佣金</view>
 					<view class="item-right">
-						<u--input
+						<input
+							type="number"
 							placeholder="请输入佣金百分比"
-							border="surround"
-							shape="circle"
 							v-model="queryParams.scaleCommission"
-							class="form-input">
-						</u--input>
+							class="form-input" />
+						<text class="unit-text">%</text>
 					</view>
 				</view>
 			</view>
 
 			<!-- 提交按钮 -->
 			<view class="submit-section">
-				<u-button
-					type="primary"
-					shape="circle"
-					text="保存设置"
-					@click="submitForm(queryParams)"
-					:customStyle="submitButtonStyle">
-				</u-button>
+				<view class="submit-button" @click="submitForm(queryParams)">
+					<text class="submit-text">保存设置</text>
+				</view>
 			</view>
 		</view>
 	</view>
@@ -69,7 +64,10 @@
 
 		agentUpdateCommissionConfig,
 	} from "@/api/product/product.js";
+  import URadioGroup from "../../../uview-ui/components/u-radio-group/u-radio-group.vue";
+  import URadio from "../../../uview-ui/components/u-radio/u-radio.vue";
 	export default {
+    components: {URadio, URadioGroup},
 		data() {
 			return {
 				// 基本案列数据
@@ -90,11 +88,6 @@
 				queryParams: {
 					commissionConfigType: 1,
 				},
-				// 提交按钮样式
-				submitButtonStyle: {
-					backgroundColor: '#f09b7f',
-					borderColor: '#f09b7f',
-				}
 			};
 		},
 		async created() {
@@ -156,7 +149,7 @@ page {
     font-size: 32rpx;
     color: #333;
     flex-shrink: 0;
-    width: 140rpx;
+    width: 180rpx;
   }
 
   .item-right {
@@ -166,15 +159,16 @@ page {
     justify-content: flex-end;
 
     &.radio-group {
-      justify-content: center;
+      justify-content: flex-end;
 
       >>> .u-radio-group {
-        justify-content: center;
-        gap: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
       }
 
       >>> .u-radio {
-        margin-right: 32rpx !important;
+        margin-right: 40rpx !important;
 
         &:last-child {
           margin-right: 0 !important;
@@ -196,27 +190,58 @@ page {
 // 表单输入框
 .form-input {
   flex: 1;
-  max-width: 400rpx;
+  max-width: 200rpx;
+  height: 80rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  color: #333;
+  background-color: #f8f9fa;
+  border: 1rpx solid #eaeef1;
+  border-radius: 8rpx;
+  text-align: right;
 
-  >>> .u-input {
-    background-color: #f8f9fa;
-    border: 1rpx solid #eaeef1;
-
-    &:focus {
-      border-color: #f09b7f;
-    }
+  &:focus {
+    border-color: #f09b7f;
+    background-color: #fff;
   }
+
+  &::placeholder {
+    color: #c0c0c0;
+    font-size: 28rpx;
+  }
+}
+
+// 单位文本
+.unit-text {
+  font-size: 28rpx;
+  color: #606266;
+  margin-left: 16rpx;
+  flex-shrink: 0;
 }
 
 // 提交按钮区域
 .submit-section {
   margin-top: 40rpx;
   padding: 0 20rpx;
+}
 
-  >>> .u-button {
-    height: 88rpx;
-    font-size: 32rpx;
-    font-weight: 500;
+// 提交按钮
+.submit-button {
+  height: 88rpx;
+  background-color: #f09b7f;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:active {
+    background-color: #d87d63;
   }
+}
+
+.submit-text {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #fff;
 }
 </style>

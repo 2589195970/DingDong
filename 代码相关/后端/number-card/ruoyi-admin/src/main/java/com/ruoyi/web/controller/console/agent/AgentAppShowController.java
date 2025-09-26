@@ -1,7 +1,12 @@
 package com.ruoyi.web.controller.console.agent;
 
+import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.core.page.ResponseEntity;
 import com.ruoyi.common.exception.BizException;
+import com.ruoyi.common.order.bo.AgentAccountSelectBO;
+import com.ruoyi.common.order.bo.AgentTeamQueryBO;
+import com.ruoyi.common.order.vo.AgentAccountListVO;
+import com.ruoyi.common.order.vo.AgentTeamListVO;
 import com.ruoyi.common.order.vo.AgentActivateOrderAPPStatisticsVO;
 import com.ruoyi.common.order.vo.AgentOrderAPPStatisticsVO;
 import com.ruoyi.common.order.vo.AgentWithdrawalAPPStatisticsVO;
@@ -85,4 +90,44 @@ public class AgentAppShowController {
             return ResponseEntity.error("出错了,请稍候重试:{}", null);
         }
     }
+
+    /**
+     * 代理商列表查询
+     *
+     * @return 代理商列表分页结果
+     */
+    @PostMapping("/agentSelectOrderListPage")
+    @ApiOperation("代理商分页查询订单")
+    public ResponseEntity<PageResult<AgentAccountListVO>> selectAgentAccountListPage(@RequestBody AgentAccountSelectBO agentAccountSelectBO) {
+        try {
+            return ResponseEntity.success(agentAppShowService.selectAgentAccountListPage(agentAccountSelectBO));
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "agentSelectOrderListPage", e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "agentSelectOrderListPage", e.getMessage());
+            return ResponseEntity.error("出错了,请稍候重试:{}", null);
+        }
+    }
+
+    /**
+     * 获取我的直接团队列表
+     *
+     * @param queryBO 查询参数
+     * @return 团队列表分页结果
+     */
+    @PostMapping("/getMyDirectTeamList")
+    @ApiOperation("获取我的直接团队列表（包含团队统计）")
+    public ResponseEntity<PageResult<AgentTeamListVO>> getMyDirectTeamList(@RequestBody AgentTeamQueryBO queryBO) {
+        try {
+            return ResponseEntity.success(agentAppShowService.getMyDirectTeamList(queryBO, getLoginUser()));
+        } catch (BizException e) {
+            log.info("getMyDirectTeamList方法异常:{}", e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.error("getMyDirectTeamList方法异常:", e);
+            return ResponseEntity.error("出错了,请稍候重试", null);
+        }
+    }
+
 }

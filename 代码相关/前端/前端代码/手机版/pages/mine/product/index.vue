@@ -279,7 +279,7 @@
 			},
 			xianqing(data) {
 				uni.navigateTo({
-					url: `/pages/Product/cpxiangqing?key=${encodeURIComponent(JSON.stringify(data))}`
+					url: `/pages/Product/detail?key=${encodeURIComponent(JSON.stringify(data))}`
 				})
 			},
 			open() {

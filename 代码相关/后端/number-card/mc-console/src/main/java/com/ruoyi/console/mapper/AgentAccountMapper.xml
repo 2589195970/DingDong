@@ -68,4 +68,85 @@
         limit #{offset},#{pageSize}
     </select>
 
+    <select id="selectAgentAccountListOnCountChidAgentByPaentAgentCode" resultType="com.ruoyi.common.order.vo.AgentProductVO">
+
+    </select>
+
+    <!-- 查询直接下级代理商总数 -->
+    <select id="selectDirectSubAgentsCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM t_agent_account a1
+        WHERE a1.parent_agent_code = #{queryBO.parentAgentCode}
+          AND a1.sys_user_id != 1
+        <if test="queryBO.searchKeyword != null and queryBO.searchKeyword != ''">
+            AND (
+                CAST(a1.agent_account_id AS CHAR) LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.agent_code LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.agent_name LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.phone LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+            )
+        </if>
+        <if test="queryBO.isRealName != null">
+            AND a1.is_real_name = #{queryBO.isRealName}
+        </if>
+        <if test="queryBO.isEnabled != null">
+            AND a1.is_enabled = #{queryBO.isEnabled}
+        </if>
+        <if test="queryBO.level != null">
+            AND a1.level = #{queryBO.level}
+        </if>
+    </select>
+
+    <!-- 查询直接下级代理商列表 -->
+    <select id="selectDirectSubAgentsList" resultType="com.ruoyi.common.order.vo.AgentAccountListVO">
+        SELECT
+            a1.agent_account_id as agentAccountId,
+            a1.sys_user_id as sysUserId,
+            s.user_name as sysUserName,
+            a1.parent_agent_code as parentAgentCode,
+            a2.agent_name as parentAgentName,
+            a1.agent_code as agentCode,
+            a1.agent_name as agentName,
+            a1.level as level,
+            a1.is_real_name as isRealName,
+            a1.phone as phone,
+            a1.is_enabled as isEnabled,
+            a1.is_encrypt as isEncrypt,
+            a1.create_time as createTime,
+            r.balance as balance
+        FROM t_agent_account a1
+        LEFT JOIN t_agent_account a2 ON a1.parent_agent_code = a2.agent_code
+        LEFT JOIN sys_user s ON a1.sys_user_id = s.user_id
+        LEFT JOIN t_withdrawal_record r ON a1.agent_code = r.agent_code
+        WHERE a1.parent_agent_code = #{queryBO.parentAgentCode}
+          AND a1.sys_user_id != 1
+        <if test="queryBO.searchKeyword != null and queryBO.searchKeyword != ''">
+            AND (
+                CAST(a1.agent_account_id AS CHAR) LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.agent_code LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.agent_name LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.phone LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+            )
+        </if>
+        <if test="queryBO.isRealName != null">
+            AND a1.is_real_name = #{queryBO.isRealName}
+        </if>
+        <if test="queryBO.isEnabled != null">
+            AND a1.is_enabled = #{queryBO.isEnabled}
+        </if>
+        <if test="queryBO.level != null">
+            AND a1.level = #{queryBO.level}
+        </if>
+        ORDER BY a1.create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 统计某个代理商的团队成员数（直接下级数量） -->
+    <select id="countAgentTeamMembers" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM t_agent_account
+        WHERE parent_agent_code = #{parentAgentCode}
+          AND sys_user_id != 1
+    </select>
+
 </mapper>

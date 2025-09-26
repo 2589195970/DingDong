@@ -3,7 +3,7 @@ import request from "@/utils/request";
 // 查询下级代理列表
 export function selectChildAgentList(data) {
   return request({
-    url: "/agentManagement/selectChildAgentList",
+    url: "/agentAppShow/getMyDirectTeamList",
     method: "post",
     data: data,
   });

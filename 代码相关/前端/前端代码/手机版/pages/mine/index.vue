@@ -27,15 +27,15 @@
     </view>
     <view class="content-section">
 
-      <view class="mine-actions grid col-4 text-center" style="background-color: #FE9678; color: #fff;">
+      <view class="mine-actions grid col-4 text-center" style="background-color: #f09b7f; color: #fff;">
         <view style="display: flex; width: 60%;justify-content: space-around; border-right: 1px solid #FFF;">
           <view style="display: flex; flex-direction: column; align-items: center;" @click="product">
             <text>累计收益</text>
-            <text>{{productList.depositAmount *0.01}}元</text>
+            <text>{{ productList.depositAmount * 0.01 }}元</text>
           </view>
           <view style="display: flex; flex-direction: column; align-items: center;" @click="product">
             <text>可提现收益</text>
-            <text>{{productList.balance *0.01}}元</text>
+            <text>{{ productList.balance * 0.01 }}元</text>
           </view>
         </view>
         <view class="" @click="payouts">
@@ -44,6 +44,83 @@
 
       </view>
 
+    </view>
+
+    <!-- 数据统计组件 -->
+    <view class="content-section">
+      <view class="mine-actions" style="margin: 15px 15px; padding: 20px; border-radius: 8px; background-color: white;">
+        <view class="stats-header" style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+          <view class="shu2">
+            数据统计
+          </view>
+          <view class="shu1" @click="goToVisualData">
+            可视化数据
+            <u-icon name="arrow-right" color="#999" size="14"></u-icon>
+          </view>
+        </view>
+
+        <!-- 今日数据 -->
+        <view class="stats-section">
+          <view class="daili-kan"
+                style="display: flex; flex-wrap: nowrap; justify-content: space-around; margin-top: 15px;">
+            <view class="orderclass-dd">
+              <view class="dd-vla">{{ todayStats.invitations || 0 }}</view>
+              <view class="dd-oimg">
+                <view class="dd-lab">今日邀请</view>
+              </view>
+            </view>
+            <view class="orderclass-dd">
+              <view class="dd-vla">{{ todayStats.orders || 0 }}</view>
+              <view class="dd-oimg">
+                <view class="dd-lab">今日订单</view>
+              </view>
+            </view>
+            <view class="orderclass-dd">
+              <view class="dd-vla">{{ todayStats.activations || 0 }}</view>
+              <view class="dd-oimg">
+                <view class="dd-lab">今日激活</view>
+              </view>
+            </view>
+            <view class="orderclass-dd">
+              <view class="dd-vla">{{ (todayStats.commission || 0) * 0.01 }}元</view>
+              <view class="dd-oimg">
+                <view class="dd-lab">今日佣金</view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 本月数据 -->
+        <view class="stats-section" style="margin-top: 20px;">
+          <view class="daili-kan"
+                style="display: flex; flex-wrap: nowrap; justify-content: space-around; margin-top: 15px;">
+            <view class="orderclass-dd">
+              <view class="dd-vla">{{ monthStats.invitations || 0 }}</view>
+              <view class="dd-oimg">
+                <view class="dd-lab">本月邀请</view>
+              </view>
+            </view>
+            <view class="orderclass-dd">
+              <view class="dd-vla">{{ monthStats.orders || 0 }}</view>
+              <view class="dd-oimg">
+                <view class="dd-lab">本月订单</view>
+              </view>
+            </view>
+            <view class="orderclass-dd">
+              <view class="dd-vla">{{ monthStats.activations || 0 }}</view>
+              <view class="dd-oimg">
+                <view class="dd-lab">本月激活</view>
+              </view>
+            </view>
+            <view class="orderclass-dd">
+              <view class="dd-vla">{{ (monthStats.commission || 0) * 0.01 }}元</view>
+              <view class="dd-oimg">
+                <view class="dd-lab">本月佣金</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
     </view>
     <view class="content-section">
 
@@ -101,7 +178,7 @@
     </view>
     <u-modal :show="commissionopen" @confirm="confirm" ref="uModal" @cancel="cancel" :showCancelButton='true'
              confirmText="保存图片" :asyncClose="true">
-      <image :src="sc.shopQrcodeMap" alt="" style="height: 400px;" />
+      <image :src="sc.shopQrcodeMap" alt="" style="height: 400px;"/>
     </u-modal>
   </view>
 </template>
@@ -111,21 +188,37 @@ import {
   selectRevenue,
   getAgentExtendUrlVO
 } from "@/api/order/order.js";
+
 export default {
   data() {
     return {
-      commissionopen:false,
+      commissionopen: false,
       name: this.$store.state.user.name,
       version: getApp().globalData.config.appInfo.version,
       productList: {
-        depositAmount:0,
-        balance:0,
+        depositAmount: 0,
+        balance: 0,
       },
       sc: {},
+      // 今日统计数据
+      todayStats: {
+        invitations: 0,
+        orders: 0,
+        activations: 0,
+        commission: 0
+      },
+      // 本月统计数据
+      monthStats: {
+        invitations: 0,
+        orders: 0,
+        activations: 0,
+        commission: 0
+      },
     }
   },
   onLoad() {
     this.select(); //获取列表
+    this.getStatsData(); //获取统计数据
   },
   computed: {
     avatar() {
@@ -136,9 +229,9 @@ export default {
     }
   },
   methods: {
-    miansc(){
+    miansc() {
       // this.$tab.navigateTo(`/pages/common/webview/index?title=我的商城&url=`+ this.sc.shopUrl)
-      window.location.href=this.sc.shopUrl;
+      window.location.href = this.sc.shopUrl;
     },
     confirm() {
       // 图片地址（需允许跨域访问）
@@ -158,7 +251,7 @@ export default {
 
     },
 
-    haibao(){
+    haibao() {
       this.commissionopen = true;
     },
     cancel() {
@@ -176,6 +269,27 @@ export default {
           this.sc = res.data;
         }
       })
+    },
+    // 获取统计数据
+    getStatsData() {
+      // TODO: 这里需要调用实际的API接口获取统计数据
+      // 目前使用模拟数据
+      this.todayStats = {
+        invitations: 5,
+        orders: 12,
+        activations: 8,
+        commission: 15000 // 分为单位，显示时除以100
+      };
+      this.monthStats = {
+        invitations: 156,
+        orders: 380,
+        activations: 245,
+        commission: 450000 // 分为单位，显示时除以100
+      };
+    },
+    // 跳转到可视化数据页面
+    goToVisualData() {
+      this.$tab.navigateTo('/pages/mine/visual-data/index')
     },
     use() {
       this.$tab.navigateTo('/pages/home/use')
@@ -207,9 +321,6 @@ export default {
     },
     handleAbout() {
       this.$tab.navigateTo('/pages/mine/about/index')
-    },
-    invite() {
-      this.$tab.navigateTo('/pages/mine/invite/index')
     },
     myAgents() {
       this.$tab.navigateTo('/pages/mine/my-agents/index')
@@ -338,6 +449,92 @@ page {
           margin: 8px 0;
         }
       }
+    }
+
+    // 数据统计样式
+    .stats-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+
+      .shu1 {
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+        font-weight: 300;
+        color: #333;
+
+        u-icon {
+          margin-right: 15px;
+        }
+
+        &:last-child {
+          cursor: pointer;
+          font-size: 14px;
+        }
+      }
+
+      .shu2 {
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+        font-weight: 400;
+        color: #333;
+
+        u-icon {
+          margin-right: 15px;
+        }
+
+        &:last-child {
+          cursor: pointer;
+          font-size: 14px;
+        }
+      }
+
+    }
+
+    .stats-section {
+      .stats-title {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 10px;
+        font-weight: 500;
+      }
+    }
+
+    // 统计数据卡片样式 (参考首页样式)
+    .orderclass-dd {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+    }
+
+    .dd-vla {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .dd-oimg {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .imgsi-dd {
+        width: 24px;
+        height: 24px;
+        margin-bottom: 4px;
+      }
+    }
+
+    .dd-lab {
+      font-size: 12px;
+      color: #999;
+      text-align: center;
     }
   }
 }

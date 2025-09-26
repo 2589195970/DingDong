@@ -5,7 +5,7 @@
     <!-- 实名认证提示区域 -->
     <view v-if="!isRealNameVerified" class="container">
       <view class="info-card">
-        <view class="info-item">
+        <view class="info-item tip-item">
           <view class="item-left">
             <u-icon name="warning-fill" color="#f09b7f" size="40"></u-icon>
           </view>
@@ -413,23 +413,35 @@ page {
 .tip-content {
   flex: 1;
   text-align: left;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 
   .tip-title {
     font-size: 32rpx;
     font-weight: 500;
     color: #333333;
-    margin-bottom: 8rpx;
+    margin-bottom: 12rpx;
+    line-height: 1.4;
+    white-space: nowrap;
   }
 
   .tip-desc {
     font-size: 28rpx;
     color: #606266;
-    margin-bottom: 8rpx;
+    margin-bottom: 12rpx;
+    line-height: 1.5;
+    word-wrap: break-word;
+    white-space: normal;
+    max-width: 100%;
   }
 
   .tip-status {
     font-size: 24rpx;
     color: #909399;
+    line-height: 1.3;
+    white-space: nowrap;
   }
 }
 
@@ -483,6 +495,19 @@ page {
       &.text-secondary {
         color: #909399;
       }
+    }
+  }
+
+  // 实名认证提示项特殊样式
+  &.tip-item {
+    align-items: flex-start;
+    min-height: 120rpx;
+    padding: 30rpx;
+
+    .item-left {
+      margin-top: 10rpx;
+      width: auto;
+      margin-right: 20rpx;
     }
   }
 }

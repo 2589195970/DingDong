@@ -431,9 +431,7 @@ export default {
         if (res.data) {
           this.productList = res.data;
         }
-
       })
-
     },
     AgentOrderdata() {
       selectAgentOrderAPPStatistics(this.current).then(res => {
