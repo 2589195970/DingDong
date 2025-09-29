@@ -55,7 +55,7 @@ public class SmsController {
     public ResponseEntity sendSms(@RequestParam(required = false, value = "data") String data) {
         try {
             smsService.sendSms(JSONObject.parseObject(decryptedBase64(BaseConstant.AES_KEY,data),SmsDTO.class));
-            return ResponseEntity.success();
+            return ResponseEntity.success("发送成功");
         } catch (Exception e) {
             log.info("{}方法异常:{}", "sendSms", e.getMessage());
             return ResponseEntity.error("出错了,请稍候重试:"+e.getMessage(), null);

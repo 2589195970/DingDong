@@ -360,15 +360,57 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if(product==null){
             throw new BizException("产品不存在:{}",productUpdateStatusBO.getProductId());
         }
-        //更新产品状态
+        
+        // 更新产品状态
         product.setProductStatus(productUpdateStatusBO.getProductStatus());
         product.setUpdateTime(System.currentTimeMillis());
+        
+        // 如果是上架操作，设置上架时间
+        if(productUpdateStatusBO.getProductStatus() == 1) {
+            product.setShelfTime(System.currentTimeMillis());
+        }
+        
         baseMapper.updateById(product);
-        //更新所有代理产品状态
+        
+        // 只有下架操作才影响下游代理商
+        if(productUpdateStatusBO.getProductStatus() == 0) {
+            // 获取当前操作用户的代理商信息
+            AgentAccount currentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+            
+            // 递归下架所有下游代理商的产品
+            updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode());
+        }
+    }
+
+    /**
+     * 递归下架所有下游代理商的产品
+     * @param productCode 产品编码
+     * @param parentAgentCode 父代理商编码
+     * TODO: 确认是下游代理商的当前产品还是父级产品为当前产品的也受影响
+     */
+    private void updateDownstreamAgentProducts(String productCode, String parentAgentCode) {
+        // 更新当前层级的下游代理商产品状态为下架
         AgentProduct agentProduct = new AgentProduct();
-        agentProduct.setProductStatus(productUpdateStatusBO.getProductStatus());
+        agentProduct.setProductStatus(0); // 下架状态
         agentProduct.setUpdateTime(System.currentTimeMillis());
-        agentProductService.update(agentProduct,new LambdaQueryWrapper<AgentProduct>().eq(AgentProduct::getParentProductCode,product.getProductCode()));
+        
+        agentProductService.update(agentProduct, 
+            new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getParentProductCode, productCode)
+                .eq(AgentProduct::getParentAgentCode, parentAgentCode) // 当前层级的父代理商
+                .eq(AgentProduct::getProductStatus, 1) // 只更新当前上架的产品
+        );
+        
+        // 查询当前层级的下游代理商
+        List<AgentAccount> downstreamAgents = agentAccountService.list(
+            new LambdaQueryWrapper<AgentAccount>()
+                .eq(AgentAccount::getParentAgentCode, parentAgentCode)
+        );
+        
+        // 递归处理每个下游代理商的下游代理商
+        for (AgentAccount downstreamAgent : downstreamAgents) {
+            updateDownstreamAgentProducts(productCode, downstreamAgent.getAgentCode());
+        }
     }
 
 

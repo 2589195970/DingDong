@@ -28,6 +28,7 @@ import com.ruoyi.common.order.reuqest.ApiCommonNotifyRequest;
 import com.ruoyi.common.order.reuqest.OrderSubmitRequest;
 import com.ruoyi.common.order.vo.OrderSelectVO;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.console.mapper.AgentAccountMapper;
 import com.ruoyi.console.mapper.OrderLogMapper;
 import com.ruoyi.console.mapper.OrderMapper;
 import com.ruoyi.console.service.*;
@@ -87,6 +88,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Resource
     NumberStatusService numberStatusService;
+
+    @Resource
+    AgentAccountMapper agentAccountMapper;
 
     /**
      * 订单查询
@@ -595,7 +599,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             .isNotNull("downstream_name")
             .ne("downstream_name", "")
             .groupBy("downstream_name")
-            .orderByDesc("activatedOrders");
+            .orderByDesc("activatedOrders")
+            .last("LIMIT 10");  // 限制返回Top10
             
             List<Map<String, Object>> agentRankingList = baseMapper.selectMaps(queryWrapper);
             
@@ -743,17 +748,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             );
             stats.put("pendingSettlementOrders", pendingSettlementOrders);
             
-            // 代理数（去重统计下游代理商数量）
-            // 使用downstreamCode字段进行统计
-            List<Order> distinctDownstreamOrders = baseMapper.selectList(
-                new LambdaQueryWrapper<Order>()
-                    .select(Order::getDownstreamCode)
-                    .ge(Order::getCreateTime, startTimestamp)
-                    .le(Order::getCreateTime, endTimestamp)
-                    .isNotNull(Order::getDownstreamCode)
-                    .groupBy(Order::getDownstreamCode)
+            // 代理数（统计指定时间段内创建的代理账户数量）
+            // 从t_agent_account表中查询create_time在指定时间段内的代理账户数量
+            Long agentCount = agentAccountMapper.selectCount(
+                new LambdaQueryWrapper<AgentAccount>()
+                    .ge(AgentAccount::getCreateTime, startTimestamp)
+                    .le(AgentAccount::getCreateTime, endTimestamp)
             );
-            stats.put("agentCount", distinctDownstreamOrders.size());
+            stats.put("agentCount", agentCount);
             
         } catch (Exception e) {
             log.error("获取时间段统计数据异常: startTimestamp={}, endTimestamp={}, error={}", 

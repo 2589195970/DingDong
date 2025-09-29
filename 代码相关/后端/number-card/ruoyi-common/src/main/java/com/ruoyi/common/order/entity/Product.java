@@ -267,5 +267,11 @@ public class Product {
     @ApiModelProperty("余额配置")
     private Integer balanceConfig;
 
+    /**
+     * 产品上架时间
+     */
+    @ApiModelProperty("产品上架时间")
+    private Long shelfTime;
+
 
 }

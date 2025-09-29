@@ -6,6 +6,7 @@ import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.*;
 import com.ruoyi.common.order.entity.WithdrawalRecordDetails;
 import com.ruoyi.common.order.vo.AgentAccountListVO;
+import com.ruoyi.common.order.vo.AgentRankingVO;
 import com.ruoyi.console.service.AgentManagementService;
 import com.ruoyi.console.service.WithdrawalRecordDetailsService;
 import io.swagger.annotations.Api;
@@ -142,6 +143,25 @@ public class AgentManagementController {
     public ResponseEntity<PageResult<WithdrawalRecordDetails>> agentSelectOrderListPage(@RequestBody WithdrawalRecordDetailsSelectBO withdrawalRecordDetailsSelectBO) {
         try {
             return ResponseEntity.success(withdrawalRecordDetailsService.selectWithdrawalRecordDetailsListPage(withdrawalRecordDetailsSelectBO));
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error("出错了,请稍候重试:{}", null);
+        }
+    }
+
+    /**
+     * 代理商排名查询
+     *
+     * @return
+     */
+    @PostMapping("/selectAgentRankingPage")
+    @ApiOperation("代理商排名查询")
+    public ResponseEntity<PageResult<AgentRankingVO>> selectAgentRankingPage(@RequestBody AgentRankingSelectBO agentRankingSelectBO) {
+        try {
+            return ResponseEntity.success(agentManagementService.selectAgentRankingPage(agentRankingSelectBO));
         } catch (BizException e) {
             log.info("{}方法异常:{}", TAG, e.getMessage());
             return ResponseEntity.error(e.getMessage(), null);

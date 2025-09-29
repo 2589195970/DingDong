@@ -4,10 +4,12 @@ package com.ruoyi.console.service;
 import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.AgentAccountSelectBO;
+import com.ruoyi.common.order.bo.AgentRankingSelectBO;
 import com.ruoyi.common.order.bo.AgentUpdateBalanceBO;
 import com.ruoyi.common.order.bo.AgentUpdateEnabledBO;
 import com.ruoyi.common.order.bo.AgentUpdateEncryptBO;
 import com.ruoyi.common.order.vo.AgentAccountListVO;
+import com.ruoyi.common.order.vo.AgentRankingVO;
 
 /**
  * @Description
@@ -53,5 +55,12 @@ public interface AgentManagementService  {
      */
     void deleteAgentAccount(Integer agentAccountId) throws BizException;
 
+    /**
+     * 代理商排名查询
+     * @param agentRankingSelectBO 查询条件
+     * @return 代理商排名分页结果
+     * @throws BizException
+     */
+    PageResult<AgentRankingVO> selectAgentRankingPage(AgentRankingSelectBO agentRankingSelectBO) throws BizException;
 
 }
