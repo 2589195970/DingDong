@@ -677,14 +677,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         
         // 生成30天的日期范围
-        LocalDate startDate = LocalDate.ofInstant(
-            java.time.Instant.ofEpochMilli(startTimestamp), 
+        LocalDate startDate = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(startTimestamp),
             java.time.ZoneId.systemDefault()
-        );
-        LocalDate endDate = LocalDate.ofInstant(
-            java.time.Instant.ofEpochMilli(endTimestamp), 
+        ).toLocalDate();
+        LocalDate endDate = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(endTimestamp),
             java.time.ZoneId.systemDefault()
-        );
+        ).toLocalDate();
         
         LocalDate currentDate = startDate;
         while (!currentDate.isAfter(endDate)) {

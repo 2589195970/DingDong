@@ -61,6 +61,7 @@ new Vue({
       shareStoreopon: false,
       agentCode: '',
       ShopQrcodeMap: '',
+      visitorId: '', // 访客标识
 
     };
   },
@@ -70,6 +71,7 @@ new Vue({
 
   created() {
     this.agentCode= getQueryString('agentCode')
+    this.initializeVisitor();
     this.soplist();
   },
 
@@ -149,25 +151,105 @@ new Vue({
         this.productList = res.data;
       })
     },
-    Receive(data) {
-      window.location.href = data;
+
+    // ==================== 页面访问统计相关方法 ====================
+
+    /**
+     * 生成UUID
+     * @returns {string} UUID字符串
+     */
+    generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
     },
-    timestampToDateString(timestamp) {
-      // 创建一个新的 Date 对象，并传入时间戳（秒）
-      const date = new Date(timestamp * 1000); // 时间戳是以秒为单位，因此乘以1000转换为毫秒
 
-      // 使用 Date 对象的方法获取年、月、日、时、分、秒
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，需要加1，并补齐两位数
-      const day = String(date.getDate()).padStart(2, '0'); // 补齐两位数
-      const hours = String(date.getHours()).padStart(2, '0'); // 补齐两位数
-      const minutes = String(date.getMinutes()).padStart(2, '0'); // 补齐两位数
-      const seconds = String(date.getSeconds()).padStart(2, '0'); // 补齐两位数
+    /**
+     * 获取或创建访客ID
+     * @returns {string} 访客ID
+     */
+    getOrCreateVisitorId() {
+      const storageKey = 'dingdong_visitor_id';
+      let visitorId = localStorage.getItem(storageKey);
 
-      // 构建日期字符串
-      const dateString = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      if (!visitorId) {
+        visitorId = this.generateUUID();
+        localStorage.setItem(storageKey, visitorId);
+      }
 
-      return dateString;
+      return visitorId;
+    },
+
+    /**
+     * 初始化访客并记录页面访问
+     */
+    initializeVisitor() {
+      try {
+        // 获取或创建访客ID
+        this.visitorId = this.getOrCreateVisitorId();
+
+        // 记录页面访问
+        this.recordPageViewAsync();
+      } catch (error) {
+        console.error('初始化访客失败:', error);
+      }
+    },
+
+    /**
+     * 异步记录页面访问
+     */
+    async recordPageViewAsync() {
+      try {
+        const pageViewData = {
+          agentCode: this.agentCode || '',
+          visitorId: this.visitorId,
+          userAgent: navigator.userAgent,
+          referer: document.referrer || ''
+        };
+
+        const response = await axios.post(baseUrl + '/product/recordPageView', pageViewData, {
+          showLoading: false, // 不显示加载提示，避免影响用户体验
+          timeout: 5000 // 5秒超时
+        });
+
+        if (response.code === 200) {
+          console.log('页面访问记录成功');
+        } else {
+          console.warn('页面访问记录失败:', response.message);
+        }
+      } catch (error) {
+        // 访问记录失败不影响页面正常功能，只记录错误日志
+        console.error('记录页面访问时发生错误:', error.message || error);
+      }
+    },
+
+    /**
+     * 获取页面访问统计（可选功能，供后续扩展使用）
+     * @param {string} dateRange 日期范围，默认为'today'
+     * @returns {Promise} 统计数据
+     */
+    async getPageViewStats(dateRange = 'today') {
+      try {
+        const response = await axios.get(`${baseUrl}/product/getPageViewStats`, {
+          params: {
+            agentCode: this.agentCode || '',
+            dateRange: dateRange
+          },
+          showLoading: false
+        });
+
+        if (response.code === 200) {
+          return response.data;
+        } else {
+          console.warn('获取访问统计失败:', response.message);
+          return null;
+        }
+      } catch (error) {
+        console.error('获取页面访问统计时发生错误:', error.message || error);
+        return null;
+      }
     }
   }
 });

@@ -502,18 +502,21 @@ export default {
 
       .item-left {
         flex-shrink: 0;
-        width: 140rpx;
+        width: 200rpx;
 
         .type-info {
           display: flex;
           align-items: center;
           gap: 8rpx;
+          flex-wrap: nowrap;
 
           .type-tag {
             padding: 6rpx 12rpx;
             border-radius: 8rpx;
             font-size: 22rpx;
             color: #fff;
+            white-space: nowrap;
+            flex-shrink: 0;
 
             &.success {
               background-color: #52c41a;
@@ -535,6 +538,8 @@ export default {
           .amount-type {
             font-size: 22rpx;
             color: #666;
+            white-space: nowrap;
+            flex-shrink: 0;
           }
         }
 

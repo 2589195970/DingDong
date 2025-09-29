@@ -11,6 +11,7 @@ import com.ruoyi.common.order.bo.AgentTeamQueryBO;
 import com.ruoyi.common.order.entity.AgentAccount;
 import com.ruoyi.common.order.vo.AgentAccountListVO;
 import com.ruoyi.common.order.vo.AgentActivateOrderAPPStatisticsVO;
+import com.ruoyi.common.order.vo.AgentDashboardStatisticsVO;
 import com.ruoyi.common.order.vo.AgentOrderAPPStatisticsVO;
 import com.ruoyi.common.order.vo.AgentTeamListVO;
 import com.ruoyi.common.order.vo.AgentWithdrawalAPPStatisticsVO;
@@ -23,6 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -170,6 +176,95 @@ public class AgentAppShowServiceImpl  implements AgentAppShowService {
         return PageResultFactory.createPageResult(
             resultList, Long.valueOf(totalCount),
             queryBO.getPageSize(), queryBO.getPageNo());
+    }
+
+    /**
+     * 查询代理商统计面板数据
+     * 包含今日和本月的邀请、订单、激活、佣金统计
+     *
+     * @param type 统计类型：0-个人统计，1-团队统计
+     * @param loginUser 当前登录用户
+     * @return 统计面板数据
+     * @throws BizException 业务异常
+     */
+    @Override
+    public AgentDashboardStatisticsVO selectDashboardStatistics(Integer type, LoginUser loginUser) throws BizException {
+        // 1. 获取当前代理商信息
+        AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+
+        // 2. 根据type决定查询参数
+        String downstreamCode = null;
+        String downstreamTeam = null;
+
+        if (type == null || type == BaseConstant.ZERO_INT) {
+            // 个人统计
+            downstreamCode = agentAccount.getAgentCode();
+        } else if (type == BaseConstant.ONE_INT) {
+            // 团队统计
+            downstreamTeam = agentAccount.getAgentCode();
+        }
+
+        // 3. 查询订单、激活、佣金数据（从OrderMapper）
+        AgentDashboardStatisticsVO dashboardStats = orderMapper.selectDashboardStatistics(downstreamCode, downstreamTeam);
+
+        // 4. 如果查询结果为空，创建默认对象
+        if (dashboardStats == null) {
+            dashboardStats = new AgentDashboardStatisticsVO();
+        }
+
+        // 5. 单独查询邀请数据（代理商注册数据）
+        Integer todayInviteCount = queryInviteCount(agentAccount.getAgentCode(), type, true);
+        Integer monthInviteCount = queryInviteCount(agentAccount.getAgentCode(), type, false);
+
+        // 6. 设置邀请数据
+        dashboardStats.setTodayInviteCount(todayInviteCount);
+        dashboardStats.setMonthInviteCount(monthInviteCount);
+
+        // 7. 设置统计类型和更新时间
+        dashboardStats.setStatisticsType(type != null ? type : 0);
+        dashboardStats.refreshUpdateTime();
+
+        return dashboardStats;
+    }
+
+    /**
+     * 查询邀请数据（代理商注册数据）
+     *
+     * @param agentCode 代理商编码
+     * @param type 统计类型：0-个人统计，1-团队统计
+     * @param isToday true-今日，false-本月
+     * @return 邀请数量
+     */
+    private Integer queryInviteCount(String agentCode, Integer type, boolean isToday) {
+        try {
+            // 计算时间范围
+            LocalDateTime now = LocalDateTime.now();
+            Long startTime;
+            Long endTime;
+
+            if (isToday) {
+                // 今日时间范围（00:00:00 - 23:59:59）
+                startTime = now.with(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                endTime = now.with(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            } else {
+                // 本月时间范围（1号00:00:00 - 当前时间）
+                startTime = now.with(TemporalAdjusters.firstDayOfMonth())
+                        .with(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                endTime = now.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            }
+
+            // 根据统计类型查询
+            if (type == null || type == BaseConstant.ZERO_INT) {
+                // 个人统计：查询直接邀请的代理商数量
+                return agentAccountMapper.countDirectInvitesByTimeRange(agentCode, startTime, endTime);
+            } else {
+                // 团队统计：查询团队内所有邀请数量
+                return agentAccountMapper.countTeamInvitesByTimeRange(agentCode, startTime, endTime);
+            }
+        } catch (Exception e) {
+            log.error("查询邀请数据异常：agentCode={}, type={}, isToday={}", agentCode, type, isToday, e);
+            return 0;
+        }
     }
 
 }

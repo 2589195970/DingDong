@@ -104,8 +104,8 @@
         <view class="card-content">
           <u-icon name="message" color="#409eff" size="32"></u-icon>
           <view class="card-info">
-            <text class="card-title">在线客服</text>
-            <text class="card-desc">点击进入在线客服系统，实时为您解答</text>
+            <text class="card-title">企业微信客服</text>
+            <text class="card-desc">点击进入企业微信客服，实时为您解答</text>
           </view>
         </view>
         <u-icon name="arrow-right" color="#c0c4cc"></u-icon>
@@ -332,11 +332,16 @@ export default {
 
     // 打开在线客服
     openOnlineChat() {
-      // 这里可以集成第三方在线客服系统
-      // 或者跳转到webview加载在线客服页面
+      // H5环境下直接跳转到企业微信客服
+      // #ifdef H5
+      window.location.href = 'https://work.weixin.qq.com/kfid/kfcf856088b08cab7ad';
+      // #endif
+      // #ifndef H5
+      // 其他平台跳转到webview页面
       uni.navigateTo({
-        url: '/pages/common/webview/index?url=' + encodeURIComponent('https://chat.dingdong.com')
+        url: '/pages/common/webview/index?url=' + encodeURIComponent('https://work.weixin.qq.com/kfid/kfcf856088b08cab7ad')
       });
+      // #endif
     },
 
     // 切换常见问题展开状态

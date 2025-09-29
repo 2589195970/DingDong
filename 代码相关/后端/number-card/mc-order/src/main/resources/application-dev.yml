@@ -19,7 +19,7 @@ spring:
   # redis 配置
   redis:
     public:
-      database: 0
+      database: 1
       host: test.sdzdf.com
       port: 8006
       password: sdzdfredis20241206
@@ -36,15 +36,27 @@ spring:
       port: 8006
       password: sdzdfredis20241206
       timeout: 5000
+    temporarily:
+      database: 4
+      host: test.sdzdf.com
+      port: 8006
+      password: sdzdfredis20241206
+      timeout: 5000
+    lettuce:
+      pool:
+        max-active: 10
+        max-wait: 10000
+        max-idle: 5
+        min-idle: 3
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driverClassName: com.mysql.cj.jdbc.Driver
     druid:
       # 主库数据源
       master:
-        url: jdbc:mysql://test.sdzdf.com:8000/simple_deployment?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&autoReconnect=true&failOverReadOnly=false
-        username: sdzdf
-        password: anquanshengchan$007
+        url: jdbc:mysql://123.56.89.151:3306/numbercard?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&autoReconnect=true&failOverReadOnly=false
+        username: root
+        password: 94loaUawkU0SuUJV@
       # 从库数据源
       slave:
         # 从数据源开关/默认关闭

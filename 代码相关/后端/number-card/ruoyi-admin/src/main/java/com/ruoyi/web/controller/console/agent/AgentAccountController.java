@@ -5,6 +5,7 @@ import com.ruoyi.common.core.page.ResponseEntity;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.*;
 import com.ruoyi.common.order.entity.AgentAccount;
+import com.ruoyi.common.order.vo.AgentRegistrationStatisticsVO;
 import com.ruoyi.common.order.vo.AgentStatisticsVO;
 import com.ruoyi.console.service.AgentAccountService;
 import io.swagger.annotations.Api;
@@ -88,6 +89,29 @@ public class AgentAccountController {
         } catch (Exception e) {
             log.info("{}方法异常:{}", TAG, e.getMessage());
             return ResponseEntity.error("出错了,请稍候重试:{}", null);
+        }
+    }
+
+    /**
+     * 代理商注册统计（按时间维度）
+     *
+     * @param parentAgentCode 父代理商编码（可选）
+     * @return 注册统计数据
+     */
+    @GetMapping("/selectRegistrationStatistics")
+    @ApiOperation("代理商注册统计（按时间维度）")
+    public ResponseEntity<AgentRegistrationStatisticsVO> selectRegistrationStatistics(
+            @RequestParam(required = false, value = "parentAgentCode") String parentAgentCode) {
+        try {
+            return ResponseEntity.success(
+                agentAccountService.selectAgentRegistrationStatistics(parentAgentCode, getLoginUser())
+            );
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error("出错了,请稍候重试", null);
         }
     }
 

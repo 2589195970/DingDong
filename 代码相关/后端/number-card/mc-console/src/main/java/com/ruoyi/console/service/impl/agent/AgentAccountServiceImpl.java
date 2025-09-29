@@ -17,6 +17,7 @@ import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.*;
 import com.ruoyi.common.order.dto.SmsDTO;
 import com.ruoyi.common.order.entity.*;
+import com.ruoyi.common.order.vo.AgentRegistrationStatisticsVO;
 import com.ruoyi.common.order.vo.AgentStatisticsVO;
 import com.ruoyi.common.utils.CacheUtils;
 import com.ruoyi.common.utils.SecurityUtils;
@@ -34,6 +35,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -373,5 +378,58 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         agentStatisticsVO.setSecondaryAgentTotal(secondaryAgentTotal);
         agentStatisticsVO.setAgentStatisticsList(agentStatisticsList);
         return agentStatisticsVO;
+    }
+
+    /**
+     * 查询代理商注册统计（按时间维度）
+     *
+     * @param parentAgentCode 父代理商编码（可选，为空则查询当前代理商的下级）
+     * @param loginUser 当前登录用户
+     * @return 注册统计数据
+     * @throws BizException 业务异常
+     */
+    @Override
+    public AgentRegistrationStatisticsVO selectAgentRegistrationStatistics(String parentAgentCode, LoginUser loginUser) throws BizException {
+        // 如果没有指定父代理商编码，则使用当前登录用户的代理商编码
+        if (StringUtils.isEmpty(parentAgentCode)) {
+            AgentAccount currentAgent = getAgentAccountByUserId(loginUser.getUserId(), true);
+            parentAgentCode = currentAgent.getAgentCode();
+        }
+
+        // 获取当前时间
+        LocalDateTime now = LocalDateTime.now();
+
+        // 计算今日时间范围（00:00:00 - 23:59:59）
+        Long todayStart = now.with(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        Long todayEnd = now.with(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+        // 计算昨日时间范围
+        LocalDateTime yesterday = now.minusDays(1);
+        Long yesterdayStart = yesterday.with(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        Long yesterdayEnd = yesterday.with(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+        // 计算本周开始时间（周一00:00:00）
+        Long thisWeekStart = now.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+                .with(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+        // 计算本月开始时间（1号00:00:00）
+        Long thisMonthStart = now.with(TemporalAdjusters.firstDayOfMonth())
+                .with(LocalTime.MIN).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+        // 调用Mapper获取统计数据
+        AgentRegistrationStatisticsVO statisticsVO = baseMapper.selectAgentRegistrationStatistics(
+                todayStart, todayEnd, yesterdayStart, yesterdayEnd,
+                thisWeekStart, thisMonthStart, parentAgentCode
+        );
+
+        // 如果查询结果为空，返回默认值
+        if (statisticsVO == null) {
+            statisticsVO = new AgentRegistrationStatisticsVO();
+        }
+
+        // 计算增长率
+        statisticsVO.calculateGrowthRate();
+
+        return statisticsVO;
     }
 }

@@ -93,6 +93,12 @@
               <view class="action-btn primary" @click="showTrue(dict)">
                 <text class="btn-text">推广</text>
               </view>
+              <view class="action-btn warning" v-if="dict.productStatus == 1" @click="handleOffShelf(dict)">
+                <text class="btn-text">下架</text>
+              </view>
+              <view class="action-btn success" v-if="dict.productStatus == 0" @click="handleOnShelf(dict)">
+                <text class="btn-text">上架</text>
+              </view>
             </view>
           </view>
         </view>
@@ -125,12 +131,14 @@
 <script>
 import {
   agentSelectProductListPage,
-  updateProductCommission
+  updateProductStatus
 } from "@/api/product/product";
 import USearch from "../../uview-ui/components/u-search/u-search.vue";
+import UCollapseItem from "../../uview-ui/components/u-collapse-item/u-collapse-item.vue";
+import ULoadingPage from "../../uview-ui/components/u-loading-page/u-loading-page.vue";
 
 export default {
-  components: {USearch},
+  components: {ULoadingPage, UCollapseItem, USearch},
   data() {
     return {
       value: '',
@@ -369,6 +377,66 @@ export default {
         this.productList = res.data.rows;
         this.loading = false;
       })
+    },
+
+    // 下架产品
+    handleOffShelf(product) {
+      uni.showModal({
+        title: '提示',
+        content: '确认要下架该产品吗？',
+        success: (res) => {
+          if (res.confirm) {
+            const data = {
+              productId: product.productId,
+              productStatus: 0
+            };
+            updateProductStatus(data).then(() => {
+              uni.showToast({
+                title: '下架成功',
+                icon: 'success',
+                duration: 2000
+              });
+              this.soplist(); // 刷新列表
+            }).catch(err => {
+              uni.showToast({
+                title: '下架失败',
+                icon: 'error',
+                duration: 2000
+              });
+            });
+          }
+        }
+      });
+    },
+
+    // 上架产品
+    handleOnShelf(product) {
+      uni.showModal({
+        title: '提示',
+        content: '确认要上架该产品吗？',
+        success: (res) => {
+          if (res.confirm) {
+            const data = {
+              productId: product.productId,
+              productStatus: 1
+            };
+            updateProductStatus(data).then(() => {
+              uni.showToast({
+                title: '上架成功',
+                icon: 'success',
+                duration: 2000
+              });
+              this.soplist(); // 刷新列表
+            }).catch(err => {
+              uni.showToast({
+                title: '上架失败',
+                icon: 'error',
+                duration: 2000
+              });
+            });
+          }
+        }
+      });
     },
   }
 }
@@ -629,7 +697,8 @@ page {
 
   .right-buttons {
     display: flex;
-    gap: 12rpx;
+    flex-wrap: wrap;
+    gap: 8rpx;
   }
 
   .action-btn {
@@ -664,6 +733,30 @@ page {
 
       &:active {
         background-color: #e6e8ea;
+      }
+    }
+
+    &.warning {
+      background-color: #ff9800;
+
+      .btn-text {
+        color: #fff;
+      }
+
+      &:active {
+        background-color: #f57c00;
+      }
+    }
+
+    &.success {
+      background-color: #4caf50;
+
+      .btn-text {
+        color: #fff;
+      }
+
+      &:active {
+        background-color: #388e3c;
       }
     }
   }

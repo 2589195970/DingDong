@@ -92,9 +92,7 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         List<AgentProductVO> agentProductSelectVOS = productMapper.selectAgentProductList(agentProductSelectBO.getOperatorType(), agentProductSelectBO.getProductStatus(), agentProductSelectBO.getProductType(),
                 agentProductSelectBO.getProductName(), agentAccount.getAgentCode(), (agentProductSelectBO.getPageNo() - 1) * agentProductSelectBO.getPageSize(), agentProductSelectBO.getPageSize());
         for(AgentProductVO agentProductVO:agentProductSelectVOS){
-            StringBuffer stringBuffer = new StringBuffer(h5url);
-            stringBuffer.append("?productCode=").append(agentProductVO.getProductCode()).append("&agentCode=").append(agentAccount.getAgentCode());
-            agentProductVO.setH5Url(stringBuffer.toString());
+            agentProductVO.setH5Url(h5url + "?productCode=" + agentProductVO.getProductCode() + "&agentCode=" + agentAccount.getAgentCode());
             List<AgentProduct> agentProductList = baseMapper.selectList(new LambdaQueryWrapper<AgentProduct>().eq(AgentProduct::getParentProductCode,agentProductVO.getProductCode()).eq(AgentProduct::getParentAgentCode,agentAccount.getAgentCode()));
             if(!CollectionUtils.isEmpty(agentProductList)){
                 List<String> agentCodeList = agentProductList.stream().map(t -> t.getAgentCode()).collect(Collectors.toList());

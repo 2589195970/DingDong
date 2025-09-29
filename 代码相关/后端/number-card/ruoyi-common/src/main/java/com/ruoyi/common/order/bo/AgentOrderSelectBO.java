@@ -85,5 +85,11 @@ public class AgentOrderSelectBO extends BaseBO{
     @ApiModelProperty("订单佣金状态")
     private Integer orderCommissionStatus;
 
+    /**
+     * 订单类型：0-我的订单，1-代理商订单，不传则查询所有
+     */
+    @ApiModelProperty("订单类型：0-我的订单，1-代理商订单，不传则查询所有")
+    private Integer orderType;
+
 
 }

@@ -3,6 +3,7 @@ package com.ruoyi.console.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ruoyi.common.order.entity.Order;
 import com.ruoyi.common.order.vo.AgentActivateOrderAPPStatisticsVO;
+import com.ruoyi.common.order.vo.AgentDashboardStatisticsVO;
 import com.ruoyi.common.order.vo.AgentOrderAPPStatisticsVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -31,5 +32,14 @@ public interface OrderMapper extends BaseMapper<Order> {
      * @return
      */
     AgentActivateOrderAPPStatisticsVO selectActivateAgentOrderAPPStatistics(@Param(value = "downstreamCode") String downstreamCode, @Param(value = "downstreamTeam") String downstreamTeam);
+
+    /**
+     * 查询代理商统计面板数据
+     * 包含今日和本月的订单、激活、佣金统计
+     * @param downstreamCode 代理商编码（个人统计）
+     * @param downstreamTeam 代理商编码（团队统计）
+     * @return 统计面板数据
+     */
+    AgentDashboardStatisticsVO selectDashboardStatistics(@Param(value = "downstreamCode") String downstreamCode, @Param(value = "downstreamTeam") String downstreamTeam);
 
 }

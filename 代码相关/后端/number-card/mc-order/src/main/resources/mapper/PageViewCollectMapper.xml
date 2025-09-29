@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.order.mapper.PageViewCollectMapper">
+
+    <resultMap type="com.ruoyi.common.order.entity.PageViewLog" id="PageViewLogResult">
+        <id     property="id"           column="id"            />
+        <result property="agentCode"    column="agent_code"    />
+        <result property="visitorId"    column="visitor_id"    />
+        <result property="ipAddress"    column="ip_address"    />
+        <result property="userAgent"    column="user_agent"    />
+        <result property="referer"      column="referer"       />
+        <result property="deviceType"   column="device_type"   />
+        <result property="visitTime"    column="visit_time"    />
+    </resultMap>
+
+    <!-- 插入访问日志 -->
+    <insert id="insertViewLog" parameterType="com.ruoyi.common.order.entity.PageViewLog" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_page_view_log (
+            agent_code,
+            visitor_id,
+            ip_address,
+            user_agent,
+            referer,
+            device_type,
+            visit_time
+        ) VALUES (
+            #{agentCode},
+            #{visitorId},
+            #{ipAddress},
+            #{userAgent},
+            #{referer},
+            #{deviceType},
+            #{visitTime}
+        )
+    </insert>
+
+    <!-- 获取代理商今日访问基础统计 -->
+    <select id="selectTodayBasicStats" parameterType="String" resultType="java.util.Map">
+        SELECT
+            COUNT(*) as todayViews,
+            COUNT(DISTINCT visitor_id) as todayVisitors,
+            COUNT(DISTINCT ip_address) as todayIps,
+            COUNT(CASE WHEN device_type = 'Mobile' THEN 1 END) as mobileViews,
+            COUNT(CASE WHEN device_type = 'PC' THEN 1 END) as pcViews,
+            MAX(visit_time) as lastVisitTime
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = CURDATE()
+    </select>
+
+    <!-- 检查代理商是否有访问记录 -->
+    <select id="hasViewRecords" parameterType="String" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        LIMIT 1
+    </select>
+
+    <!-- 批量插入访问日志（预留接口） -->
+    <insert id="batchInsertViewLog" parameterType="java.util.List">
+        INSERT INTO t_page_view_log (
+            agent_code,
+            visitor_id,
+            ip_address,
+            user_agent,
+            referer,
+            device_type,
+            visit_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.agentCode},
+                #{item.visitorId},
+                #{item.ipAddress},
+                #{item.userAgent},
+                #{item.referer},
+                #{item.deviceType},
+                #{item.visitTime}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 查询指定时间段内的访问统计（预留接口） -->
+    <select id="selectRangeStats" resultType="java.util.Map">
+        SELECT
+            DATE(visit_time) as visitDate,
+            COUNT(*) as totalViews,
+            COUNT(DISTINCT visitor_id) as uniqueVisitors,
+            COUNT(DISTINCT ip_address) as uniqueIps,
+            COUNT(CASE WHEN device_type = 'Mobile' THEN 1 END) as mobileViews,
+            COUNT(CASE WHEN device_type = 'PC' THEN 1 END) as pcViews,
+            COUNT(CASE WHEN device_type = 'Tablet' THEN 1 END) as tabletViews
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        <if test="startDate != null">
+            AND visit_time >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND visit_time &lt;= #{endDate}
+        </if>
+        GROUP BY DATE(visit_time)
+        ORDER BY visitDate DESC
+    </select>
+
+    <!-- 查询热门访问时段（预留接口） -->
+    <select id="selectHourlyStats" resultType="java.util.Map">
+        SELECT
+            HOUR(visit_time) as visitHour,
+            COUNT(*) as totalViews,
+            COUNT(DISTINCT visitor_id) as uniqueVisitors
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = CURDATE()
+        GROUP BY HOUR(visit_time)
+        ORDER BY visitHour
+    </select>
+
+    <!-- 查询设备类型分布（预留接口） -->
+    <select id="selectDeviceTypeStats" resultType="java.util.Map">
+        SELECT
+            device_type as deviceType,
+            COUNT(*) as viewCount,
+            COUNT(DISTINCT visitor_id) as uniqueVisitors,
+            ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM t_page_view_log WHERE agent_code = #{agentCode} AND DATE(visit_time) = CURDATE()), 2) as percentage
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = CURDATE()
+        GROUP BY device_type
+        ORDER BY viewCount DESC
+    </select>
+
+    <!-- 查询来源统计（预留接口） -->
+    <select id="selectRefererStats" resultType="java.util.Map">
+        SELECT
+            CASE
+                WHEN referer IS NULL OR referer = '' THEN '直接访问'
+                ELSE referer
+            END as refererSource,
+            COUNT(*) as viewCount,
+            COUNT(DISTINCT visitor_id) as uniqueVisitors
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = CURDATE()
+        GROUP BY referer
+        ORDER BY viewCount DESC
+        LIMIT 10
+    </select>
+
+</mapper>

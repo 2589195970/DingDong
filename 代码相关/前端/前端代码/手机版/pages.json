@@ -205,6 +205,13 @@
 			}
 		},
 		{
+			"path": "pages/mine/live-connect/create-live",
+			"style": {
+				"navigationBarTitleText": "抖音小黄车直播配置",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/mine/visual-data/index",
 			"style": {
 				"navigationBarTitleText": "可视化数据",

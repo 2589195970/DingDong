@@ -1,169 +1,263 @@
 <template>
-  <div class="dashboard-container">
-    <!-- 顶部区域 -->
-    <div class="top-section">
-      <!-- 左侧：产品数据图表 -->
-      <div class="left-panel">
-        <div class="card-box">
-          <div class="chart-header">
-            <h3 class="section-title">产品数据</h3>
-            <el-button 
-              type="text" 
-              icon="el-icon-refresh" 
-              @click="getProductData"
-              :loading="productLoading"
-              class="refresh-btn"
-            >
-              刷新
-            </el-button>
-          </div>
-          <ECharts 
-            :options="productChartOptions" 
-            :height="'calc(100% - 60px)'"
-            :loading="productLoading"
-            loading-text="产品数据加载中..."
-            class="product-chart"
-          />
-        </div>
-      </div>
-      
-      <!-- 中间：数据统计面板 -->
-      <div class="middle-panel">
-        <div class="card-box">
-          <div class="data-header">
-            <h3 class="section-title">数据统计</h3>
-            <el-button 
-              type="text" 
-              icon="el-icon-refresh" 
-              @click="getOrderData"
-              :loading="orderLoading"
-              class="refresh-btn"
-            >
-              刷新
-            </el-button>
-          </div>
-          <div class="data-section" v-loading="orderLoading" element-loading-text="数据加载中...">
-            <div class="data-group">
-              <h3 class="data-title">今日/昨日数据</h3>
-              <div class="data-row">
-                <el-tag class="period-tag" type="success" size="small">今日</el-tag>
-                <span class="data-item">订单：{{ formatNumber(orderData.today.totalOrders) }}</span>
-                <span class="data-item">激活：{{ formatNumber(orderData.today.activatedOrders) }}</span>
-                <span class="data-item">佣金：{{ formatNumber(orderData.today.settledOrders) }}</span>
-                <span class="data-item">代理：{{ formatNumber(orderData.today.agentCount) }}</span>
-              </div>
-              <div class="data-row">
-                <el-tag class="period-tag" type="primary" size="small">昨日</el-tag>
-                <span class="data-item">订单：{{ formatNumber(orderData.yesterday.totalOrders) }}</span>
-                <span class="data-item">激活：{{ formatNumber(orderData.yesterday.activatedOrders) }}</span>
-                <span class="data-item">佣金：{{ formatNumber(orderData.yesterday.settledOrders) }}</span>
-                <span class="data-item">代理：{{ formatNumber(orderData.yesterday.agentCount) }}</span>
-              </div>
+  <div class="app-container">
+    <!-- 数据统计卡片行 -->
+    <el-row :gutter="16" class="mb20">
+      <el-col :span="6">
+        <el-card class="box-card order-card">
+          <div class="card-content">
+            <div class="card-left">
+              <i class="el-icon-shopping-cart-2 card-icon"></i>
             </div>
-            <div class="data-group">
-              <h3 class="data-title">本月/上月数据</h3>
-              <div class="data-row">
-                <el-tag class="period-tag" type="success" size="small">本月</el-tag>
-                <span class="data-item">订单：{{ formatNumber(orderData.thisMonth.totalOrders) }}</span>
-                <span class="data-item">激活：{{ formatNumber(orderData.thisMonth.activatedOrders) }}</span>
-                <span class="data-item">佣金：{{ formatNumber(orderData.thisMonth.settledOrders) }}</span>
-                <span class="data-item">代理：{{ formatNumber(orderData.thisMonth.agentCount) }}</span>
-              </div>
-              <div class="data-row">
-                <el-tag class="period-tag" type="primary" size="small">上月</el-tag>
-                <span class="data-item">订单：{{ formatNumber(orderData.lastMonth.totalOrders) }}</span>
-                <span class="data-item">激活：{{ formatNumber(orderData.lastMonth.activatedOrders) }}</span>
-                <span class="data-item">佣金：{{ formatNumber(orderData.lastMonth.settledOrders) }}</span>
-                <span class="data-item">代理：{{ formatNumber(orderData.lastMonth.agentCount) }}</span>
-              </div>
-            </div>
-            <div class="data-group">
-              <h3 class="data-title">本年度数据</h3>
-              <div class="data-row">
-                <el-tag class="period-tag" type="success" size="small">本年</el-tag>
-                <span class="data-item">订单：{{ formatNumber(orderData.thisYear.totalOrders) }}</span>
-                <span class="data-item">激活：{{ formatNumber(orderData.thisYear.activatedOrders) }}</span>
-                <span class="data-item">佣金：{{ formatNumber(orderData.thisYear.settledOrders) }}</span>
-                <span class="data-item">代理：{{ formatNumber(orderData.thisYear.agentCount) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 右侧：系统通知 -->
-      <div class="right-panel">
-        <div class="card-box">
-          <div class="notification-section">
-            <h3 class="section-title">系统通知</h3>
-            <div class="notification-list">
-              <div class="notification-item" v-for="(item, index) in notifications" :key="index">
-                <div class="notification-bar"></div>
-                <div class="notification-content">
-                  <div class="notification-text">{{ item.text }}</div>
-                  <div class="notification-date">{{ item.date }}</div>
+            <div class="card-right">
+              <div class="card-header">
+                <span>今日订单</span>
+                <div class="trend-indicator" :class="getTrendClass(orderData.today.totalOrders, orderData.yesterday.totalOrders)">
+                  <i :class="getTrendIcon(orderData.today.totalOrders, orderData.yesterday.totalOrders)"></i>
+                  {{ getTrendPercent(orderData.today.totalOrders, orderData.yesterday.totalOrders) }}
                 </div>
               </div>
+              <div class="card-number">{{ formatNumber(orderData.today.totalOrders) }}</div>
+              <div class="card-desc">较昨日 {{ getChangeText(orderData.today.totalOrders, orderData.yesterday.totalOrders) }}</div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 底部区域 -->
-    <div class="bottom-section">
-      <!-- 左侧：订单趋势图 -->
-      <div class="left-panel">
-        <div class="card-box">
-          <div class="chart-header">
-            <h3 class="section-title">订单趋势图</h3>
-            <el-button 
-              type="text" 
-              icon="el-icon-refresh" 
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="box-card active-card">
+          <div class="card-content">
+            <div class="card-left">
+              <i class="el-icon-rocket card-icon"></i>
+            </div>
+            <div class="card-right">
+              <div class="card-header">
+                <span>今日激活</span>
+                <div class="trend-indicator" :class="getTrendClass(orderData.today.activatedOrders, orderData.yesterday.activatedOrders)">
+                  <i :class="getTrendIcon(orderData.today.activatedOrders, orderData.yesterday.activatedOrders)"></i>
+                  {{ getTrendPercent(orderData.today.activatedOrders, orderData.yesterday.activatedOrders) }}
+                </div>
+              </div>
+              <div class="card-number">{{ formatNumber(orderData.today.activatedOrders) }}</div>
+              <div class="card-desc">较昨日 {{ getChangeText(orderData.today.activatedOrders, orderData.yesterday.activatedOrders) }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="box-card commission-card">
+          <div class="card-content">
+            <div class="card-left">
+              <i class="el-icon-wallet card-icon"></i>
+            </div>
+            <div class="card-right">
+              <div class="card-header">
+                <span>今日佣金</span>
+                <div class="trend-indicator" :class="getTrendClass(orderData.today.settledOrders, orderData.yesterday.settledOrders)">
+                  <i :class="getTrendIcon(orderData.today.settledOrders, orderData.yesterday.settledOrders)"></i>
+                  {{ getTrendPercent(orderData.today.settledOrders, orderData.yesterday.settledOrders) }}
+                </div>
+              </div>
+              <div class="card-number">{{ formatNumber(orderData.today.settledOrders) }}</div>
+              <div class="card-desc">较昨日 {{ getChangeText(orderData.today.settledOrders, orderData.yesterday.settledOrders) }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="box-card agent-card">
+          <div class="card-content">
+            <div class="card-left">
+              <i class="el-icon-user-solid card-icon"></i>
+            </div>
+            <div class="card-right">
+              <div class="card-header">
+                <span>活跃代理</span>
+                <div class="trend-indicator" :class="getTrendClass(orderData.today.agentCount, orderData.yesterday.agentCount)">
+                  <i :class="getTrendIcon(orderData.today.agentCount, orderData.yesterday.agentCount)"></i>
+                  {{ getTrendPercent(orderData.today.agentCount, orderData.yesterday.agentCount) }}
+                </div>
+              </div>
+              <div class="card-number">{{ formatNumber(orderData.today.agentCount) }}</div>
+              <div class="card-desc">较昨日 {{ getChangeText(orderData.today.agentCount, orderData.yesterday.agentCount) }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 图表和数据行 -->
+    <el-row :gutter="20" class="mb20 equal-height-row">
+      <!-- 产品数据图表 -->
+      <el-col :span="7">
+        <el-card class="equal-height-card">
+          <div slot="header">
+            <span>产品分布</span>
+            <el-button
+              style="float: right; padding: 3px 0"
+              type="text"
+              icon="el-icon-refresh"
+              @click="getProductData"
+              :loading="productLoading">刷新</el-button>
+          </div>
+          <div class="chart-container">
+            <ECharts
+              :options="productChartOptions"
+              height="240px"
+              :loading="productLoading" />
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 数据统计表格 -->
+      <el-col :span="11">
+        <el-card class="equal-height-card">
+          <div slot="header">
+            <span>数据统计</span>
+            <el-button
+              style="float: right; padding: 3px 0"
+              type="text"
+              icon="el-icon-refresh"
+              @click="getOrderData"
+              :loading="orderLoading">刷新</el-button>
+          </div>
+          <div class="table-container">
+            <el-table :data="statisticsData" size="small" stripe class="statistics-table" height="240">
+              <el-table-column label="时间" width="80" align="center">
+                <template slot-scope="scope">
+                  <el-tag
+                    :type="scope.row.period === '今日' ? 'primary' : scope.row.period === '昨日' ? 'success' : ''"
+                    size="mini">
+                    {{ scope.row.period }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="订单" align="right">
+                <template slot-scope="scope">
+                  <div class="table-cell-content">
+                    <span :class="{'today-data': scope.row.period === '今日'}">
+                      {{ scope.row.totalOrders }}
+                    </span>
+                    <div v-if="scope.row.period === '今日'" class="trend-mini">
+                      <i :class="getTrendIcon(orderData.today.totalOrders, orderData.yesterday.totalOrders)"
+                         :style="{color: getTrendColor(orderData.today.totalOrders, orderData.yesterday.totalOrders)}"></i>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="激活" align="right">
+                <template slot-scope="scope">
+                  <div class="table-cell-content">
+                    <span :class="{'today-data': scope.row.period === '今日'}">
+                      {{ scope.row.activatedOrders }}
+                    </span>
+                    <div v-if="scope.row.period === '今日'" class="trend-mini">
+                      <i :class="getTrendIcon(orderData.today.activatedOrders, orderData.yesterday.activatedOrders)"
+                         :style="{color: getTrendColor(orderData.today.activatedOrders, orderData.yesterday.activatedOrders)}"></i>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="佣金" align="right">
+                <template slot-scope="scope">
+                  <div class="table-cell-content">
+                    <span :class="{'today-data': scope.row.period === '今日'}">
+                      {{ scope.row.settledOrders }}
+                    </span>
+                    <div v-if="scope.row.period === '今日'" class="trend-mini">
+                      <i :class="getTrendIcon(orderData.today.settledOrders, orderData.yesterday.settledOrders)"
+                         :style="{color: getTrendColor(orderData.today.settledOrders, orderData.yesterday.settledOrders)}"></i>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="代理" align="right">
+                <template slot-scope="scope">
+                  <div class="table-cell-content">
+                    <span :class="{'today-data': scope.row.period === '今日'}">
+                      {{ scope.row.agentCount }}
+                    </span>
+                    <div v-if="scope.row.period === '今日'" class="trend-mini">
+                      <i :class="getTrendIcon(orderData.today.agentCount, orderData.yesterday.agentCount)"
+                         :style="{color: getTrendColor(orderData.today.agentCount, orderData.yesterday.agentCount)}"></i>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 系统通知 -->
+      <el-col :span="6">
+        <el-card class="equal-height-card">
+          <div slot="header">
+            <span>系统通知</span>
+            <el-badge :value="notifications.length" :max="99" class="notification-badge" />
+          </div>
+          <div class="notification-container">
+            <div class="notification-list" v-loading="notificationLoading">
+              <div class="notification-item" v-for="(item, index) in notifications" :key="item.id || index">
+                <div class="notification-icon">
+                  <i :class="getNotificationIcon(item.type)" :style="{color: getNotificationColor(item.type)}"></i>
+                </div>
+                <div class="notification-content">
+                  <div class="notification-header">
+                    <span class="notification-text">{{ item.text }}</span>
+                    <el-tag :type="getNotificationTagType(item.type)" size="mini">{{ getNotificationTypeText(item.type) }}</el-tag>
+                  </div>
+                  <div class="notification-time">{{ formatRelativeTime(item.date) }}</div>
+                </div>
+              </div>
+              <div v-if="notifications.length === 0 && !notificationLoading" class="no-notifications">
+                <i class="el-icon-bell" style="font-size: 32px; color: #C0C4CC; margin-bottom: 8px;"></i>
+                <div style="color: #909399; font-size: 12px;">暂无系统通知</div>
+              </div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 趋势图表行 -->
+    <el-row :gutter="20">
+      <!-- 订单趋势图 -->
+      <el-col :span="16">
+        <el-card>
+          <div slot="header">
+            <span>订单趋势</span>
+            <el-button
+              style="float: right; padding: 3px 0"
+              type="text"
+              icon="el-icon-refresh"
               @click="getOrderTrendData"
-              :loading="orderTrendLoading"
-              class="refresh-btn"
-            >
-              刷新
-            </el-button>
+              :loading="orderTrendLoading">刷新</el-button>
           </div>
-          <ECharts 
-            :options="orderTrendOptions" 
-            :height="'calc(100% - 60px)'"
-            :loading="orderTrendLoading"
-            loading-text="订单趋势数据加载中..."
-            class="trend-chart"
-          />
-        </div>
-      </div>
-      
-      <!-- 右侧：今日代理排名 -->
-      <div class="right-panel">
-        <div class="card-box">
-          <div class="ranking-section">
-            <div class="chart-header">
-              <h3 class="section-title">今日代理排名</h3>
-              <el-button 
-                type="text" 
-                icon="el-icon-refresh" 
-                @click="getAgentRankingData"
-                :loading="agentRankingLoading"
-                class="refresh-btn"
-              >
-                刷新
-              </el-button>
-            </div>
-            <ECharts 
-              :options="agentRankingOptions" 
-              :height="'calc(100% - 60px)'"
-              :loading="agentRankingLoading"
-              loading-text="代理排名数据加载中..."
-              class="ranking-chart"
-            />
+          <ECharts
+            :options="orderTrendOptions"
+            height="280px"
+            :loading="orderTrendLoading" />
+        </el-card>
+      </el-col>
+
+      <!-- 代理排名 -->
+      <el-col :span="8">
+        <el-card>
+          <div slot="header">
+            <span>代理排名</span>
+            <el-button
+              style="float: right; padding: 3px 0"
+              type="text"
+              icon="el-icon-refresh"
+              @click="getAgentRankingData"
+              :loading="agentRankingLoading">刷新</el-button>
           </div>
-        </div>
-      </div>
-    </div>
+          <ECharts
+            :options="agentRankingOptions"
+            height="280px"
+            :loading="agentRankingLoading" />
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -171,6 +265,7 @@
 import ECharts from '@/components/ECharts'
 import { getProductCategoryCount } from '@/api/product'
 import { getOrderStatistics, getTodayAgentOrderRanking, getOrderTrend } from '@/api/order'
+import { listNotice } from '@/api/system/notice'
 
 export default {
   name: 'Index',
@@ -244,200 +339,411 @@ export default {
       productChartOptions: {
         tooltip: {
           trigger: 'item',
-          formatter: '{a} <br/>{b}: {c} ({d}%)'
+          formatter: '{b}: {c}个 ({d}%)'
         },
         legend: {
-          top: '10%',
-          left: 'center'
+          bottom: '2%',
+          left: 'center',
+          textStyle: {
+            fontSize: 11
+          },
+          itemWidth: 10,
+          itemHeight: 10
         },
         series: [
           {
-            name: '产品数据',
+            name: '产品分布',
             type: 'pie',
-            radius: ['35%', '55%'],
-            center: ['50%', '50%'],
-            avoidLabelOverlap: true,
+            radius: ['45%', '75%'],
+            center: ['50%', '42%'],
+            data: [],
             itemStyle: {
-              borderRadius: 8,
+              borderWidth: 2,
               borderColor: '#fff',
-              borderWidth: 2
+              shadowBlur: 10,
+              shadowColor: 'rgba(0, 0, 0, 0.1)'
             },
             label: {
               show: true,
-              position: 'outside',
               formatter: '{d}%',
-              fontSize: 14,
-              fontWeight: 'bold',
-              color: '#333'
+              fontSize: 11,
+              color: '#606266'
             },
             labelLine: {
               show: true,
-              length: 15,
-              length2: 10,
-              smooth: true
+              length: 10,
+              length2: 5
             },
-            data: []
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 20,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.2)'
+              }
+            }
           }
         ],
         graphic: [
           {
             type: 'text',
             left: 'center',
-            top: '45%',
+            top: '38%',
             style: {
               text: '产品总数',
               fontSize: 12,
-              fontWeight: 'bold',
-              fill: '#666',
+              fontWeight: 'normal',
+              fill: '#909399',
               textAlign: 'center'
             }
           },
           {
             type: 'text',
             left: 'center',
-            top: '52%',
+            top: '45%',
             style: {
               text: '0',
-              fontSize: 16,
+              fontSize: 24,
               fontWeight: 'bold',
-              fill: '#333',
+              fill: '#303133',
               textAlign: 'center'
             }
           }
-        ]
+        ],
+        color: ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399']
       },
       // 订单趋势图配置
       orderTrendOptions: {
         tooltip: {
-          trigger: 'axis'
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            crossStyle: {
+              color: '#999'
+            }
+          },
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#E4E7ED',
+          borderWidth: 1,
+          textStyle: {
+            color: '#606266'
+          }
         },
         legend: {
           data: ['总订单', '激活订单', '有效订单'],
-          top: '5%'
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
-          containLabel: true
-        },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: []
-        },
-        yAxis: {
-          type: 'value',
-          name: '数量'
-        },
-        series: [
-          {
-            name: '总订单',
-            type: 'line',
-            data: [],
-            itemStyle: {
-              color: '#409EFF'
-            },
-            lineStyle: {
-              width: 3
-            },
-            symbol: 'circle',
-            symbolSize: 6
-          },
-          {
-            name: '激活订单',
-            type: 'bar',
-            data: [],
-            itemStyle: {
-              color: '#67C23A'
-            },
-            barWidth: '20%',
-            barGap: '10%'
-          },
-          {
-            name: '有效订单',
-            type: 'bar',
-            data: [],
-            itemStyle: {
-              color: '#E6A23C'
-            },
-            barWidth: '20%',
-            barGap: '10%'
-          }
-        ]
-      },
-      // 系统通知数据
-      notifications: [
-        {
-          text: '产品下架: 9...',
-          date: '2025-07-21'
-        },
-        {
-          text: '产品下架: 测...',
-          date: '2025-07-20'
-        },
-        {
-          text: '新品上新: 9...',
-          date: '2025-07-20'
-        }
-      ],
-      // 代理排名图表配置
-      agentRankingOptions: {
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'shadow'
-          }
-        },
-        legend: {
-          data: ['激活', '订单'],
           top: '5%',
-          right: '10%'
+          textStyle: {
+            fontSize: 12
+          }
         },
         grid: {
           left: '3%',
           right: '4%',
-          bottom: '3%',
-          top: '15%',
+          bottom: '8%',
+          top: '18%',
           containLabel: true
         },
         xAxis: {
           type: 'category',
           data: [],
           axisLabel: {
-            fontSize: 12,
-            color: '#666'
+            fontSize: 11,
+            color: '#606266'
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#E4E7ED'
+            }
+          },
+          axisTick: {
+            show: false
           }
         },
         yAxis: {
           type: 'value',
-          name: '数量',
           axisLabel: {
-            fontSize: 12,
-            color: '#666'
+            fontSize: 11,
+            color: '#606266'
+          },
+          axisLine: {
+            show: false
+          },
+          axisTick: {
+            show: false
+          },
+          splitLine: {
+            lineStyle: {
+              color: '#F5F7FA',
+              type: 'dashed'
+            }
           }
         },
         series: [
           {
-            name: '激活',
-            type: 'bar',
+            name: '总订单',
+            type: 'line',
             data: [],
-            itemStyle: {
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 6,
+            lineStyle: {
+              width: 3,
               color: '#409EFF'
             },
-            barWidth: '30%'
+            itemStyle: {
+              color: '#409EFF',
+              borderWidth: 2,
+              borderColor: '#fff'
+            },
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [{
+                  offset: 0, color: 'rgba(64, 158, 255, 0.3)'
+                }, {
+                  offset: 1, color: 'rgba(64, 158, 255, 0.05)'
+                }]
+              }
+            }
           },
           {
-            name: '订单',
-            type: 'bar',
+            name: '激活订单',
+            type: 'line',
             data: [],
-            itemStyle: {
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 5,
+            lineStyle: {
+              width: 2,
               color: '#67C23A'
             },
-            barWidth: '30%'
+            itemStyle: {
+              color: '#67C23A',
+              borderWidth: 2,
+              borderColor: '#fff'
+            },
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [{
+                  offset: 0, color: 'rgba(103, 194, 58, 0.25)'
+                }, {
+                  offset: 1, color: 'rgba(103, 194, 58, 0.03)'
+                }]
+              }
+            }
+          },
+          {
+            name: '有效订单',
+            type: 'line',
+            data: [],
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 5,
+            lineStyle: {
+              width: 2,
+              color: '#E6A23C'
+            },
+            itemStyle: {
+              color: '#E6A23C',
+              borderWidth: 2,
+              borderColor: '#fff'
+            },
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [{
+                  offset: 0, color: 'rgba(230, 162, 60, 0.25)'
+                }, {
+                  offset: 1, color: 'rgba(230, 162, 60, 0.03)'
+                }]
+              }
+            }
+          }
+        ]
+      },
+      // 系统通知数据
+      notifications: [],
+      notificationLoading: false,
+      // 代理排名图表配置
+      agentRankingOptions: {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          },
+          formatter: function(params) {
+            let result = params[0].name + '<br/>'
+            params.forEach(function(item) {
+              result += item.marker + ' ' + item.seriesName + ': ' + item.value + '<br/>'
+            })
+            return result
+          }
+        },
+        legend: {
+          data: ['激活订单', '总订单'],
+          top: '5%',
+          textStyle: {
+            fontSize: 11
+          }
+        },
+        grid: {
+          left: '15%',
+          right: '8%',
+          bottom: '8%',
+          top: '20%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'value',
+          axisLabel: {
+            fontSize: 11,
+            color: '#606266'
+          },
+          axisLine: {
+            show: false
+          },
+          axisTick: {
+            show: false
+          },
+          splitLine: {
+            lineStyle: {
+              color: '#F5F7FA',
+              type: 'dashed'
+            }
+          }
+        },
+        yAxis: {
+          type: 'category',
+          data: [],
+          axisLabel: {
+            fontSize: 10,
+            color: '#606266',
+            formatter: function(value) {
+              return value.length > 6 ? value.substring(0, 6) + '...' : value
+            }
+          },
+          axisLine: {
+            lineStyle: {
+              color: '#E4E7ED'
+            }
+          },
+          axisTick: {
+            show: false
+          }
+        },
+        series: [
+          {
+            name: '激活订单',
+            type: 'bar',
+            data: [],
+            barHeight: 16,
+            itemStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 1,
+                y2: 0,
+                colorStops: [{
+                  offset: 0, color: '#67C23A'
+                }, {
+                  offset: 1, color: '#85ce61'
+                }]
+              },
+              borderRadius: [0, 4, 4, 0]
+            },
+            label: {
+              show: true,
+              position: 'right',
+              fontSize: 10,
+              color: '#606266',
+              formatter: '{c}'
+            }
+          },
+          {
+            name: '总订单',
+            type: 'bar',
+            data: [],
+            barHeight: 16,
+            itemStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 1,
+                y2: 0,
+                colorStops: [{
+                  offset: 0, color: '#409EFF'
+                }, {
+                  offset: 1, color: '#66b1ff'
+                }]
+              },
+              borderRadius: [0, 4, 4, 0]
+            },
+            label: {
+              show: true,
+              position: 'right',
+              fontSize: 10,
+              color: '#606266',
+              formatter: '{c}'
+            }
           }
         ]
       }
+    }
+  },
+  computed: {
+    // 统计数据表格数据
+    statisticsData() {
+      return [
+        {
+          period: '今日',
+          totalOrders: this.formatNumber(this.orderData.today.totalOrders),
+          activatedOrders: this.formatNumber(this.orderData.today.activatedOrders),
+          settledOrders: this.formatNumber(this.orderData.today.settledOrders),
+          agentCount: this.formatNumber(this.orderData.today.agentCount)
+        },
+        {
+          period: '昨日',
+          totalOrders: this.formatNumber(this.orderData.yesterday.totalOrders),
+          activatedOrders: this.formatNumber(this.orderData.yesterday.activatedOrders),
+          settledOrders: this.formatNumber(this.orderData.yesterday.settledOrders),
+          agentCount: this.formatNumber(this.orderData.yesterday.agentCount)
+        },
+        {
+          period: '本月',
+          totalOrders: this.formatNumber(this.orderData.thisMonth.totalOrders),
+          activatedOrders: this.formatNumber(this.orderData.thisMonth.activatedOrders),
+          settledOrders: this.formatNumber(this.orderData.thisMonth.settledOrders),
+          agentCount: this.formatNumber(this.orderData.thisMonth.agentCount)
+        },
+        {
+          period: '上月',
+          totalOrders: this.formatNumber(this.orderData.lastMonth.totalOrders),
+          activatedOrders: this.formatNumber(this.orderData.lastMonth.activatedOrders),
+          settledOrders: this.formatNumber(this.orderData.lastMonth.settledOrders),
+          agentCount: this.formatNumber(this.orderData.lastMonth.agentCount)
+        },
+        {
+          period: '本年',
+          totalOrders: this.formatNumber(this.orderData.thisYear.totalOrders),
+          activatedOrders: this.formatNumber(this.orderData.thisYear.activatedOrders),
+          settledOrders: this.formatNumber(this.orderData.thisYear.settledOrders),
+          agentCount: this.formatNumber(this.orderData.thisYear.agentCount)
+        }
+      ]
     }
   },
   mounted() {
@@ -445,6 +751,7 @@ export default {
     this.getOrderData()
     this.getAgentRankingData()
     this.getOrderTrendData()
+    this.getNotificationData()
   },
   methods: {
     // 获取产品数据
@@ -452,7 +759,7 @@ export default {
       this.productLoading = true
       try {
         const response = await getProductCategoryCount()
-        
+
         if (response.code === 200) {
           this.productData = response.data
           this.updateProductChart()
@@ -466,13 +773,13 @@ export default {
         this.productLoading = false
       }
     },
-    
+
     // 获取订单数据
     async getOrderData() {
       this.orderLoading = true
       try {
         const response = await getOrderStatistics()
-        
+
         if (response.code === 200) {
           this.orderData = response.data
         } else {
@@ -485,13 +792,13 @@ export default {
         this.orderLoading = false
       }
     },
-    
+
     // 获取代理排名数据
     async getAgentRankingData() {
       this.agentRankingLoading = true
       try {
         const response = await getTodayAgentOrderRanking()
-        
+
         if (response.code === 200) {
           this.agentRankingData = response.data
           this.updateAgentRankingChart()
@@ -505,13 +812,13 @@ export default {
         this.agentRankingLoading = false
       }
     },
-    
+
     // 获取订单趋势数据
     async getOrderTrendData() {
       this.orderTrendLoading = true
       try {
         const response = await getOrderTrend()
-        
+
         if (response.code === 200) {
           this.orderTrendData = response.data
           this.updateOrderTrendChart()
@@ -525,29 +832,60 @@ export default {
         this.orderTrendLoading = false
       }
     },
-    
+
+    // 获取系统通知数据
+    async getNotificationData() {
+      this.notificationLoading = true
+      try {
+        const response = await listNotice({
+          pageNum: 1,
+          pageSize: 6 // 只获取最新的6条通知
+        })
+
+        if (response.code === 200) {
+          // 转换数据格式，添加类型判断
+          this.notifications = response.rows.map(item => ({
+            text: item.noticeTitle,
+            date: item.createTime,
+            type: this.getNotificationType(item.noticeType),
+            id: item.noticeId
+          }))
+        } else {
+          console.warn('获取系统通知失败:', response.msg || '未知错误')
+        }
+      } catch (error) {
+        console.error('获取系统通知数据失败:', error)
+        // 不显示错误提示，避免影响页面主要功能
+      } finally {
+        this.notificationLoading = false
+      }
+    },
+
     // 更新代理排名图表
     updateAgentRankingChart() {
       const { agentRankingList } = this.agentRankingData
-      
+
       if (!agentRankingList || agentRankingList.length === 0) {
         return
       }
-      
+
+      // 取前10名并倒序显示（从下往上排列）
+      const topAgents = agentRankingList.slice(0, 10).reverse()
+
       // 提取代理名称
-      const agentNames = agentRankingList.map(item => item.downstreamName)
-      
+      const agentNames = topAgents.map(item => item.downstreamName)
+
       // 提取激活订单数据
-      const activatedOrders = agentRankingList.map(item => item.activatedOrders)
-      
+      const activatedOrders = topAgents.map(item => item.activatedOrders)
+
       // 提取总订单数据
-      const totalOrders = agentRankingList.map(item => item.totalOrders)
-      
+      const totalOrders = topAgents.map(item => item.totalOrders)
+
       // 更新图表配置
       this.agentRankingOptions = {
         ...this.agentRankingOptions,
-        xAxis: {
-          ...this.agentRankingOptions.xAxis,
+        yAxis: {
+          ...this.agentRankingOptions.yAxis,
           data: agentNames
         },
         series: [
@@ -562,13 +900,13 @@ export default {
         ]
       }
     },
-    
+
     // 更新订单趋势图表
     updateOrderTrendChart() {
       if (!this.orderTrendData || this.orderTrendData.length === 0) {
         return
       }
-      
+
       // 提取日期数据，格式化为 MM-DD
       const dates = this.orderTrendData.map(item => {
         const date = new Date(item.orderDate)
@@ -576,16 +914,16 @@ export default {
         const day = date.getDate().toString().padStart(2, '0')
         return `${month}-${day}`
       })
-      
+
       // 提取总订单数据
       const totalOrders = this.orderTrendData.map(item => item.totalOrders)
-      
+
       // 提取激活订单数据
       const activatedOrders = this.orderTrendData.map(item => item.activatedOrders)
-      
+
       // 提取有效订单数据
       const validOrders = this.orderTrendData.map(item => item.validOrders)
-      
+
       // 更新图表配置
       this.orderTrendOptions = {
         ...this.orderTrendOptions,
@@ -609,7 +947,7 @@ export default {
         ]
       }
     },
-    
+
     // 格式化数字
     formatNumber(num) {
       if (num >= 10000) {
@@ -619,11 +957,60 @@ export default {
       }
       return num.toString()
     },
-    
+
+    // 获取变化文本
+    getChangeText(current, previous) {
+      if (previous === 0) {
+        return current > 0 ? '新增' : '-'
+      }
+      const change = current - previous
+      if (change > 0) {
+        return `+${this.formatNumber(change)}`
+      } else if (change < 0) {
+        return `${this.formatNumber(change)}`
+      } else {
+        return '持平'
+      }
+    },
+
+    // 获取趋势样式类
+    getTrendClass(current, previous) {
+      if (previous === 0) return 'trend-new'
+      const change = current - previous
+      if (change > 0) return 'trend-up'
+      if (change < 0) return 'trend-down'
+      return 'trend-equal'
+    },
+
+    // 获取趋势图标
+    getTrendIcon(current, previous) {
+      if (previous === 0) return 'el-icon-plus'
+      const change = current - previous
+      if (change > 0) return 'el-icon-top'
+      if (change < 0) return 'el-icon-bottom'
+      return 'el-icon-minus'
+    },
+
+    // 获取趋势百分比
+    getTrendPercent(current, previous) {
+      if (previous === 0) return current > 0 ? '+100%' : '0%'
+      const percent = ((current - previous) / previous * 100).toFixed(1)
+      return `${percent >= 0 ? '+' : ''}${percent}%`
+    },
+
+    // 获取趋势颜色
+    getTrendColor(current, previous) {
+      if (previous === 0) return '#409EFF'
+      const change = current - previous
+      if (change > 0) return '#67C23A'
+      if (change < 0) return '#F56C6C'
+      return '#909399'
+    },
+
     // 更新产品图表
     updateProductChart() {
       const { productTypeCount, totalCount } = this.productData
-      
+
       // 构建饼图数据
       const chartData = [
         { value: productTypeCount.dailySettlement, name: '日结秒返' },
@@ -632,7 +1019,7 @@ export default {
         { value: productTypeCount.other, name: '其他产品' },
         { value: productTypeCount.combination, name: '组合返佣' }
       ].filter(item => item.value > 0) // 过滤掉数量为0的产品类型
-      
+
       // 更新图表配置
       this.productChartOptions = {
         ...this.productChartOptions,
@@ -653,477 +1040,540 @@ export default {
           }
         ]
       }
+    },
+
+    // 获取通知图标
+    getNotificationIcon(type) {
+      const iconMap = {
+        success: 'el-icon-check',
+        warning: 'el-icon-warning',
+        danger: 'el-icon-delete',
+        info: 'el-icon-info'
+      }
+      return iconMap[type] || 'el-icon-bell'
+    },
+
+    // 获取通知颜色
+    getNotificationColor(type) {
+      const colorMap = {
+        success: '#67C23A',
+        warning: '#E6A23C',
+        danger: '#F56C6C',
+        info: '#409EFF'
+      }
+      return colorMap[type] || '#909399'
+    },
+
+    // 获取通知标签类型
+    getNotificationTagType(type) {
+      const tagMap = {
+        success: 'success',
+        warning: 'warning',
+        danger: 'danger',
+        info: 'primary'
+      }
+      return tagMap[type] || ''
+    },
+
+    // 获取通知类型文本
+    getNotificationTypeText(type) {
+      const textMap = {
+        success: '成功',
+        warning: '警告',
+        danger: '错误',
+        info: '信息'
+      }
+      return textMap[type] || '通知'
+    },
+
+    // 格式化相对时间
+    formatRelativeTime(dateTime) {
+      const now = new Date()
+      const date = new Date(dateTime)
+      const diffInSeconds = Math.floor((now - date) / 1000)
+
+      if (diffInSeconds < 60) {
+        return '刚刚'
+      } else if (diffInSeconds < 3600) {
+        const minutes = Math.floor(diffInSeconds / 60)
+        return `${minutes}分钟前`
+      } else if (diffInSeconds < 86400) {
+        const hours = Math.floor(diffInSeconds / 3600)
+        return `${hours}小时前`
+      } else if (diffInSeconds < 2592000) { // 30天
+        const days = Math.floor(diffInSeconds / 86400)
+        return `${days}天前`
+      } else {
+        // 超过30天显示具体日期
+        const month = (date.getMonth() + 1).toString().padStart(2, '0')
+        const day = date.getDate().toString().padStart(2, '0')
+        return `${month}-${day}`
+      }
+    },
+
+    // 根据通知类型转换为样式类型
+    getNotificationType(noticeType) {
+      // 根据若依系统的通知类型转换
+      switch(noticeType) {
+        case '1': // 通知
+          return 'info'
+        case '2': // 公告
+          return 'success'
+        default:
+          return 'info'
+      }
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.dashboard-container {
-  height: calc(100vh - 84px);
-  padding: 20px;
-  background-color: #f5f5f5;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+// 统计卡片样式
+.box-card {
+  border: 1px solid #EBEEF5;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  height: 100px; // 固定卡片高度
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  :deep(.el-card__body) {
+    padding: 16px; // 减少内边距
+  }
+
+  .card-content {
+    display: flex;
+    align-items: center;
+    height: 68px; // 固定内容高度
+  }
+
+  .card-left {
+    margin-right: 12px;
+
+    .card-icon {
+      font-size: 32px;
+      width: 48px;
+      height: 48px;
+      line-height: 48px;
+      text-align: center;
+      border-radius: 50%;
+      color: #fff;
+    }
+  }
+
+  .card-right {
+    flex: 1;
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+
+      span {
+        font-size: 13px;
+        color: #606266;
+        font-weight: 500;
+      }
+    }
+
+    .card-number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #303133;
+      margin-bottom: 2px;
+      line-height: 1;
+    }
+
+    .card-desc {
+      font-size: 11px;
+      color: #909399;
+    }
+  }
+
+  // 不同卡片的主题色
+  &.order-card .card-icon {
+    background: linear-gradient(135deg, #409EFF, #66b1ff);
+  }
+
+  &.active-card .card-icon {
+    background: linear-gradient(135deg, #67C23A, #85ce61);
+  }
+
+  &.commission-card .card-icon {
+    background: linear-gradient(135deg, #E6A23C, #ebb563);
+  }
+
+  &.agent-card .card-icon {
+    background: linear-gradient(135deg, #F56C6C, #f78989);
+  }
 }
 
-// 顶部区域
-.top-section {
-  display: flex;
-  gap: 20px;
-  height: 45%;
-  
-  .left-panel {
-    flex: 1;
-  }
-  
-  .middle-panel {
-    flex: 1.5;
-  }
-  
-  .right-panel {
-    flex: 1;
-  }
-}
-
-// 底部区域
-.bottom-section {
-  display: flex;
-  gap: 20px;
-  height: 45%;
-  
-  .left-panel {
-    flex: 1.5;
-  }
-  
-  .right-panel {
-    flex: 1;
-  }
-}
-
-// 卡片样式
-.card-box {
-  background-color: #FFFFFF;
-  height: 100%;
+// 趋势指示器样式
+.trend-indicator {
+  font-size: 10px;
+  font-weight: bold;
+  padding: 1px 4px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  box-sizing: border-box;
+
+  i {
+    margin-right: 1px;
+    font-size: 9px;
+  }
+
+  &.trend-up {
+    color: #67C23A;
+    background: rgba(103, 194, 58, 0.1);
+  }
+
+  &.trend-down {
+    color: #F56C6C;
+    background: rgba(245, 108, 108, 0.1);
+  }
+
+  &.trend-equal {
+    color: #909399;
+    background: rgba(144, 147, 153, 0.1);
+  }
+
+  &.trend-new {
+    color: #409EFF;
+    background: rgba(64, 158, 255, 0.1);
+  }
 }
 
-// 产品图表区域
-.left-panel .card-box {
+// 通知徽章样式
+.notification-badge {
+  margin-left: 8px;
+
+  :deep(.el-badge__content) {
+    background-color: #F56C6C;
+    font-size: 10px;
+    height: 16px;
+    line-height: 16px;
+    min-width: 16px;
+    padding: 0 4px;
+  }
+}
+
+// 通知列表滚动条样式
+.notification-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+  background: #F5F7FA;
+  border-radius: 2px;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+  background: #C0C4CC;
+  border-radius: 2px;
+
+  &:hover {
+    background: #A4A9AE;
+  }
+}
+
+// 等高卡片行样式
+.equal-height-row {
+  .el-col {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+// 等高卡片样式
+.equal-height-card {
+  height: 320px; // 减少高度：卡片头部50px + 内容区270px
   display: flex;
   flex-direction: column;
+
+  :deep(.el-card__body) {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    height: 270px; // 内容区域固定高度
+  }
+
+  // 图表容器
+  .chart-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 240px;
+  }
+
+  // 表格容器
+  .table-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 240px;
+  }
+
+  // 通知容器
+  .notification-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 240px;
+  }
 }
 
-.chart-header, .data-header {
+// 通知列表高度调整
+.notification-list {
+  flex: 1;
+  height: 100%;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+
+  .notification-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 8px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    background: #FAFAFA;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &:hover {
+      background: #F5F7FA;
+      border-color: #E4E7ED;
+      transform: translateX(2px);
+    }
+
+    .notification-icon {
+      margin-right: 12px;
+      margin-top: 2px;
+      min-width: 20px;
+      text-align: center;
+
+      i {
+        font-size: 16px;
+        font-weight: bold;
+      }
+    }
+
+    .notification-content {
+      flex: 1;
+      min-width: 0;
+
+      .notification-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        gap: 8px;
+
+        .notification-text {
+          font-size: 13px;
+          color: #303133;
+          line-height: 1.4;
+          font-weight: 500;
+          flex: 1;
+          word-break: break-all;
+        }
+
+        .el-tag--mini {
+          font-size: 10px;
+          height: 18px;
+          line-height: 16px;
+          padding: 0 4px;
+          border-radius: 9px;
+          flex-shrink: 0;
+        }
+      }
+
+      .notification-time {
+        font-size: 11px;
+        color: #909399;
+        display: flex;
+        align-items: center;
+
+        &::before {
+          content: '';
+          display: inline-block;
+          width: 4px;
+          height: 4px;
+          background: #C0C4CC;
+          border-radius: 50%;
+          margin-right: 6px;
+        }
+      }
+    }
+  }
+
+  // 空状态样式
+  .no-notifications {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #909399;
+    text-align: center;
+  }
+}
+
+// 统计表格样式
+.statistics-table {
+  .today-data {
+    font-weight: bold;
+    color: #303133;
+    font-size: 14px;
+  }
+
+  .table-cell-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .trend-mini {
+    font-size: 10px;
+    line-height: 1;
+
+    i {
+      font-size: 12px;
+    }
+  }
+
+  // 表格行高调整
+  :deep(.el-table__row) {
+    td {
+      padding: 12px 0;
+    }
+  }
+
+  // 表头样式
+  :deep(.el-table__header-wrapper) {
+    th {
+      font-weight: 600;
+      color: #606266;
+      background: #F8F9FA;
+    }
+  }
+}
+
+// 表格行间距调整
+:deep(.el-table td) {
+  padding: 8px 0;
+
+  .el-tag--mini {
+    font-size: 11px;
+    padding: 0 6px;
+    height: 20px;
+    line-height: 18px;
+  }
+}
+
+// 卡片头部按钮样式
+:deep(.el-card__header) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+
+  .el-button--text {
+    color: #409EFF;
+    font-size: 12px;
+    padding: 0;
+  }
 }
 
-.refresh-btn {
-  padding: 0;
-  font-size: 14px;
+// 整体容器优化
+.app-container {
+  padding: 16px;
+  min-height: calc(100vh - 84px); // 减去头部导航高度
+  overflow: hidden; // 防止页面滚动
+}
+
+// 行间距优化
+.mb20 {
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// 卡片内容填充优化
+:deep(.el-card) {
+  border-radius: 8px;
+  border: 1px solid #E4E7ED;
+
+  .el-card__header {
+    background: #FAFBFC;
+    border-bottom: 1px solid #E4E7ED;
+    padding: 16px 20px;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  .el-card__body {
+    padding: 20px;
+  }
+}
+
+// 统一按钮样式
+:deep(.el-button--text) {
   color: #409EFF;
-  
+  font-size: 12px;
+  padding: 0;
+
   &:hover {
     color: #66b1ff;
   }
+
+  &.is-loading {
+    color: #C0C4CC;
+  }
 }
 
-.product-chart {
-  height: 100%;
-  width: 100%;
-  flex: 1;
-}
-
-// 饼图响应式调整
+// 响应式处理
 @media (max-width: 1400px) {
-  .product-chart {
-    :deep(.echarts) {
-      .graphic text:first-child {
-        font-size: 10px !important; // 产品总数
-      }
-      .graphic text:last-child {
-        font-size: 14px !important; // 数量
-      }
+  .app-container {
+    padding: 16px;
+  }
+
+  .box-card {
+    .card-number {
+      font-size: 24px;
     }
   }
 }
 
-@media (max-width: 1200px) {
-  .product-chart {
-    :deep(.echarts) {
-      .graphic text:first-child {
-        font-size: 9px !important; // 产品总数
-      }
-      .graphic text:last-child {
-        font-size: 12px !important; // 数量
-      }
-    }
-  }
-}
-
-@media (max-width: 1000px) {
-  .product-chart {
-    :deep(.echarts) {
-      .graphic text:first-child {
-        font-size: 8px !important; // 产品总数
-      }
-      .graphic text:last-child {
-        font-size: 10px !important; // 数量
-      }
-    }
-  }
-}
-
-// 趋势图表
-.trend-chart {
-  height: 100%;
-  width: 100%;
-  flex: 1;
-}
-
-// 订单趋势图区域
-.left-panel .card-box {
-  display: flex;
-  flex-direction: column;
-}
-
-// 数据统计区域
-.data-section {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  overflow: hidden; // 防止内容溢出
-}
-
-.data-group {
-  flex: 1;
-  min-height: 0; // 确保可以收缩
-  display: flex;
-  flex-direction: column;
-}
-
-.data-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10px;
-  padding-bottom: 0;
-  flex-shrink: 0; // 标题不收缩
-}
-
-.data-row {
-  display: flex;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
-  flex-shrink: 0; // 数据行不收缩
-  
-  .period-tag {
-    flex-shrink: 0; // 标签不收缩
-    margin-right: 8px;
-  }
-  
-  .data-item {
-    flex: 1;
-    text-align: center;
-    color: #333;
-    font-size: 14px;
-    padding: 0 8px;
-    white-space: nowrap; // 防止文字换行
-    overflow: hidden;
-    text-overflow: ellipsis; // 文字过长时显示省略号
-  }
-}
-
-// 响应式布局 - 电脑端不同尺寸
-@media (max-width: 1600px) {
-  .data-section {
-    gap: 15px;
-  }
-  
-  .data-title {
-    font-size: 16px;
-    margin-bottom: 12px;
-  }
-  
-  .data-row {
-    padding: 10px 0;
-    
-    .period-tag {
-      font-size: 12px;
-    }
-    
-    .data-item {
-      font-size: 13px;
-      padding: 0 6px;
-    }
-  }
-}
-
-@media (max-width: 1400px) {
-  .data-section {
-    gap: 12px;
-  }
-  
-  .data-title {
-    font-size: 15px;
-    margin-bottom: 10px;
-  }
-  
-  .data-row {
-    padding: 8px 0;
-    
-    .period-tag {
-      font-size: 11px;
-    }
-    
-    .data-item {
-      font-size: 12px;
-      padding: 0 4px;
-    }
-  }
-}
-
-@media (max-width: 1200px) {
-  .data-section {
-    gap: 10px;
-  }
-  
-  .data-title {
-    font-size: 14px;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-  }
-  
-  .data-row {
-    padding: 6px 0;
-    
-    .period-tag {
-      font-size: 10px;
-    }
-    
-    .data-item {
-      font-size: 11px;
-      padding: 0 3px;
-    }
-  }
-}
-
-@media (max-width: 1000px) {
-  .data-section {
-    gap: 8px;
-  }
-  
-  .data-title {
-    font-size: 13px;
-    margin-bottom: 6px;
-    padding-bottom: 4px;
-  }
-  
-  .data-row {
-    padding: 5px 0;
-    
-    .period-tag {
-      font-size: 9px;
-    }
-    
-    .data-item {
-      font-size: 10px;
-      padding: 0 2px;
-    }
-  }
-}
-
-// 超小屏幕时的特殊处理
-@media (max-width: 900px) {
-  .data-section {
-    gap: 6px;
-  }
-  
-  .data-title {
-    font-size: 12px;
-    margin-bottom: 5px;
-    padding-bottom: 3px;
-  }
-  
-  .data-row {
-    padding: 4px 0;
-    flex-wrap: wrap; // 允许换行
-    
-    .period-tag {
-      width: 100%;
-      margin-bottom: 2px;
-      font-size: 9px;
-    }
-    
-    .data-item {
-      flex: 0 0 25%; // 每行4个数据项
-      font-size: 10px;
-      padding: 2px;
-      text-align: left;
-    }
-  }
-}
-
-// 系统通知区域
-.notification-section {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.section-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10px;
-  padding-bottom: 0;
-}
-
-.notification-list {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.notification-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
-  
-  .notification-bar {
-    width: 4px;
-    height: 40px;
-    background-color: #67C23A;
-    margin-right: 12px;
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
-  
-  .notification-content {
-    flex: 1;
-    
-    .notification-text {
-      font-size: 14px;
-      color: #333;
-      margin-bottom: 4px;
-      line-height: 1.4;
-    }
-    
-    .notification-date {
-      font-size: 12px;
-      color: #999;
-    }
-  }
-}
-
-// 代理排名区域
-.ranking-section {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.ranking-chart {
-  height: 100%;
-  width: 100%;
-  flex: 1;
-}
-
-// 响应式设计
-@media (max-width: 1600px) {
-  .dashboard-container {
-    padding: 18px;
-    gap: 18px;
-  }
-  
-  .top-section, .bottom-section {
-    gap: 18px;
-  }
-  
-  .card-box {
-    padding: 18px;
-  }
-}
-
-@media (max-width: 1400px) {
-  .dashboard-container {
-    padding: 15px;
-    gap: 15px;
-  }
-  
-  .top-section, .bottom-section {
-    gap: 15px;
-  }
-  
-  .card-box {
-    padding: 15px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .dashboard-container {
-    padding: 12px;
-    gap: 12px;
-  }
-  
-  .top-section, .bottom-section {
-    gap: 12px;
-  }
-  
-  .card-box {
+@media (max-width: 768px) {
+  .app-container {
     padding: 12px;
   }
-}
 
-@media (max-width: 1000px) {
-  .dashboard-container {
-    padding: 10px;
-    gap: 10px;
-  }
-  
-  .top-section, .bottom-section {
-    gap: 10px;
-  }
-  
-  .card-box {
-    padding: 10px;
-  }
-}
+  .box-card {
+    margin-bottom: 15px;
 
-@media (max-width: 900px) {
-  .dashboard-container {
-    padding: 8px;
-    gap: 8px;
-  }
-  
-  .top-section, .bottom-section {
-    gap: 8px;
-  }
-  
-  .card-box {
-    padding: 8px;
-  }
-}
+    .card-number {
+      font-size: 20px;
+    }
 
-// 超小屏幕时的布局调整
-@media (max-width: 800px) {
-  .top-section, .bottom-section {
-    flex-direction: column;
-    height: auto;
-  }
-  
-  .top-section > div,
-  .bottom-section > div {
-    height: 300px;
+    .card-left .card-icon {
+      font-size: 32px;
+      width: 50px;
+      height: 50px;
+      line-height: 50px;
+    }
   }
 }
 </style>

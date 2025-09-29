@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruoyi.console.mapper.PageViewMapper">
+
+    <!-- ================================ 结果映射定义 ================================ -->
+
+    <!-- PageViewLog结果映射 -->
+    <resultMap id="PageViewLogResult" type="com.ruoyi.common.order.entity.PageViewLog">
+        <id property="id" column="id"/>
+        <result property="agentCode" column="agent_code"/>
+        <result property="visitorId" column="visitor_id"/>
+        <result property="ipAddress" column="ip_address"/>
+        <result property="userAgent" column="user_agent"/>
+        <result property="referer" column="referer"/>
+        <result property="deviceType" column="device_type"/>
+        <result property="visitTime" column="visit_time"/>
+    </resultMap>
+
+    <!-- PageViewStatistics结果映射 -->
+    <resultMap id="PageViewStatisticsResult" type="com.ruoyi.common.order.entity.PageViewStatistics">
+        <id property="id" column="id"/>
+        <result property="agentCode" column="agent_code"/>
+        <result property="viewDate" column="view_date"/>
+        <result property="viewCount" column="view_count"/>
+        <result property="visitorCount" column="visitor_count"/>
+        <result property="ipCount" column="ip_count"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <!-- ================================ 访问日志相关操作 ================================ -->
+
+    <!-- 插入访问日志 -->
+    <insert id="insertViewLog" parameterType="com.ruoyi.common.order.entity.PageViewLog" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_page_view_log (
+            agent_code, visitor_id, ip_address,
+            user_agent, referer, device_type, visit_time
+        ) VALUES (
+            #{agentCode}, #{visitorId}, #{ipAddress},
+            #{userAgent}, #{referer}, #{deviceType},
+            IFNULL(#{visitTime}, NOW())
+        )
+    </insert>
+
+    <!-- 批量插入访问日志 -->
+    <insert id="insertViewLogBatch" parameterType="java.util.List">
+        INSERT INTO t_page_view_log (
+            agent_code, visitor_id, ip_address,
+            user_agent, referer, device_type, visit_time
+        ) VALUES
+        <foreach collection="logs" item="log" separator=",">
+            (
+                #{log.agentCode}, #{log.visitorId}, #{log.ipAddress},
+                #{log.userAgent}, #{log.referer}, #{log.deviceType},
+                IFNULL(#{log.visitTime}, NOW())
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据条件查询访问日志 -->
+    <select id="selectViewLogs" resultMap="PageViewLogResult">
+        SELECT * FROM t_page_view_log
+        <where>
+            <if test="agentCode != null and agentCode != ''">
+                AND agent_code = #{agentCode}
+            </if>
+            <if test="startTime != null">
+                AND visit_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND visit_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY visit_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 统计访问日志数量 -->
+    <select id="countViewLogs" resultType="int">
+        SELECT COUNT(1) FROM t_page_view_log
+        <where>
+            <if test="agentCode != null and agentCode != ''">
+                AND agent_code = #{agentCode}
+            </if>
+            <if test="startTime != null">
+                AND visit_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND visit_time &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据代理商和日期查询当日访问明细 -->
+    <select id="selectTodayViewLogs" resultMap="PageViewLogResult">
+        SELECT * FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = #{viewDate}
+        ORDER BY visit_time DESC
+    </select>
+
+    <!-- 删除过期的访问日志 -->
+    <delete id="deleteExpiredViewLogs">
+        DELETE FROM t_page_view_log
+        WHERE visit_time &lt; #{beforeDate}
+    </delete>
+
+    <!-- ================================ 访问统计相关操作 ================================ -->
+
+    <!-- 插入或更新访问统计（核心方法） -->
+    <insert id="insertOrUpdateStatistics">
+        INSERT INTO t_page_view_statistics (
+            agent_code, view_date, view_count, visitor_count, ip_count
+        )
+        SELECT
+            #{agentCode} as agent_code,
+            #{viewDate} as view_date,
+            COUNT(*) as view_count,
+            COUNT(DISTINCT visitor_id) as visitor_count,
+            COUNT(DISTINCT ip_address) as ip_count
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = #{viewDate}
+        ON DUPLICATE KEY UPDATE
+            view_count = VALUES(view_count),
+            visitor_count = VALUES(visitor_count),
+            ip_count = VALUES(ip_count),
+            update_time = NOW()
+    </insert>
+
+    <!-- 直接插入访问统计记录 -->
+    <insert id="insertStatistics" parameterType="com.ruoyi.common.order.entity.PageViewStatistics" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_page_view_statistics (
+            agent_code, view_date, view_count, visitor_count, ip_count, create_time
+        ) VALUES (
+            #{agentCode}, #{viewDate}, #{viewCount}, #{visitorCount}, #{ipCount}, NOW()
+        )
+    </insert>
+
+    <!-- 更新访问统计记录 -->
+    <update id="updateStatistics" parameterType="com.ruoyi.common.order.entity.PageViewStatistics">
+        UPDATE t_page_view_statistics
+        SET view_count = #{viewCount},
+            visitor_count = #{visitorCount},
+            ip_count = #{ipCount},
+            update_time = NOW()
+        WHERE agent_code = #{agentCode}
+        AND view_date = #{viewDate}
+    </update>
+
+    <!-- 根据代理商和日期查询统计数据 -->
+    <select id="selectStatistics" resultMap="PageViewStatisticsResult">
+        SELECT * FROM t_page_view_statistics
+        WHERE agent_code = #{agentCode}
+        AND view_date = #{viewDate}
+    </select>
+
+    <!-- 查询代理商的访问趋势 -->
+    <select id="selectViewTrend" resultMap="PageViewStatisticsResult">
+        SELECT * FROM t_page_view_statistics
+        WHERE agent_code = #{agentCode}
+        AND view_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY view_date DESC
+    </select>
+
+    <!-- 查询所有代理商的访问统计 -->
+    <select id="selectAllAgentStatistics" resultMap="PageViewStatisticsResult">
+        SELECT * FROM t_page_view_statistics
+        WHERE view_date = #{viewDate}
+        ORDER BY view_count DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 统计指定日期有访问记录的代理商数量 -->
+    <select id="countActiveAgents" resultType="int">
+        SELECT COUNT(DISTINCT agent_code) FROM t_page_view_statistics
+        WHERE view_date = #{viewDate}
+        AND view_count > 0
+    </select>
+
+    <!-- 删除过期的统计数据 -->
+    <delete id="deleteExpiredStatistics">
+        DELETE FROM t_page_view_statistics
+        WHERE view_date &lt; #{beforeDate}
+    </delete>
+
+    <!-- ================================ 高级统计查询 ================================ -->
+
+    <!-- 获取代理商访问统计摘要 -->
+    <select id="selectStatisticsSummary" resultType="map">
+        SELECT
+            COALESCE(SUM(view_count), 0) as totalViews,
+            COALESCE(SUM(visitor_count), 0) as totalVisitors,
+            COALESCE(SUM(ip_count), 0) as totalIps,
+            COALESCE(AVG(view_count), 0) as avgDailyViews,
+            COALESCE(MAX(view_count), 0) as maxDailyViews,
+            COALESCE(MIN(view_date), '') as firstDate,
+            COALESCE(MAX(view_date), '') as lastDate,
+            COUNT(*) as activeDays
+        FROM t_page_view_statistics
+        WHERE agent_code = #{agentCode}
+        AND view_date BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 获取访问最多的代理商排行榜 -->
+    <select id="selectTopAgentsByViews" resultType="map">
+        SELECT
+            agent_code as agentCode,
+            view_count as viewCount,
+            visitor_count as visitorCount,
+            ip_count as ipCount
+        FROM t_page_view_statistics
+        WHERE view_date = #{viewDate}
+        ORDER BY view_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 获取访问来源统计 -->
+    <select id="selectRefererStatistics" resultType="map">
+        SELECT
+            CASE
+                WHEN referer IS NULL OR referer = '' THEN '直接访问'
+                ELSE referer
+            END as referer,
+            COUNT(*) as count,
+            COUNT(DISTINCT visitor_id) as uniqueVisitors
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = #{viewDate}
+        GROUP BY referer
+        ORDER BY count DESC
+    </select>
+
+    <!-- 获取设备类型统计 -->
+    <select id="selectDeviceTypeStatistics" resultType="map">
+        SELECT
+            COALESCE(device_type, 'Unknown') as deviceType,
+            COUNT(*) as count,
+            COUNT(DISTINCT visitor_id) as uniqueVisitors,
+            ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM t_page_view_log
+                                     WHERE agent_code = #{agentCode}
+                                     AND DATE(visit_time) = #{viewDate}), 2) as percentage
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = #{viewDate}
+        GROUP BY device_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- 获取小时访问分布统计 -->
+    <select id="selectHourlyStatistics" resultType="map">
+        SELECT
+            HOUR(visit_time) as hour,
+            COUNT(*) as count,
+            COUNT(DISTINCT visitor_id) as uniqueVisitors
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = #{viewDate}
+        GROUP BY HOUR(visit_time)
+        ORDER BY hour
+    </select>
+
+    <!-- 获取IP访问排行 -->
+    <select id="selectTopIPsByViews" resultType="map">
+        SELECT
+            ip_address as ipAddress,
+            COUNT(*) as viewCount,
+            COUNT(DISTINCT visitor_id) as uniqueVisitors,
+            MIN(visit_time) as firstVisit,
+            MAX(visit_time) as lastVisit
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = #{viewDate}
+        GROUP BY ip_address
+        ORDER BY viewCount DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- ================================ 实时统计查询 ================================ -->
+
+    <!-- 获取代理商今日实时统计 -->
+    <select id="selectTodayRealTimeStats" resultType="map">
+        SELECT
+            COUNT(*) as totalViews,
+            COUNT(DISTINCT visitor_id) as uniqueVisitors,
+            COUNT(DISTINCT ip_address) as uniqueIps,
+            COUNT(CASE WHEN device_type = 'Mobile' THEN 1 END) as mobileViews,
+            COUNT(CASE WHEN device_type = 'PC' THEN 1 END) as pcViews,
+            COUNT(CASE WHEN device_type = 'Tablet' THEN 1 END) as tabletViews,
+            COUNT(CASE WHEN referer IS NULL OR referer = '' THEN 1 END) as directViews,
+            MAX(visit_time) as lastVisitTime
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = CURDATE()
+    </select>
+
+    <!-- 获取代理商最近访问记录 -->
+    <select id="selectRecentViewLogs" resultMap="PageViewLogResult">
+        SELECT * FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        ORDER BY visit_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 检查代理商是否有访问记录 -->
+    <select id="hasViewRecords" resultType="boolean">
+        SELECT COUNT(1) > 0 FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        LIMIT 1
+    </select>
+
+    <!-- 获取代理商首次访问时间 -->
+    <select id="selectFirstVisitTime" resultType="java.util.Date">
+        SELECT MIN(visit_time) FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+    </select>
+
+    <!-- 获取代理商最后访问时间 -->
+    <select id="selectLastVisitTime" resultType="java.util.Date">
+        SELECT MAX(visit_time) FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+    </select>
+
+    <!-- ================================ 数据完整性检查 ================================ -->
+
+    <!-- 检查统计数据完整性 -->
+    <select id="checkDataConsistency" resultType="map">
+        SELECT
+            (SELECT COUNT(*) FROM t_page_view_log
+             WHERE agent_code = #{agentCode} AND DATE(visit_time) = #{viewDate}) as logCount,
+            (SELECT COALESCE(view_count, 0) FROM t_page_view_statistics
+             WHERE agent_code = #{agentCode} AND view_date = #{viewDate}) as statsCount,
+            (SELECT COUNT(*) FROM t_page_view_log
+             WHERE agent_code = #{agentCode} AND DATE(visit_time) = #{viewDate}) =
+            (SELECT COALESCE(view_count, 0) FROM t_page_view_statistics
+             WHERE agent_code = #{agentCode} AND view_date = #{viewDate}) as isConsistent
+    </select>
+
+    <!-- 修复统计数据 -->
+    <update id="repairStatisticsData">
+        INSERT INTO t_page_view_statistics (
+            agent_code, view_date, view_count, visitor_count, ip_count
+        )
+        SELECT
+            #{agentCode} as agent_code,
+            #{viewDate} as view_date,
+            COUNT(*) as view_count,
+            COUNT(DISTINCT visitor_id) as visitor_count,
+            COUNT(DISTINCT ip_address) as ip_count
+        FROM t_page_view_log
+        WHERE agent_code = #{agentCode}
+        AND DATE(visit_time) = #{viewDate}
+        ON DUPLICATE KEY UPDATE
+            view_count = VALUES(view_count),
+            visitor_count = VALUES(visitor_count),
+            ip_count = VALUES(ip_count),
+            update_time = NOW()
+    </update>
+
+</mapper>

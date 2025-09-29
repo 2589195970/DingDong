@@ -61,6 +61,14 @@ public class AgentOrderServiceImpl extends ServiceImpl<AgentAccountMapper, Agent
     public PageResult<AgentOrderSelectVO> agentSelectOrderListPage(AgentOrderSelectBO agentOrderSelectBO, LoginUser loginUser) throws BizException {
         //获取代理账户信息
         AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+
+        // 校验 orderType 参数
+        if (agentOrderSelectBO.getOrderType() != null &&
+            agentOrderSelectBO.getOrderType() != 0 &&
+            agentOrderSelectBO.getOrderType() != 1) {
+            throw new BizException("订单类型参数错误，只允许0（我的订单）或1（代理商订单）");
+        }
+
         //读取分页
         Page page = new Page(agentOrderSelectBO.getPageNo(), agentOrderSelectBO.getPageSize());
         Page<Order> orderPage = orderMapper.selectPage(page, new LambdaQueryWrapper<Order>()
@@ -76,7 +84,19 @@ public class AgentOrderServiceImpl extends ServiceImpl<AgentAccountMapper, Agent
                 .eq(StringUtils.isNotEmpty(agentOrderSelectBO.getAccNumber()), Order::getAccNumber, agentOrderSelectBO.getAccNumber())
                 //此处查的是账号下归属代理的订单 所以只要归属中出现就要查出来
                 .like(StringUtils.isNotEmpty(agentOrderSelectBO.getDownstreamCode()), Order::getDownstreamFatherList, agentOrderSelectBO.getDownstreamCode())
-                .like(Order::getDownstreamFatherList, agentAccount.getAgentCode())
+                // 根据 orderType 参数决定查询范围
+                .and(agentOrderSelectBO.getOrderType() != null, wrapper -> {
+                    if (agentOrderSelectBO.getOrderType() == 0) {
+                        // 查询我的订单
+                        wrapper.eq(Order::getDownstreamCode, agentAccount.getAgentCode());
+                    } else if (agentOrderSelectBO.getOrderType() == 1) {
+                        // 查询代理商订单（下级代理商的订单）
+                        wrapper.like(Order::getDownstreamFatherList, agentAccount.getAgentCode())
+                               .ne(Order::getDownstreamCode, agentAccount.getAgentCode());
+                    }
+                })
+                // 如果 orderType 为空，保持原有逻辑：查询所有相关订单
+                .like(agentOrderSelectBO.getOrderType() == null, Order::getDownstreamFatherList, agentAccount.getAgentCode())
                 //查询时间范围
                 .between((agentOrderSelectBO.getStarTime() != null && agentOrderSelectBO.getEndTime() != null), Order::getCreateTime, agentOrderSelectBO.getStarTime(), agentOrderSelectBO.getEndTime())
                 .orderByDesc(Order::getCreateTime)

@@ -88,14 +88,6 @@
                     ></u-tag>
                   </view>
                 </view>
-
-                <view class="agent-details">
-                  <text class="phone">{{ formatPhone(agent.phone) }}</text>
-                  <text class="parent-agent" v-if="agent.parentAgentName">
-                    上级: {{ agent.parentAgentName }}
-                  </text>
-                </view>
-
                 <!-- 余额和佣金信息 -->
                 <view class="financial-info">
                   <view class="balance-info">
@@ -347,7 +339,7 @@ export default {
 
       try {
         const response = await selectChildAgentList(this.queryParams);
-        const agents = response.data?.list || [];
+        const agents = response.data?.rows || [];
 
         if (refresh) {
           this.agentList = agents;

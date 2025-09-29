@@ -12,6 +12,7 @@ import com.ruoyi.common.order.entity.AgentAccount;
 import com.ruoyi.common.order.vo.AgentOrderSelectVO;
 import com.ruoyi.common.order.vo.AgentProductSelectVO;
 import com.ruoyi.common.order.vo.AgentProductVO;
+import com.ruoyi.common.order.vo.AgentRegistrationStatisticsVO;
 import com.ruoyi.common.order.vo.AgentStatisticsVO;
 
 import java.util.List;
@@ -82,5 +83,15 @@ public interface AgentAccountService extends IService<AgentAccount> {
      * @return
      */
     AgentStatisticsVO selectChildAgentStatistics(LoginUser loginUser) throws BizException;
+
+    /**
+     * 查询代理商注册统计（按时间维度）
+     *
+     * @param parentAgentCode 父代理商编码（可选，为空则查询当前代理商的下级）
+     * @param loginUser 当前登录用户
+     * @return 注册统计数据
+     * @throws BizException 业务异常
+     */
+    AgentRegistrationStatisticsVO selectAgentRegistrationStatistics(String parentAgentCode, LoginUser loginUser) throws BizException;
 
 }

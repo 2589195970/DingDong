@@ -63,7 +63,7 @@
       <view class=""
             style="display: flex; flex-wrap: nowrap; justify-content: space-around;margin-top: 32px; padding-bottom: 8px;">
         <view class="orderclass-oui">
-          <view class="ii-aa">{{ agentOrder.yesterdayOrderNumber }}</view>
+          <view class="ii-aa">{{ agentOrder.yesterdayOrderNumber || 0 }}</view>
           <view class="ordercust-rwa">
             <view>
               <image src="@/static/images/icon/sj.svg" alt="" class="imgsi-oi"/>
@@ -72,7 +72,7 @@
           </view>
         </view>
         <view class="orderclass-oui">
-          <view class="ii-aa">{{ agentOrder.todayOrderNumber }}</view>
+          <view class="ii-aa">{{ agentOrder.todayOrderNumber || 0 }}</view>
           <view class="ordercust-rwa">
             <view>
               <image src="@/static/images/icon/dsp.svg" alt="" class="imgsi-oi"/>
@@ -81,7 +81,7 @@
           </view>
         </view>
         <view class="orderclass-oui">
-          <view class="ii-aa">{{ agentOrder.totalOrderNumber }}</view>
+          <view class="ii-aa">{{ agentOrder.totalOrderNumber || 0 }}</view>
           <view class="ordercust-rwa">
             <view>
               <image src="@/static/images/icon/wfsj.svg" alt="" class="imgsi-oi"/>
@@ -103,12 +103,19 @@
       </view>
       <view class="orderclass" style="margin-top: 20px;">
         <div ref="chart" style="width: 120px; height: 120px; min-width: 120px; min-height: 120px;"></div>
-        <view class="ordercust" style="margin-top: 20px; width: 60%;">
-          <span>年度订单数量 {{ activateOrder.totalOrderNumber }}</span>
-          <br/>
-          <span>激活数量 {{ activateOrder.activatedOrderNumber }}</span>
-          <br/>
-          <span>结算数量 {{ activateOrder.settledOrderNumber }}</span>
+        <view class="ordercust activate-stats-text" style="margin-top: 20px; width: 55%; margin-left: 10px;">
+          <view class="stats-line">
+            <span class="stats-label">年度订单数量</span>
+            <span class="stats-number">{{ activateOrder.totalOrderNumber || 0 }}</span>
+          </view>
+          <view class="stats-line">
+            <span class="stats-label">激活数量</span>
+            <span class="stats-number highlight">{{ activateOrder.activatedOrderNumber || 0 }}</span>
+          </view>
+          <view class="stats-line">
+            <span class="stats-label">结算数量</span>
+            <span class="stats-number">{{ activateOrder.settledOrderNumber || 0 }}</span>
+          </view>
         </view>
       </view>
 
@@ -151,7 +158,7 @@
       </view>
     </view>
 
-    <view class="item3" @click="xianqing">
+    <view class="item3">
       <view style="display: flex;justify-content: space-between;">
         <view class="shu1">
           <u-icon name="man-add" color="#f09b7f"></u-icon>
@@ -164,7 +171,7 @@
             <image src="@/static/images/icon/qhdm.svg" alt="" class="imgsi-po"/>
           </view>
           <view class="ordercust-lla">
-            <view class="ok-ui-vl">5</view>
+            <view class="ok-ui-vl">{{ registrationStats.yesterdayCount }}</view>
             <view class="ok-ui-la">昨日注册</view>
           </view>
         </view>
@@ -173,7 +180,7 @@
             <image src="@/static/images/icon/qlzu.svg" alt="" class="imgsi-po"/>
           </view>
           <view class="ordercust-lla">
-            <view class="ok-ui-vl">2</view>
+            <view class="ok-ui-vl">{{ registrationStats.todayCount }}</view>
             <view class="ok-ui-la">今日注册</view>
           </view>
         </view>
@@ -182,7 +189,7 @@
             <image src="@/static/images/icon/qysh.svg" alt="" class="imgsi-po"/>
           </view>
           <view class="ordercust-lla">
-            <view class="ok-ui-vl">29</view>
+            <view class="ok-ui-vl">{{ registrationStats.totalCount }}</view>
             <view class="ok-ui-la">总注册</view>
           </view>
         </view>
@@ -234,6 +241,7 @@ import {
   selectActivateAgentOrderAPPStatistics,
   selectChildAgentStatistics,
 } from "@/api/home/home.js";
+import { selectRegistrationStatistics } from "@/api/agent/agent.js";
 import NoticePopup from '@/components/NoticePopup/NoticePopup.vue';
 import { listNotice } from '@/api/system/notice.js';
 import constant from "@/utils/constant";
@@ -261,6 +269,13 @@ export default {
         total: 100,
       },
       dailidata: {},
+      registrationStats: {
+        totalCount: 0,
+        todayCount: 0,
+        yesterdayCount: 0,
+        thisWeekCount: 0,
+        thisMonthCount: 0
+      },
       list: ['我的订单', '团队订单'],
       current: 0,
       current1: 0,
@@ -273,6 +288,7 @@ export default {
     this.dail();
     this.AgentOrderdata();
     this.ActivateOrder();
+    this.loadRegistrationStats(); // 加载注册统计数据
     this.loadNoticeList(); // 加载通知列表
     this.loadNotices(); // 初始加载时检查通知
   },
@@ -287,6 +303,8 @@ export default {
     avatar() {
       return this.$store.state.user.avatar
     },
+
+
     chartOption() {
       const {
         value,
@@ -295,14 +313,13 @@ export default {
       return {
         backgroundColor: "#FFF",
         title: {
-          text: (value || '0') + '%',
+          text: Math.round(value) + '%',
           x: 'center',
           y: 'center',
           textStyle: {
-            color: '#333333',
-            fontSize: '15',
-            fontWeight: '600',
-          },
+            color: '#f09b7f',
+            fontSize: '18',
+          }
         },
         angleAxis: {
           axisLine: {
@@ -447,14 +464,31 @@ export default {
     },
     ActivateOrder() {
       selectActivateAgentOrderAPPStatistics(this.current1).then(res => {
-        this.activateOrder = res.data;
-        // this.chartData.value=this.activateOrder.activatedOrderNumber/this.activateOrder.totalOrderNumber;
-        this.chartData.value = (this.activateOrder.activatedOrderNumber / this.activateOrder
-            .totalOrderNumber).toFixed(2) * 100;
-        console.log(this.chartData);
-        this.initChart();
-      })
+        this.activateOrder = res.data || {};
 
+        // 安全的百分比计算，修复精度问题并添加取整处理
+        const total = this.activateOrder.totalOrderNumber || 0;
+        const activated = this.activateOrder.activatedOrderNumber || 0;
+
+        if (total > 0) {
+          const percentage = (activated / total) * 100;
+          this.chartData.value = Math.round(percentage); // 取整处理
+        } else {
+          this.chartData.value = 0;
+        }
+
+        console.log('Chart data:', this.chartData);
+        this.initChart();
+      }).catch(error => {
+        console.error('获取激活统计数据失败:', error);
+        // 设置默认值
+        this.chartData.value = 0;
+        this.activateOrder = {
+          totalOrderNumber: 0,
+          activatedOrderNumber: 0,
+          settledOrderNumber: 0
+        };
+      });
     },
 
     initChart() {
@@ -470,6 +504,17 @@ export default {
         } catch (error) {
           console.error('ECharts initialization failed:', error);
         }
+      });
+    },
+
+    // 加载注册统计数据
+    loadRegistrationStats() {
+      selectRegistrationStatistics().then(res => {
+        if (res.code === 200 && res.data) {
+          this.registrationStats = res.data;
+        }
+      }).catch(error => {
+        console.error('获取注册统计数据失败:', error);
       });
     },
 
@@ -512,6 +557,7 @@ export default {
         console.error('加载通知列表失败:', err);
       });
     },
+
 
     // 点击通知区域跳转到通知列表
     goToNoticeList() {
@@ -622,7 +668,11 @@ export default {
 }
 
 .ok-ui-la {
-  color: #909399;
+  color: #666;
+  font-size: 12px;
+  text-align: center;
+  font-weight: 500;
+  margin-top: 2px;
 }
 
 .od-im-uu {
@@ -638,7 +688,13 @@ export default {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  height: 40px;
+  height: 50px;
+  padding: 6px 4px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  flex: 1;
+  margin: 0 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .imgsi-po {
@@ -647,13 +703,20 @@ export default {
 }
 
 .ordercust-lla {
-  margin-left: 4px;
+  margin-left: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 45px;
 }
 
 .ok-ui-vl {
   text-align: center;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
+  color: #333;
+  margin-bottom: 2px;
+  line-height: 1.2;
 }
 
 .orderclass-dd {
@@ -690,16 +753,58 @@ export default {
   padding-bottom: 12px;
 }
 
+// 保留原有样式以兼容其他组件
 .ordercust {
   font-weight: 700;
   font-size: 12px;
   margin-top: 5px;
 }
 
+/* 激活统计文字样式优化 */
+.activate-stats-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stats-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  border-left: 2px solid #f0f0f0;
+  transition: all 0.2s ease;
+}
+
+.stats-line:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-left-color: #f09b7f;
+}
+
+.stats-label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.stats-number {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.stats-number.highlight {
+  color: #f09b7f;
+  font-size: 17px;
+}
+
 .orderclass {
   display: flex;
   justify-content: space-around;
 }
+
 
 .imgsi {
   width: 40px;
@@ -771,6 +876,7 @@ page {
   margin-left: 8px;
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
+
 
 .mine-container {
   width: 100%;

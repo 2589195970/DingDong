@@ -81,7 +81,7 @@ public class RedisConfig extends CachingConfigurerSupport
     }
 
     @Bean(name = "temporarilyRedisDataSource")
-    @ConfigurationProperties(prefix = "spring.redis.temporarily")
+    @ConfigurationProperties(prefix = "spring.redis.public")
     public RedisDataSource temporarilyRedisDataSource() {
         return new RedisDataSource();
     }

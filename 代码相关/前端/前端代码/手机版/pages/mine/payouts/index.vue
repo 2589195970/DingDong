@@ -241,11 +241,6 @@ export default {
           label: '增值税发票税费',
           value: `${this.pz.withdrawRate || 0}%`,
           valueClass: ''
-        },
-        {
-          label: '最低提现金额',
-          value: `${this.pz.withdrawMinAmount || 0}元`,
-          valueClass: ''
         }
       ]
     }

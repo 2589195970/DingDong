@@ -26,6 +26,15 @@ export function updateProductCommission(data) {
     data: data,
   });
 }
+
+// 产品上架下架
+export function updateProductStatus(data) {
+  return request({
+    url: "/product/updateProductStatus",
+    method: "post",
+    data: data,
+  });
+}
 // 查询提现记录
 export function selectAgentCommissionConfig(data) {
   return request({

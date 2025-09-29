@@ -20,7 +20,6 @@ import java.util.List;
  */
 public interface AgentOrderService extends IService<AgentAccount> {
 
-
     /**
      * 代理商订单查询
      *
@@ -28,8 +27,5 @@ public interface AgentOrderService extends IService<AgentAccount> {
      * @throws BizException
      */
     PageResult<AgentOrderSelectVO> agentSelectOrderListPage(AgentOrderSelectBO agentOrderSelectBO, LoginUser loginUser) throws BizException;
-
-
-
 
 }

@@ -40,5 +40,71 @@
 
     </select>
 
+    <select id="selectDashboardStatistics" resultType="com.ruoyi.common.order.vo.AgentDashboardStatisticsVO">
+        SELECT
+            -- 今日订单数
+            SUM(CASE WHEN o.create_time >= unix_timestamp(current_date) * 1000 THEN 1 ELSE 0 END) AS todayOrderCount,
+
+            -- 今日激活数
+            SUM(CASE WHEN o.active_time >= unix_timestamp(current_date) * 1000
+                     AND o.active_time IS NOT NULL AND o.active_time > 0
+                     AND o.order_status = 4 THEN 1 ELSE 0 END) AS todayActivateCount,
+
+            -- 本月订单数
+            SUM(CASE WHEN o.create_time >= unix_timestamp(DATE_FORMAT(CURDATE(), '%Y-%m-01')) * 1000 THEN 1 ELSE 0 END) AS monthOrderCount,
+
+            -- 本月激活数
+            SUM(CASE WHEN o.active_time >= unix_timestamp(DATE_FORMAT(CURDATE(), '%Y-%m-01')) * 1000
+                     AND o.active_time IS NOT NULL AND o.active_time > 0
+                     AND o.order_status = 4 THEN 1 ELSE 0 END) AS monthActivateCount,
+
+            -- 今日佣金 (从订单佣金详情表查询已结算的佣金)
+            COALESCE((
+                SELECT SUM(ocd.revenue_product_commission)
+                FROM t_order_commission_details ocd
+                INNER JOIN t_order_commission oc ON ocd.order_commission_id = oc.order_commission_id
+                WHERE ocd.create_time >= unix_timestamp(current_date) * 1000
+                  AND oc.order_commission_status = 3
+                  <if test="downstreamCode != null and downstreamCode != ''">
+                    AND ocd.agent_code = #{downstreamCode}
+                  </if>
+                  <if test="downstreamTeam != null and downstreamTeam != ''">
+                    AND EXISTS (
+                        SELECT 1 FROM t_agent_account aa
+                        WHERE aa.agent_code = ocd.agent_code
+                        AND aa.parent_agent_list LIKE CONCAT('%', #{downstreamTeam}, '%')
+                    )
+                  </if>
+            ), 0) AS todayCommission,
+
+            -- 本月佣金
+            COALESCE((
+                SELECT SUM(ocd.revenue_product_commission)
+                FROM t_order_commission_details ocd
+                INNER JOIN t_order_commission oc ON ocd.order_commission_id = oc.order_commission_id
+                WHERE ocd.create_time >= unix_timestamp(DATE_FORMAT(CURDATE(), '%Y-%m-01')) * 1000
+                  AND oc.order_commission_status = 3
+                  <if test="downstreamCode != null and downstreamCode != ''">
+                    AND ocd.agent_code = #{downstreamCode}
+                  </if>
+                  <if test="downstreamTeam != null and downstreamTeam != ''">
+                    AND EXISTS (
+                        SELECT 1 FROM t_agent_account aa
+                        WHERE aa.agent_code = ocd.agent_code
+                        AND aa.parent_agent_list LIKE CONCAT('%', #{downstreamTeam}, '%')
+                    )
+                  </if>
+            ), 0) AS monthCommission
+
+        FROM t_order o
+        WHERE 1=1
+        <if test="downstreamCode != null and downstreamCode != ''">
+            AND o.downstream_code = #{downstreamCode}
+        </if>
+        <if test="downstreamTeam != null and downstreamTeam != ''">
+            AND o.downstream_father_list LIKE CONCAT('%', #{downstreamTeam}, '%')
+        </if>
+    </select>
+
 
 </mapper>

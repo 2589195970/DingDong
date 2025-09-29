@@ -216,7 +216,295 @@
         SELECT COUNT(*)
         FROM t_agent_account
         WHERE parent_agent_code = #{parentAgentCode}
-          AND sys_user_id != 1
+    </select>
+
+    <!-- 查询代理商注册统计（按时间维度） -->
+    <select id="selectAgentRegistrationStatistics" resultType="com.ruoyi.common.order.vo.AgentRegistrationStatisticsVO">
+        SELECT
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN a1.create_time >= #{todayStart} AND a1.create_time &lt; #{todayEnd} THEN 1 ELSE 0 END) as todayCount,
+            SUM(CASE WHEN a1.create_time >= #{yesterdayStart} AND a1.create_time &lt; #{yesterdayEnd} THEN 1 ELSE 0 END) as yesterdayCount,
+            SUM(CASE WHEN a1.create_time >= #{thisWeekStart} THEN 1 ELSE 0 END) as thisWeekCount,
+            SUM(CASE WHEN a1.create_time >= #{thisMonthStart} THEN 1 ELSE 0 END) as thisMonthCount
+        FROM t_agent_account a1
+        WHERE a1.sys_user_id != 1
+        <if test="parentAgentCode != null and parentAgentCode != ''">
+            AND a1.parent_agent_code = #{parentAgentCode}
+        </if>
+    </select>
+
+    <!-- 查询直接邀请的代理商数量（按时间范围） -->
+    <select id="countDirectInvitesByTimeRange" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM t_agent_account
+        WHERE parent_agent_code = #{agentCode}
+          AND create_time >= #{startTime}
+          AND create_time &lt;= #{endTime}
+    </select>
+
+    <!-- 查询团队内所有邀请数量（按时间范围） -->
+    <select id="countTeamInvitesByTimeRange" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM t_agent_account
+        WHERE parent_agent_list LIKE CONCAT('%', #{agentCode}, '%')
+          AND create_time >= #{startTime}
+          AND create_time &lt;= #{endTime}
+    </select>
+
+    <!-- 代理商佣金排行榜 -->
+    <select id="selectAgentCommissionRanking" resultType="com.ruoyi.common.order.vo.AgentRankingVO">
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY SUM(ocd.revenue_product_commission) DESC) as ranking,
+            a.agent_code as agentCode,
+            a.agent_name as agentName,
+            a.level as level,
+            SUM(ocd.revenue_product_commission) as statValue
+        FROM t_order_commission_details ocd
+        INNER JOIN t_agent_account a ON ocd.agent_code = a.agent_code
+        INNER JOIN t_order_commission oc ON ocd.order_commission_id = oc.order_commission_id
+        WHERE oc.order_commission_status = 3
+          AND ocd.create_time >= #{queryBO.startTime}
+          AND ocd.create_time &lt;= #{queryBO.endTime}
+        <if test="queryBO.parentAgentCode != null and queryBO.parentAgentCode != ''">
+            AND a.parent_agent_list LIKE CONCAT('%', #{queryBO.parentAgentCode}, '%')
+        </if>
+        GROUP BY a.agent_code, a.agent_name, a.level
+        ORDER BY statValue DESC
+        LIMIT #{queryBO.topCount}
+    </select>
+
+    <!-- 代理商订单量排行榜 -->
+    <select id="selectAgentOrderRanking" resultType="com.ruoyi.common.order.vo.AgentRankingVO">
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) as ranking,
+            a.agent_code as agentCode,
+            a.agent_name as agentName,
+            a.level as level,
+            COUNT(*) as statValue
+        FROM t_order o
+        INNER JOIN t_agent_account a ON o.downstream_code = a.agent_code
+        WHERE o.create_time >= #{queryBO.startTime}
+          AND o.create_time &lt;= #{queryBO.endTime}
+        <if test="queryBO.parentAgentCode != null and queryBO.parentAgentCode != ''">
+            AND a.parent_agent_list LIKE CONCAT('%', #{queryBO.parentAgentCode}, '%')
+        </if>
+        GROUP BY a.agent_code, a.agent_name, a.level
+        ORDER BY statValue DESC
+        LIMIT #{queryBO.topCount}
+    </select>
+
+    <!-- 代理商激活量排行榜 -->
+    <select id="selectAgentActivateRanking" resultType="com.ruoyi.common.order.vo.AgentRankingVO">
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) as ranking,
+            a.agent_code as agentCode,
+            a.agent_name as agentName,
+            a.level as level,
+            COUNT(*) as statValue
+        FROM t_order o
+        INNER JOIN t_agent_account a ON o.downstream_code = a.agent_code
+        WHERE o.active_time >= #{queryBO.startTime}
+          AND o.active_time &lt;= #{queryBO.endTime}
+          AND o.active_time IS NOT NULL
+          AND o.active_time > 0
+          AND o.order_status = 4
+        <if test="queryBO.parentAgentCode != null and queryBO.parentAgentCode != ''">
+            AND a.parent_agent_list LIKE CONCAT('%', #{queryBO.parentAgentCode}, '%')
+        </if>
+        GROUP BY a.agent_code, a.agent_name, a.level
+        ORDER BY statValue DESC
+        LIMIT #{queryBO.topCount}
+    </select>
+
+    <!-- 代理商团队发展排行榜（直接邀请数） -->
+    <select id="selectAgentTeamRanking" resultType="com.ruoyi.common.order.vo.AgentRankingVO">
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) as ranking,
+            a.agent_code as agentCode,
+            a.agent_name as agentName,
+            a.level as level,
+            COUNT(*) as statValue
+        FROM t_agent_account sub
+        INNER JOIN t_agent_account a ON sub.parent_agent_code = a.agent_code
+        WHERE sub.create_time >= #{queryBO.startTime}
+          AND sub.create_time &lt;= #{queryBO.endTime}
+        <if test="queryBO.parentAgentCode != null and queryBO.parentAgentCode != ''">
+            AND a.parent_agent_list LIKE CONCAT('%', #{queryBO.parentAgentCode}, '%')
+        </if>
+        GROUP BY a.agent_code, a.agent_name, a.level
+        ORDER BY statValue DESC
+        LIMIT #{queryBO.topCount}
+    </select>
+
+    <!-- 查询代理商排行总数（通用方法） -->
+    <select id="selectAgentRankingCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM (
+            <choose>
+                <when test="rankingType == 1">
+                    <!-- 佣金排行 -->
+                    SELECT a.agent_code
+                    FROM t_agent_account a
+                    LEFT JOIN t_order_commission_details ocd ON a.agent_code = ocd.agent_code
+                    LEFT JOIN t_order o ON ocd.order_id = o.id
+                    WHERE 1=1
+                    <if test="agentName != null and agentName != ''">
+                        AND a.agent_name LIKE CONCAT('%', #{agentName}, '%')
+                    </if>
+                    <if test="startTime != null and endTime != null">
+                        AND o.create_time >= #{startTime} AND o.create_time &lt;= #{endTime}
+                    </if>
+                    GROUP BY a.agent_code, a.agent_name
+                </when>
+                <when test="rankingType == 2">
+                    <!-- 订单量排行 -->
+                    SELECT a.agent_code
+                    FROM t_agent_account a
+                    LEFT JOIN t_order o ON a.agent_code = o.agent_code
+                    WHERE 1=1
+                    <if test="agentName != null and agentName != ''">
+                        AND a.agent_name LIKE CONCAT('%', #{agentName}, '%')
+                    </if>
+                    <if test="startTime != null and endTime != null">
+                        AND o.create_time >= #{startTime} AND o.create_time &lt;= #{endTime}
+                    </if>
+                    GROUP BY a.agent_code, a.agent_name
+                </when>
+                <when test="rankingType == 3">
+                    <!-- 激活量排行 -->
+                    SELECT a.agent_code
+                    FROM t_agent_account a
+                    LEFT JOIN t_order o ON a.agent_code = o.agent_code
+                    WHERE 1=1
+                    <if test="agentName != null and agentName != ''">
+                        AND a.agent_name LIKE CONCAT('%', #{agentName}, '%')
+                    </if>
+                    <if test="startTime != null and endTime != null">
+                        AND o.create_time >= #{startTime} AND o.create_time &lt;= #{endTime}
+                    </if>
+                    AND o.status = 1
+                    GROUP BY a.agent_code, a.agent_name
+                </when>
+                <when test="rankingType == 4">
+                    <!-- 团队发展排行 -->
+                    SELECT a.agent_code
+                    FROM t_agent_account sub
+                    INNER JOIN t_agent_account a ON sub.parent_agent_code = a.agent_code
+                    WHERE 1=1
+                    <if test="agentName != null and agentName != ''">
+                        AND a.agent_name LIKE CONCAT('%', #{agentName}, '%')
+                    </if>
+                    <if test="startTime != null and endTime != null">
+                        AND sub.create_time >= #{startTime} AND sub.create_time &lt;= #{endTime}
+                    </if>
+                    GROUP BY a.agent_code, a.agent_name
+                </when>
+                <otherwise>
+                    SELECT a.agent_code FROM t_agent_account a WHERE 1=0
+                </otherwise>
+            </choose>
+        ) temp
+    </select>
+
+    <!-- 查询代理商排行列表（通用方法） -->
+    <select id="selectAgentRankingList" resultType="com.ruoyi.common.order.vo.AgentRankingVO">
+        <choose>
+            <when test="rankingType == 1">
+                <!-- 佣金排行 -->
+                SELECT
+                    ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(ocd.commission_amount), 0) DESC) as ranking,
+                    a.agent_code as agentCode,
+                    a.agent_name as agentName,
+                    a.level as level,
+                    COALESCE(SUM(ocd.commission_amount), 0) as statValue
+                FROM t_agent_account a
+                LEFT JOIN t_order_commission_details ocd ON a.agent_code = ocd.agent_code
+                LEFT JOIN t_order o ON ocd.order_id = o.id
+                WHERE 1=1
+                <if test="agentName != null and agentName != ''">
+                    AND a.agent_name LIKE CONCAT('%', #{agentName}, '%')
+                </if>
+                <if test="startTime != null and endTime != null">
+                    AND o.create_time >= #{startTime} AND o.create_time &lt;= #{endTime}
+                </if>
+                GROUP BY a.agent_code, a.agent_name, a.level
+                ORDER BY statValue DESC
+                LIMIT #{offset}, #{pageSize}
+            </when>
+            <when test="rankingType == 2">
+                <!-- 订单量排行 -->
+                SELECT
+                    ROW_NUMBER() OVER (ORDER BY COUNT(o.id) DESC) as ranking,
+                    a.agent_code as agentCode,
+                    a.agent_name as agentName,
+                    a.level as level,
+                    COUNT(o.id) as statValue
+                FROM t_agent_account a
+                LEFT JOIN t_order o ON a.agent_code = o.agent_code
+                WHERE 1=1
+                <if test="agentName != null and agentName != ''">
+                    AND a.agent_name LIKE CONCAT('%', #{agentName}, '%')
+                </if>
+                <if test="startTime != null and endTime != null">
+                    AND o.create_time >= #{startTime} AND o.create_time &lt;= #{endTime}
+                </if>
+                GROUP BY a.agent_code, a.agent_name, a.level
+                ORDER BY statValue DESC
+                LIMIT #{offset}, #{pageSize}
+            </when>
+            <when test="rankingType == 3">
+                <!-- 激活量排行 -->
+                SELECT
+                    ROW_NUMBER() OVER (ORDER BY COUNT(o.id) DESC) as ranking,
+                    a.agent_code as agentCode,
+                    a.agent_name as agentName,
+                    a.level as level,
+                    COUNT(o.id) as statValue
+                FROM t_agent_account a
+                LEFT JOIN t_order o ON a.agent_code = o.agent_code
+                WHERE 1=1
+                <if test="agentName != null and agentName != ''">
+                    AND a.agent_name LIKE CONCAT('%', #{agentName}, '%')
+                </if>
+                <if test="startTime != null and endTime != null">
+                    AND o.create_time >= #{startTime} AND o.create_time &lt;= #{endTime}
+                </if>
+                AND o.status = 1
+                GROUP BY a.agent_code, a.agent_name, a.level
+                ORDER BY statValue DESC
+                LIMIT #{offset}, #{pageSize}
+            </when>
+            <when test="rankingType == 4">
+                <!-- 团队发展排行 -->
+                SELECT
+                    ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) as ranking,
+                    a.agent_code as agentCode,
+                    a.agent_name as agentName,
+                    a.level as level,
+                    COUNT(*) as statValue
+                FROM t_agent_account sub
+                INNER JOIN t_agent_account a ON sub.parent_agent_code = a.agent_code
+                WHERE 1=1
+                <if test="agentName != null and agentName != ''">
+                    AND a.agent_name LIKE CONCAT('%', #{agentName}, '%')
+                </if>
+                <if test="startTime != null and endTime != null">
+                    AND sub.create_time >= #{startTime} AND sub.create_time &lt;= #{endTime}
+                </if>
+                GROUP BY a.agent_code, a.agent_name, a.level
+                ORDER BY statValue DESC
+                LIMIT #{offset}, #{pageSize}
+            </when>
+            <otherwise>
+                SELECT
+                    0 as ranking,
+                    '' as agentCode,
+                    '' as agentName,
+                    0 as level,
+                    0 as statValue
+                WHERE 1=0
+            </otherwise>
+        </choose>
     </select>
 
 </mapper>

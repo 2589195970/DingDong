@@ -22,3 +22,12 @@ export function selectRevenue() {
     method: 'get'
   })
 }
+
+// 查询代理商统计面板数据
+export function selectDashboardStatistics(type = 0) {
+  return request({
+    url: '/agentAppShow/selectDashboardStatistics',
+    method: 'get',
+    params: { type }
+  })
+}
