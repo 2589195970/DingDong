@@ -31,7 +31,7 @@ const upload = config => {
         success: (res) => {
           let result = JSON.parse(res.data)
           const code = result.code || 200
-          const msg = errorCode[code] || result.msg || errorCode['default']
+          const msg = result.msg || result.message || errorCode[code] || errorCode['default']
           if (code === 200) {
             resolve(result)
           } else if (code == 401) {

@@ -22,14 +22,14 @@
 				</view>
 			</view>
 			<view class="action-btn">
-				<button @click="handleLogin" class="login-btn cu-btn block bg-blue lg round">登录</button>
+				<button @click="handleLogin" class="login-btn cu-btn block bg-primary lg round">登录</button>
 			</view>
 
 			<view class="reg text-center">
 
 				<u-checkbox-group>
-					<u-checkbox @change="rememberChange" v-model="rememberMe" checkedColor="#ff791c" :checked="rememberMe"
-						activeColor="#ff791c"></u-checkbox>
+					<u-checkbox @change="rememberChange" v-model="rememberMe" checkedColor="#f09b7f" :checked="rememberMe"
+						activeColor="#f09b7f"></u-checkbox>
 					<view>
 						<text>记住密码</text>
 					</view>
@@ -38,12 +38,12 @@
 
 			<!-- <el-checkbox v-model="loginForm.rememberMe" style="margin:0px 0px 25px 0px;">记住密码</el-checkbox> -->
 			<view class="reg text-center">
-				<text @click="handleUserRegister1" class="text-blue">{{dl}}</text>
+				<text @click="handleUserRegister1" class="text-primary">{{dl}}</text>
 			</view>
 			<!--     <view class="xieyi text-center">
         <text class="text-grey1">登录即代表同意</text>
-        <text @click="handleUserAgrement" class="text-blue">《用户协议》</text>
-        <text @click="handlePrivacy" class="text-blue">《隐私协议》</text>
+        <text @click="handleUserAgrement" class="text-primary">《用户协议》</text>
+        <text @click="handlePrivacy" class="text-primary">《隐私协议》</text>
       </view> -->
 		</view>
 

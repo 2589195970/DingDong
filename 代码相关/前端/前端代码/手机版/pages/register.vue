@@ -26,11 +26,11 @@
         </view>
       </view>
       <view class="action-btn">
-        <button @click="handleRegister()" class="register-btn cu-btn block bg-blue lg round">注册</button>
+        <button @click="handleRegister()" class="register-btn cu-btn block bg-primary lg round">注册</button>
       </view>
     </view>
     <view class="xieyi text-center">
-      <text @click="handleUserLogin" class="text-blue">使用已有账号登录</text>
+      <text @click="handleUserLogin" class="text-primary">使用已有账号登录</text>
     </view>
   </view>
 </template>

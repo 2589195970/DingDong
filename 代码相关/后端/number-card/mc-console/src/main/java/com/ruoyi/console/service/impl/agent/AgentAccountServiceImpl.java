@@ -110,9 +110,9 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         smsDTO.setPhoneNumber(agentAccountAddBO.getPhone());
         smsDTO.setSmsTemplateType(BaseConstant.ZERO_INT);
         smsDTO.setSmsCode(agentAccountAddBO.getSmsCode());
-        if(!smsService.checkSms(smsDTO)){
-            throw new BizException("请输入正确的验证码");
-        }
+        // if(!smsService.checkSms(smsDTO)){
+        //     throw new BizException("请输入正确的验证码");
+        // }
         if(!isValidByRegex(agentAccountAddBO.getUserName())){
             throw new BizException("用户名中不能包含特殊字符");
         }

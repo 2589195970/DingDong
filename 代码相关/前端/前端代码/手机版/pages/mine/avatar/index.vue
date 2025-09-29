@@ -1,5 +1,7 @@
 <template>
-	<view class="container">
+	<view class="page-container">
+		<app-navbar title="修改头像"></app-navbar>
+		<view class="container">
 		<view class="page-body uni-content-info">
 			<view class='cropper-content'>
 				<view v-if="isShowImg" class="uni-corpper" :style="'width:'+cropperInitW+'px;height:'+cropperInitH+'px;background:#000'">
@@ -32,6 +34,7 @@
 				<button type="warn" @click="getImageInfo" style='margin-top: 30rpx;'> 提交 </button>
 			</view>
 			<canvas canvas-id="myCanvas" :style="'position:absolute;border: 1px solid red; width:'+imageW+'px;height:'+imageH+'px;top:-9999px;left:-9999px;'"></canvas>
+		</view>
 		</view>
 	</view>
 </template>

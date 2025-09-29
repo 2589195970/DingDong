@@ -103,6 +103,12 @@
 				"navigationStyle": "custom"
 			}
 		}, {
+			"path": "pages/mine/realname/index",
+			"style": {
+				"navigationBarTitleText": "实名认证",
+				"navigationStyle": "custom"
+			}
+		}, {
 			"path": "pages/common/webview/index",
 			"style": {
 				"navigationBarTitleText": "浏览网页",
@@ -123,7 +129,7 @@
 			}
 		},
 		{
-			"path": "pages/Product/cpxiangqing",
+			"path": "pages/Product/detail",
 			"style": {
 				"navigationBarTitleText": "商品详情",
 				"navigationStyle": "custom"
@@ -152,11 +158,63 @@
 				"backgroundColor": "#f1f1f1",
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/notice/list",
+			"style": {
+				"navigationBarTitleText": "系统通知",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/notice/detail",
+			"style": {
+				"navigationBarTitleText": "通知详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/mine/commission-detail/index",
+			"style": {
+				"navigationBarTitleText": "佣金明细",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/mine/customer-service/index",
+			"style": {
+				"navigationBarTitleText": "我的客服",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/mine/my-agents/index",
+			"style": {
+				"navigationBarTitleText": "我的代理",
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/mine/live-connect/index",
+			"style": {
+				"navigationBarTitleText": "直播对接",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/mine/visual-data/index",
+			"style": {
+				"navigationBarTitleText": "可视化数据",
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"tabBar": {
 		"color": "#000000",
-		"selectedColor": "#4F97F6",
+		"selectedColor": "#f09b7f",
 		"borderStyle": "white",
 		"backgroundColor": "#f1f1f1",
 		"list": [{

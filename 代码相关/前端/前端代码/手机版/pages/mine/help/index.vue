@@ -1,5 +1,7 @@
 <template>
-  <view class="help-container">
+  <view class="page-container">
+    <app-navbar title="常见问题"></app-navbar>
+    <view class="help-container">
     <view v-for="(item, findex) in list" :key="findex" :title="item.title" class="list-title">
       <view class="text-title">
         <view :class="item.icon"></view>{{ item.title }}
@@ -11,6 +13,7 @@
           <view class="line" v-if="zindex !== item.childList.length - 1"></view>
         </view>
       </view>
+    </view>
     </view>
   </view>
 </template>

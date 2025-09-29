@@ -232,4 +232,29 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		DELETE FROM sys_user WHERE user_id = #{userId}
  	</delete>
 
-</mapper> 
+	<!-- 根据用户ID查询代理商账号信息 -->
+	<select id="selectAgentAccountByUserId" parameterType="Long" resultType="java.util.Map">
+		select *
+		from t_agent_account
+		where sys_user_id = #{userId}
+		limit 1
+	</select>
+
+    <!-- 根据用户ID查询代理商账号信息 -->
+	<select id="selectAgentAccountByAgentCode" resultType="java.util.Map">
+		select *
+		from t_agent_account
+		where agent_code = #{agentCode}
+		limit 1
+	</select>
+
+	<!-- 根据代理商编码查询实名审核信息 -->
+	<select id="selectNameAuditByAgentCode" parameterType="String" resultType="java.util.Map">
+		select card_name, card_id, status, create_time, update_time
+		from t_name_audit
+		where agent_code = #{agentCode}
+		order by create_time desc
+		limit 1
+	</select>
+
+</mapper>

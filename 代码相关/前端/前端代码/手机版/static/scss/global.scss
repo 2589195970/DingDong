@@ -21,6 +21,39 @@
 	color: #aaa;
 }
 
+/* 统一主题色类 */
+.text-primary {
+	color: #f09b7f;
+}
+.bg-primary {
+	background-color: #f09b7f;
+}
+.border-primary {
+	border-color: #f09b7f;
+}
+
+/* uni-app 原生组件样式覆盖 */
+uni-button[type="primary"] {
+	color: #fff !important;
+	background-color: #f09b7f !important;
+	border-color: #f09b7f !important;
+}
+
+uni-button[type="primary"]:not([disabled]):hover {
+	color: #fff !important;
+	background-color: #d87d63 !important;
+	border-color: #d87d63 !important;
+}
+
+/* ColorUI 按钮增强 */
+.cu-btn.bg-primary {
+	background-color: #f09b7f !important;
+}
+
+.cu-btn.bg-primary:active {
+	background-color: #d87d63 !important;
+}
+
 .list-cell-arrow::before {
     content: ' ';
     height: 10px;
@@ -76,7 +109,7 @@
       align-items: center;
   
       .menu-icon {
-        color: #007AFF;
+        color: #f09b7f;
         font-size: 16px;
         margin-right: 5px;
       }

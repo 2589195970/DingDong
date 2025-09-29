@@ -49,6 +49,8 @@ public class SysProfileController extends BaseController
         AjaxResult ajax = AjaxResult.success(user);
         ajax.put("roleGroup", userService.selectUserRoleGroup(loginUser.getUsername()));
         ajax.put("postGroup", userService.selectUserPostGroup(loginUser.getUsername()));
+        //查询代理商信息
+        ajax.put("agentAccount", userService.getUserAgentAccountInfo(user.getUserId()));
         return ajax;
     }
 

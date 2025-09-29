@@ -22,19 +22,19 @@
 			</view>
 
 			<view class="action-btn">
-				<button @click="handleLogin" class="login-btn cu-btn block bg-blue lg round">登录</button>
+				<button @click="handleLogin" class="login-btn cu-btn block bg-primary lg round">登录</button>
 			</view>
 			<view class="reg text-center" v-if="register">
 				<text class="text-grey1">没有账号？</text>
-				<text @click="handleUserRegister" class="text-blue">立即注册</text>
+				<text @click="handleUserRegister" class="text-primary">立即注册</text>
 			</view>
 			<view class="reg text-center">
-				<text @click="handleUserRegister" class="text-blue">{{dl}}</text>
+				<text @click="handleUserRegister" class="text-primary">{{dl}}</text>
 			</view>
 			<!--     <view class="xieyi text-center">
         <text class="text-grey1">登录即代表同意</text>
-        <text @click="handleUserAgrement" class="text-blue">《用户协议》</text>
-        <text @click="handlePrivacy" class="text-blue">《隐私协议》</text>
+        <text @click="handleUserAgrement" class="text-primary">《用户协议》</text>
+        <text @click="handlePrivacy" class="text-primary">《隐私协议》</text>
       </view> -->
 		</view>
 

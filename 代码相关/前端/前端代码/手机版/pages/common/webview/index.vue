@@ -1,6 +1,9 @@
 <template>
-  <view v-if="params.url">
+  <view class="page-container">
+    <app-navbar title="浏览网页"></app-navbar>
+    <view v-if="params.url">
     <web-view :webview-styles="webviewStyles" :src="`${params.url}`"></web-view>
+    </view>
   </view>
 </template>
 

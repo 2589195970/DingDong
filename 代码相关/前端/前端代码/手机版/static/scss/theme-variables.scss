@@ -1,0 +1,106 @@
+/**
+ * 叮咚号卡统一主题变量
+ * 基于用户喜好 #f09b7f 橙色系设计
+ * 2024年配色统一优化
+ */
+
+// ====================
+// 主题色（基于 #f09b7f）
+// ====================
+$primary-color: #f09b7f !default;          // 主色调 - 温暖橙色
+$primary-dark: #d87d63 !default;           // 深色 - 点击/悬浮状态
+$primary-light: #ffc4ae !default;          // 浅色 - 背景/禁用状态
+$primary-lighter: #fff2ed !default;        // 极浅色 - 背景色
+
+// ====================
+// 辅助色（功能色保持专业标准）
+// ====================
+$success-color: #52c41a !default;          // 成功 - 绿色
+$warning-color: #faad14 !default;          // 警告 - 黄色
+$error-color: #f5222d !default;            // 错误 - 红色
+$info-color: #909399 !default;             // 信息 - 灰色
+
+// 辅助色变体
+$success-light: #f6ffed !default;
+$warning-light: #fffbe6 !default;
+$error-light: #fff2f0 !default;
+$info-light: #f4f4f5 !default;
+
+// ====================
+// 文字颜色层级
+// ====================
+$text-primary: #333333 !default;           // 主要文字 - 黑色
+$text-regular: #606266 !default;           // 常规文字 - 深灰
+$text-secondary: #909399 !default;         // 次要文字 - 中灰
+$text-placeholder: #c0c0c0 !default;       // 占位符 - 浅灰
+$text-disabled: #c0c4cc !default;          // 禁用状态
+$text-white: #ffffff !default;             // 白色文字
+
+// ====================
+// 边框颜色
+// ====================
+$border-color-base: #e5e5e5 !default;      // 基础边框
+$border-color-light: #ebeef5 !default;     // 浅色边框
+$border-color-lighter: #f2f6fc !default;   // 更浅边框
+$border-color-extra-light: #fafafa !default; // 极浅边框
+
+// ====================
+// 背景颜色
+// ====================
+$background-color-base: #f5f6f7 !default;  // 页面背景
+$background-white: #ffffff !default;       // 白色背景
+$background-black: #000000 !default;       // 黑色背景
+
+// ====================
+// 透明度和遮罩
+// ====================
+$opacity-disabled: 0.3 !default;           // 禁用透明度
+$mask-color: rgba(0, 0, 0, 0.4) !default;  // 遮罩颜色
+
+// ====================
+// 兼容原有变量（逐步迁移用）
+// ====================
+
+// uni-app 原生变量替换
+$uni-color-primary: $primary-color !default;
+$uni-color-success: $success-color !default;
+$uni-color-warning: $warning-color !default;
+$uni-color-error: $error-color !default;
+
+// uview-ui 变量替换
+$u-primary: $primary-color !default;
+$u-success: $success-color !default;
+$u-warning: $warning-color !default;
+$u-error: $error-color !default;
+
+// uni-scss 变量替换
+$uni-primary: $primary-color !default;
+
+// ====================
+// 配色使用示例和说明
+// ====================
+/*
+使用示例：
+
+// 主题色使用
+.primary-button {
+  background-color: $primary-color;       // 正常状态
+  &:hover {
+    background-color: $primary-dark;      // 悬浮状态
+  }
+  &:disabled {
+    background-color: $primary-light;     // 禁用状态
+  }
+}
+
+// 文字颜色使用
+.title { color: $text-primary; }          // 标题
+.content { color: $text-regular; }        // 正文
+.description { color: $text-secondary; }  // 描述
+.placeholder { color: $text-placeholder; } // 占位符
+
+// 功能色使用
+.success-tip { color: $success-color; }   // 成功提示
+.warning-tip { color: $warning-color; }   // 警告提示
+.error-tip { color: $error-color; }       // 错误提示
+*/

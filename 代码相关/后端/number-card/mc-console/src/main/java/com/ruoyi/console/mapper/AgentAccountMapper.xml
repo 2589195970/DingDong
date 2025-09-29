@@ -70,7 +70,7 @@
 
     <!-- 查询代理商排名列表 -->
     <select id="selectAgentRankingList" resultType="com.ruoyi.common.order.vo.AgentRankingVO">
-        SELECT 
+        SELECT
             agentCode,
             agentName,
             totalOrders,
@@ -79,7 +79,7 @@
             downstreamAgentCount,
             ROW_NUMBER() OVER (ORDER BY totalOrders DESC, createTime ASC) as ranking
         FROM (
-            SELECT 
+            SELECT
                 a.agent_code as agentCode,
                 a.agent_name as agentName,
                 a.create_time as createTime,
@@ -89,11 +89,11 @@
                 COALESCE(downstream.downstream_count, 0) as downstreamAgentCount
             FROM t_agent_account a
             LEFT JOIN (
-                SELECT 
+                SELECT
                     downstream_code,
                     COUNT(*) as total_orders,
                     SUM(CASE WHEN order_status = 4 THEN 1 ELSE 0 END) as activated_orders
-                FROM t_order 
+                FROM t_order
                 WHERE 1=1
                 <if test="rankingType != 0">
                     AND create_time &gt;= #{startTime} AND create_time &lt;= #{endTime}
@@ -101,10 +101,10 @@
                 GROUP BY downstream_code
             ) o ON a.agent_code = o.downstream_code
             LEFT JOIN (
-                SELECT 
+                SELECT
                     downstream_agent_code,
                     SUM(CASE WHEN order_status = 4 AND order_commission_status = 3 THEN product_commission ELSE 0 END) as total_commission
-                FROM t_order_commission 
+                FROM t_order_commission
                 WHERE 1=1
                 <if test="rankingType != 0">
                     AND order_create_time &gt;= #{startTime} AND order_create_time &lt;= #{endTime}
@@ -112,10 +112,10 @@
                 GROUP BY downstream_agent_code
             ) commission ON a.agent_code = commission.downstream_agent_code
             LEFT JOIN (
-                SELECT 
+                SELECT
                     parent_agent_code,
                     COUNT(*) as downstream_count
-                FROM t_agent_account 
+                FROM t_agent_account
                 WHERE parent_agent_code IS NOT NULL AND parent_agent_code != ''
                 GROUP BY parent_agent_code
             ) downstream ON a.agent_code = downstream.parent_agent_code
@@ -136,6 +136,87 @@
         <if test="agentName != null and agentName != ''">
             AND a.agent_name LIKE CONCAT('%', #{agentName}, '%')
         </if>
+    </select>
+
+    <select id="selectAgentAccountListOnCountChidAgentByPaentAgentCode" resultType="com.ruoyi.common.order.vo.AgentProductVO">
+
+    </select>
+
+    <!-- 查询直接下级代理商总数 -->
+    <select id="selectDirectSubAgentsCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM t_agent_account a1
+        WHERE a1.parent_agent_code = #{queryBO.parentAgentCode}
+          AND a1.sys_user_id != 1
+        <if test="queryBO.searchKeyword != null and queryBO.searchKeyword != ''">
+            AND (
+                CAST(a1.agent_account_id AS CHAR) LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.agent_code LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.agent_name LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.phone LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+            )
+        </if>
+        <if test="queryBO.isRealName != null">
+            AND a1.is_real_name = #{queryBO.isRealName}
+        </if>
+        <if test="queryBO.isEnabled != null">
+            AND a1.is_enabled = #{queryBO.isEnabled}
+        </if>
+        <if test="queryBO.level != null">
+            AND a1.level = #{queryBO.level}
+        </if>
+    </select>
+
+    <!-- 查询直接下级代理商列表 -->
+    <select id="selectDirectSubAgentsList" resultType="com.ruoyi.common.order.vo.AgentAccountListVO">
+        SELECT
+            a1.agent_account_id as agentAccountId,
+            a1.sys_user_id as sysUserId,
+            s.user_name as sysUserName,
+            a1.parent_agent_code as parentAgentCode,
+            a2.agent_name as parentAgentName,
+            a1.agent_code as agentCode,
+            a1.agent_name as agentName,
+            a1.level as level,
+            a1.is_real_name as isRealName,
+            a1.phone as phone,
+            a1.is_enabled as isEnabled,
+            a1.is_encrypt as isEncrypt,
+            a1.create_time as createTime,
+            r.balance as balance
+        FROM t_agent_account a1
+        LEFT JOIN t_agent_account a2 ON a1.parent_agent_code = a2.agent_code
+        LEFT JOIN sys_user s ON a1.sys_user_id = s.user_id
+        LEFT JOIN t_withdrawal_record r ON a1.agent_code = r.agent_code
+        WHERE a1.parent_agent_code = #{queryBO.parentAgentCode}
+          AND a1.sys_user_id != 1
+        <if test="queryBO.searchKeyword != null and queryBO.searchKeyword != ''">
+            AND (
+                CAST(a1.agent_account_id AS CHAR) LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.agent_code LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.agent_name LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+                OR a1.phone LIKE CONCAT('%', #{queryBO.searchKeyword}, '%')
+            )
+        </if>
+        <if test="queryBO.isRealName != null">
+            AND a1.is_real_name = #{queryBO.isRealName}
+        </if>
+        <if test="queryBO.isEnabled != null">
+            AND a1.is_enabled = #{queryBO.isEnabled}
+        </if>
+        <if test="queryBO.level != null">
+            AND a1.level = #{queryBO.level}
+        </if>
+        ORDER BY a1.create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 统计某个代理商的团队成员数（直接下级数量） -->
+    <select id="countAgentTeamMembers" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM t_agent_account
+        WHERE parent_agent_code = #{parentAgentCode}
+          AND sys_user_id != 1
     </select>
 
 </mapper>

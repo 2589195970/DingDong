@@ -1,5 +1,7 @@
 <template>
-  <view class="setting-container" :style="{height: `${windowHeight}px`}">
+  <view class="page-container">
+    <app-navbar title="应用设置"></app-navbar>
+    <view class="setting-container" :style="{height: `${windowHeight}px`}">
     <view class="menu-list">
       <view class="list-cell list-cell-arrow" @click="handleToPwd">
         <view class="menu-item-box">
@@ -26,6 +28,7 @@
           <text class="text-black">退出登录</text>
         </view>
       </view>
+    </view>
     </view>
   </view>
 </template>
