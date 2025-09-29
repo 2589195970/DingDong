@@ -41,10 +41,23 @@
         </el-row> -->
         <el-table ref="tables" v-loading="loading" :data="list" row-key="operatorReportId" border lazy height="650">
             <el-table-column label="ID" align="center" prop="productId" width="50" />
-            <el-table-column label="上游产品" align="center" prop="upstreamProductName" :show-overflow-tooltip="true" />
-            <el-table-column label="产品主图" align="center" prop="productMasterMap">
+            <el-table-column label="上游产品" align="center" prop="upstreamProductName" :show-overflow-tooltip="false">
                 <template slot-scope="scope">
-                    <img :src="scope.row.productMasterMap" alt="" style="width: 100px;">
+                    <div style="white-space: normal; word-wrap: break-word; word-break: break-all; line-height: 1.4;">
+                        {{ scope.row.upstreamProductName }}
+                    </div>
+                </template>
+            </el-table-column>
+            <el-table-column label="产品主图" align="center" prop="productMasterMap" width="120">
+                <template slot-scope="scope">
+                    <div style="display: flex; justify-content: center; align-items: center; height: 80px;">
+                        <img 
+                            :src="scope.row.productMasterMap" 
+                            alt="产品主图" 
+                            style="max-width: 100px; max-height: 80px; object-fit: contain; border-radius: 4px;"
+                            @error="handleImageError"
+                        />
+                    </div>
                 </template>
             </el-table-column>
             <el-table-column label="产品名称" align="center" prop="productName" />
@@ -76,6 +89,12 @@
                 <template slot-scope="scope">
                     <p v-if="scope.row.productStatus==0" style="color: red;">已下架</p>
                     <p v-if="scope.row.productStatus==1" style="color:green;">上架中</p>
+                </template>
+            </el-table-column>
+            <el-table-column label="上架时间" align="center" prop="shelfTime" width="160">
+                <template slot-scope="scope">
+                    <span v-if="scope.row.shelfTime">{{ formatDateTime(scope.row.shelfTime) }}</span>
+                    <span v-else style="color: #999;">未上架</span>
                 </template>
             </el-table-column>
             <el-table-column label="佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
@@ -413,6 +432,10 @@
             this.getList();
         },
         methods: {
+            // 图片加载错误处理
+            handleImageError(event) {
+                event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjgwIiB2aWV3Qm94PSIwIDAgMTAwIDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iODAiIGZpbGw9IiNmNWY1ZjUiLz48dGV4dCB4PSI1MCIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+5Zu+54mH5Yqg6L295aSx6LSlPC90ZXh0Pjwvc3ZnPg==';
+            },
              // 分享
              share(data) {
                 this.sharedata = data;

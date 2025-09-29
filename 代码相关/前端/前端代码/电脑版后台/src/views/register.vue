@@ -7,8 +7,8 @@
           <svg-icon slot="prefix" icon-class="user" class="el-input__icon input-icon" />
         </el-input>
       </el-form-item>
-      <el-form-item prop="username">
-        <el-input v-model="registerForm.userName" type="text" auto-complete="off" placeholder="账号">
+      <el-form-item prop="userName">
+        <el-input v-model="registerForm.userName" type="text" auto-complete="off" placeholder="用户名">
           <svg-icon slot="prefix" icon-class="user" class="el-input__icon input-icon" />
         </el-input>
       </el-form-item>
@@ -30,7 +30,11 @@
             class="el-input__icon input-icon"
           />
         </el-input>
-        <div class="login-code" @click="getCode1">
+        <div 
+          class="login-code" 
+          :class="{ 'disabled': countdown !== '获取验证码' }"
+          @click="getCode1"
+        >
           {{ countdown }}
         </div>
       </el-form-item>
@@ -110,10 +114,11 @@ export default {
           { required: true, trigger: "blur", message: "请输入推荐人" },
           { min: 2, max: 20, message: '请输入推荐人', trigger: 'blur' }
         ],
-        // username: [
-        //   { required: true, trigger: "blur", message: "请输入您的账号" },
-        //   { min: 2, max: 10, message: '用户账号长度必须介于 2 和 10 之间', trigger: 'blur' }
-        // ],
+        userName: [
+          { required: true, trigger: "blur", message: "请输入您的用户名" },
+          { min: 2, max: 10, message: '用户名长度必须介于 2 和 10 之间', trigger: 'blur' },
+          { pattern: /^[\u4e00-\u9fa5]+$/, message: "用户名只能输入中文，不允许特殊符号", trigger: "blur" }
+        ],
         password: [
           { required: true, trigger: "blur", message: "请输入您的密码" },
           { min: 5, max: 20, message: "用户密码长度必须介于 5 和 20 之间", trigger: "blur" },
@@ -138,22 +143,22 @@ export default {
       try {
         // 1. 对象转JSON字符串
         const jsonString = JSON.stringify(data)
-        
+
         // 2. 准备密钥和IV
         const key = CryptoJS.enc.Utf8.parse(this.encryptionConfig.key)
-  
+
         // 3. AES-CBC加密
         const encrypted = CryptoJS.AES.encrypt(jsonString, key, {
           mode: CryptoJS.mode.ECB,
           padding: CryptoJS.pad.Pkcs7
         })
-        
+
         // 4. 获取Base64格式的加密字符串
         const base64Cipher = encrypted.toString()
-        
+
         // 5. URL编码处理（关键步骤）
         const urlSafeCipher = encodeURIComponent(base64Cipher)
-        
+
         return urlSafeCipher
       } catch (error) {
         console.error('加密失败:', error)
@@ -161,34 +166,43 @@ export default {
       }
     },
     getCode1() {
-      
-      
-      if (this.registerForm.phone) {
-        if (this.countdown == "获取验证码") {
-          sendSms(this.encryptAndEncode({
-            phoneNumber: this.loginForm.username,
-            smsTemplateType: 0,
-          })).then((res) => {
-            this.$message({
-              message: "验证码已发送",
-              type: "success",
-            });
-            this.countdown = 60;
-            this.countdown--;
-            const taskId = setInterval(() => {
-              this.countdown--;
-              if (this.countdown === 0) {
-                this.countdown = "获取验证码";
-                clearInterval(taskId);
-              }
-            }, 1000);
-          });
-        } else {
-          this.$message.error("已发送验证码,请稍后再试");
-        }
-      } else {
-        this.$message.error("请填写账号信息");
+      // 如果正在倒计时，不允许点击
+      if (this.countdown !== "获取验证码") {
+        return;
       }
+
+      if (this.registerForm.phone) {
+        // 先验证手机号格式
+        this.$refs.registerForm.validateField('phone', (errorMessage) => {
+          if (!errorMessage) {
+            sendSms(this.encryptAndEncode({
+              phoneNumber: this.registerForm.phone,
+              smsTemplateType: 0,
+            })).then((res) => {
+              this.$message({
+                message: "验证码已发送",
+                type: "success",
+              });
+              this.startCountdown();
+            }).catch((error) => {
+              this.$message.error("验证码发送失败，请稍后重试");
+            });
+          }
+        });
+      } else {
+        this.$message.error("请填写手机号");
+      }
+    },
+    
+    startCountdown() {
+      this.countdown = 60;
+      const taskId = setInterval(() => {
+        this.countdown--;
+        if (this.countdown === 0) {
+          this.countdown = "获取验证码";
+          clearInterval(taskId);
+        }
+      }, 1000);
     },
     getCode() {
      this.registerForm.parentAgentCode=this.$route.query.agentCode
@@ -292,6 +306,22 @@ export default {
   text-align: center;
   border-radius: 20px;
   border: 1px solid #dcdfe6;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s;
+  
+  &:hover:not(.disabled) {
+    background-color: #f5f7fa;
+    border-color: #c0c4cc;
+  }
+  
+  &.disabled {
+    cursor: not-allowed;
+    background-color: #f5f7fa;
+    color: #c0c4cc;
+    border-color: #e4e7ed;
+  }
+  
   img {
     cursor: pointer;
     vertical-align: middle;

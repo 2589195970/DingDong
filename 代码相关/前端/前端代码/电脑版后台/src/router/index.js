@@ -52,6 +52,11 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: '/forgot-password',
+    component: () => import('@/views/forgotPassword'),
+    hidden: true
+  },
+  {
     path: '/404',
     component: () => import('@/views/error/404'),
     hidden: true
@@ -113,6 +118,19 @@ export const constantRoutes = [
         component: () => import('@/views/system/user/profile/index'),
         name: 'Profile',
         meta: { title: '个人中心', icon: 'user' }
+      }
+    ]
+  },
+  {
+    path: '/agent',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: 'ranking',
+        component: () => import('@/views/agent/ranking/index'),
+        name: 'AgentRanking',
+        meta: { title: '代理商排名', icon: 'chart' }
       }
     ]
   }

@@ -47,9 +47,12 @@
           <span v-if="!loading">登 录</span>
           <span v-else>登 录 中...</span>
         </el-button>
-        <!-- <div v-if="register" style="float: right;">
+         <div v-if="register" style="float: right;">
           <router-link class="link-type" :to="'/register'">立即注册</router-link>
-        </div> -->
+        </div>
+        <div style="float: right; margin-right: 10px;">
+          <router-link class="link-type" :to="'/forgot-password'">忘记密码</router-link>
+        </div>
         <div style="float: right;">
           <span @click="handoff">{{dl}}</span>
         </div>
@@ -117,27 +120,27 @@
       this.getCookie()
     },
     methods: {
-     
+
       encryptAndEncode(data) {
       try {
         // 1. 对象转JSON字符串
         const jsonString = JSON.stringify(data)
-        
+
         // 2. 准备密钥和IV
         const key = CryptoJS.enc.Utf8.parse(this.encryptionConfig.key)
-  
+
         // 3. AES-CBC加密
         const encrypted = CryptoJS.AES.encrypt(jsonString, key, {
           mode: CryptoJS.mode.ECB,
           padding: CryptoJS.pad.Pkcs7
         })
-        
+
         // 4. 获取Base64格式的加密字符串
         const base64Cipher = encrypted.toString()
-        
+
         // 5. URL编码处理（关键步骤）
         const urlSafeCipher = encodeURIComponent(base64Cipher)
-        
+
         return urlSafeCipher
       } catch (error) {
         console.error('加密失败:', error)
@@ -157,7 +160,7 @@
       getCode1() {
         if (this.loginForm.username) {
           if (this.countdown == "获取验证码") {
-           
+
             sendSms( this.encryptAndEncode({
             phoneNumber: this.loginForm.username,
             smsTemplateType: 2,
