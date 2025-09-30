@@ -600,7 +600,15 @@ public class SysUserServiceImpl implements ISysUserService
             if (agentInfo != null) {
                 Integer isRealName = (Integer) agentInfo.get("is_real_name");
                 String agentCode = (String) agentInfo.get("agent_code");
+                agentAccountInfo.put("agentAccountId", agentInfo.get("agent_account_id"));
                 agentAccountInfo.put("agentCode", agentCode);
+                agentAccountInfo.put("agentName", agentInfo.get("agent_name"));
+                agentAccountInfo.put("phone", agentInfo.get("phone"));
+                agentAccountInfo.put("level", agentInfo.get("level"));
+                agentAccountInfo.put("balance", agentInfo.get("balance"));
+                agentAccountInfo.put("isEnabled", agentInfo.get("is_enabled"));
+                agentAccountInfo.put("isEncrypt", agentInfo.get("is_encrypt"));
+                agentAccountInfo.put("createTime", agentInfo.get("create_time"));
                 // 数据库和前端状态定义一致，直接使用数据库值
                 // 统一标准: 0=未认证, 1=已认证, 2=认证中, 3=认证失败
                 agentAccountInfo.put("isRealName", isRealName != null && isRealName == 1);

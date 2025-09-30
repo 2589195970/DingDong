@@ -120,7 +120,7 @@
       </view>
 
     </view>
-    <view class="item3" @click="xianqing">
+    <view class="item3" >
       <view style="display: flex;justify-content: space-between;">
         <view class="shu1">
           <u-icon name="integral" color="#f09b7f"></u-icon>
@@ -135,21 +135,21 @@
       </view>
       <view class="daili-kan" style="display: flex; flex-wrap: nowrap; justify-content: space-around;margin-top: 20px;">
         <view class="orderclass-dd">
-          <view class="dd-vla">10</view>
+          <view class="dd-vla">{{ viewStats.yesterdayViewCount || 0 }}</view>
           <view class="dd-oimg">
             <image src="@/static/images/icon/zytj.svg" alt="" class="imgsi-dd"/>
             <view class="dd-lab">昨日浏览</view>
           </view>
         </view>
         <view class="orderclass-dd">
-          <view class="dd-vla">16</view>
+          <view class="dd-vla">{{ viewStats.todayViewCount || 0 }}</view>
           <view class="dd-oimg">
             <image src="@/static/images/icon/khtj.svg" alt="" class="imgsi-dd"/>
             <view class="dd-lab">今日浏览</view>
           </view>
         </view>
         <view class="orderclass-dd">
-          <view class="dd-vla">160</view>
+          <view class="dd-vla">{{ viewStats.totalViewCount || 0 }}</view>
           <view class="dd-oimg">
             <image src="@/static/images/icon/hytj.svg" alt="" class="imgsi-dd"/>
             <view class="dd-lab">总浏览</view>
@@ -240,6 +240,7 @@ import {
   selectAgentOrderAPPStatistics,
   selectActivateAgentOrderAPPStatistics,
   selectChildAgentStatistics,
+  getPageViewStats,
 } from "@/api/home/home.js";
 import { selectRegistrationStatistics } from "@/api/agent/agent.js";
 import NoticePopup from '@/components/NoticePopup/NoticePopup.vue';
@@ -276,6 +277,11 @@ export default {
         thisWeekCount: 0,
         thisMonthCount: 0
       },
+      viewStats: {
+        todayViewCount: 0,
+        yesterdayViewCount: 0,
+        totalViewCount: 0
+      },
       list: ['我的订单', '团队订单'],
       current: 0,
       current1: 0,
@@ -291,6 +297,7 @@ export default {
     this.loadRegistrationStats(); // 加载注册统计数据
     this.loadNoticeList(); // 加载通知列表
     this.loadNotices(); // 初始加载时检查通知
+    this.loadViewStats(); // 加载浏览量统计数据
   },
   onShow() {
     // 移除每次显示页面时的通知检查，避免重复弹出
@@ -571,6 +578,69 @@ export default {
       uni.navigateTo({
         url: `/pages/notice/detail?noticeId=${noticeId}`
       });
+    },
+
+    // 加载浏览量统计数据
+    async loadViewStats() {
+      try {
+        console.log( this.$store.state.user)
+        // 获取当前代理商编码
+        const agentAccount = this.$store.state.user.agentAccount;
+        if (!agentAccount || !agentAccount.agentCode) {
+          console.warn('代理商信息不完整，无法获取浏览量统计');
+          return;
+        }
+
+        // 并行获取今日、昨日、总浏览量
+        const [todayRes, yesterdayRes, totalRes] = await Promise.all([
+          getPageViewStats(agentAccount.agentCode, 'today'),
+          getPageViewStats(agentAccount.agentCode, 'yesterday'),
+          getPageViewStats(agentAccount.agentCode, 'all')
+        ]);
+
+        // 处理今日浏览量
+        if (todayRes.code === 200 && todayRes.data) {
+          this.viewStats.todayViewCount = this.extractViewCount(todayRes.data);
+        }
+
+        // 处理昨日浏览量
+        if (yesterdayRes.code === 200 && yesterdayRes.data) {
+          this.viewStats.yesterdayViewCount = this.extractViewCount(yesterdayRes.data);
+        }
+
+        // 处理总浏览量
+        if (totalRes.code === 200 && totalRes.data) {
+          this.viewStats.totalViewCount = this.extractViewCount(totalRes.data);
+        }
+
+      } catch (error) {
+        console.error('获取浏览量统计失败:', error);
+        // 设置默认值
+        this.viewStats = {
+          todayViewCount: 0,
+          yesterdayViewCount: 0,
+          totalViewCount: 0
+        };
+      }
+    },
+
+    // 从统计结果中提取浏览量数值
+    extractViewCount(data) {
+      if (!data) return 0;
+
+      try {
+        if (typeof data === 'object') {
+          // 尝试多个可能的字段名
+          return data.viewCount || data.totalViews || data.pageViews || data.count || 0;
+        }
+        if (typeof data === 'number') {
+          return data;
+        }
+        return parseInt(data) || 0;
+      } catch (e) {
+        console.warn('解析浏览量数据失败:', e);
+        return 0;
+      }
     }
   },
 }

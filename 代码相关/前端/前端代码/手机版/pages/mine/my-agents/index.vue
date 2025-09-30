@@ -99,6 +99,17 @@
                     <text class="team-value">{{ agent.teamMemberCount || 0 }}人</text>
                   </view>
                 </view>
+                <!-- 浏览量信息 -->
+                <view class="view-info">
+                  <view class="view-item">
+                    <text class="view-label">今日浏览:</text>
+                    <text class="view-value">{{ agent.todayViewCount || 0 }}</text>
+                  </view>
+                  <view class="view-item">
+                    <text class="view-label">总浏览:</text>
+                    <text class="view-value">{{ agent.totalViewCount || 0 }}</text>
+                  </view>
+                </view>
               </view>
 
               <view class="agent-actions">
@@ -185,6 +196,23 @@
             <view class="detail-row" v-if="selectedAgent.totalOrders">
               <text class="detail-label">总订单数</text>
               <text class="detail-value">{{ selectedAgent.totalOrders }}</text>
+            </view>
+          </view>
+
+          <!-- 浏览量统计 -->
+          <view class="detail-section">
+            <text class="section-title">浏览量统计</text>
+            <view class="detail-row">
+              <text class="detail-label">今日浏览量</text>
+              <text class="detail-value view-count">{{ selectedAgent.todayViewCount || 0 }}</text>
+            </view>
+            <view class="detail-row">
+              <text class="detail-label">本月浏览量</text>
+              <text class="detail-value view-count">{{ selectedAgent.monthlyViewCount || 0 }}</text>
+            </view>
+            <view class="detail-row">
+              <text class="detail-label">总浏览量</text>
+              <text class="detail-value view-count">{{ selectedAgent.totalViewCount || 0 }}</text>
             </view>
           </view>
 
@@ -644,6 +672,28 @@ export default {
             }
           }
         }
+
+        .view-info {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 8px;
+          padding-top: 8px;
+          border-top: 1px solid #f0f0f0;
+
+          .view-item {
+            .view-label {
+              font-size: 12px;
+              color: #666;
+            }
+
+            .view-value {
+              font-size: 14px;
+              font-weight: bold;
+              color: #9c27b0;
+              margin-left: 5px;
+            }
+          }
+        }
       }
 
       .agent-actions {
@@ -728,6 +778,11 @@ export default {
 
           &.commission {
             color: #ff9500;
+            font-weight: bold;
+          }
+
+          &.view-count {
+            color: #9c27b0;
             font-weight: bold;
           }
         }

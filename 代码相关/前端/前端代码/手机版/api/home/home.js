@@ -38,3 +38,15 @@ export function selectChildAgentList(data) {
     data: data
   })
 }
+
+// 获取页面浏览量统计
+export function getPageViewStats(agentCode, dateRange = 'today') {
+  return request({
+    url: '/console/pageViewStatistics/overview',
+    method: 'get',
+    params: {
+      agentCode: agentCode,
+      dateRange: dateRange
+    }
+  })
+}

@@ -16,11 +16,22 @@ const user = {
     roles: storage.get(constant.roles),
     permissions: storage.get(constant.permissions),
     agentAccount: storage.get(constant.agentAccount) || {
+      agentAccountId: null,
+      agentCode: '',
+      agentName: '',
+      phone: '',
+      level: 0,
+      parentAgentCode: '',
+      parentAgentName: '',
+      balance: 0,
+      isEnabled: 1,
+      isEncrypt: false,
       isRealName: false,
       realNameStatus: 0,
       realName: '',
       cardId: '',
-      auditTime: ''
+      auditTime: '',
+      createTime: null
     }
   },
 
@@ -121,11 +132,22 @@ const user = {
           commit('SET_ROLES', [])
           commit('SET_PERMISSIONS', [])
           commit('SET_AGENT_ACCOUNT', {
+            agentAccountId: null,
+            agentCode: '',
+            agentName: '',
+            phone: '',
+            level: 0,
+            parentAgentCode: '',
+            parentAgentName: '',
+            balance: 0,
+            isEnabled: 1,
+            isEncrypt: false,
             isRealName: false,
             realNameStatus: 0,
             realName: '',
             cardId: '',
-            auditTime: ''
+            auditTime: '',
+            createTime: null
           })
           removeToken()
           storage.clean()

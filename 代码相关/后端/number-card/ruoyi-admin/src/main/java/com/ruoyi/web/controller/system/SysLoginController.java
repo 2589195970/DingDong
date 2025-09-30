@@ -20,6 +20,7 @@ import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.framework.web.service.SysLoginService;
 import com.ruoyi.framework.web.service.SysPermissionService;
 import com.ruoyi.system.service.ISysMenuService;
+import com.ruoyi.system.service.ISysUserService;
 
 import static com.ruoyi.common.utils.SecurityUtils.getLoginUser;
 
@@ -39,6 +40,9 @@ public class SysLoginController
 
     @Autowired
     private SysPermissionService permissionService;
+
+    @Autowired
+    private ISysUserService userService;
 
     /**
      * 登录方法
@@ -95,7 +99,7 @@ public class SysLoginController
 
     /**
      * 获取用户信息
-     * 
+     *
      * @return 用户信息
      */
     @GetMapping("getInfo")
@@ -110,6 +114,8 @@ public class SysLoginController
         ajax.put("user", user);
         ajax.put("roles", roles);
         ajax.put("permissions", permissions);
+        // 添加代理商账户信息（移动端需要）
+        ajax.put("agentAccount", userService.getUserAgentAccountInfo(user.getUserId()));
         return ajax;
     }
 

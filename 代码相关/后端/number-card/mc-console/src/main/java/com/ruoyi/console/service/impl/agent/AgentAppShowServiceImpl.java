@@ -56,6 +56,9 @@ public class AgentAppShowServiceImpl  implements AgentAppShowService {
     @Resource
     AgentAccountMapper agentAccountMapper;
 
+    @Resource
+    PageViewService pageViewService;
+
 
 
     /**
@@ -160,7 +163,7 @@ public class AgentAppShowServiceImpl  implements AgentAppShowService {
         // 5. 转换为带团队统计的VO
         List<AgentTeamListVO> resultList = new ArrayList<>();
 
-        // 6. 为每个直接下级查询其团队成员数
+        // 6. 为每个直接下级查询其团队成员数和浏览量统计
         for (AgentAccountListVO agent : directAgents) {
             AgentTeamListVO teamVO = new AgentTeamListVO();
             // 复制基础信息
@@ -169,6 +172,30 @@ public class AgentAppShowServiceImpl  implements AgentAppShowService {
             // 查询该代理商的直接下级人数（下下级）
             Integer teamCount = agentAccountMapper.countAgentTeamMembers(agent.getAgentCode());
             teamVO.setTeamMemberCount(teamCount != null ? teamCount : 0);
+
+            // 查询该代理商的浏览量统计
+            try {
+                // 今日浏览量
+                Object todayStats = pageViewService.getPageViewStats(agent.getAgentCode(), "today");
+                Integer todayViewCount = extractViewCount(todayStats);
+                teamVO.setTodayViewCount(todayViewCount);
+
+                // 本月浏览量
+                Object monthStats = pageViewService.getPageViewStats(agent.getAgentCode(), "month");
+                Integer monthlyViewCount = extractViewCount(monthStats);
+                teamVO.setMonthlyViewCount(monthlyViewCount);
+
+                // 总浏览量 - 使用大范围时间查询
+                Object totalStats = pageViewService.getPageViewStats(agent.getAgentCode(), "all");
+                Integer totalViewCount = extractViewCount(totalStats);
+                teamVO.setTotalViewCount(totalViewCount);
+            } catch (Exception e) {
+                log.warn("查询代理商{}的浏览量统计失败: {}", agent.getAgentCode(), e.getMessage());
+                // 设置默认值
+                teamVO.setTodayViewCount(0);
+                teamVO.setMonthlyViewCount(0);
+                teamVO.setTotalViewCount(0);
+            }
 
             resultList.add(teamVO);
         }
@@ -265,6 +292,49 @@ public class AgentAppShowServiceImpl  implements AgentAppShowService {
             log.error("查询邀请数据异常：agentCode={}, type={}, isToday={}", agentCode, type, isToday, e);
             return 0;
         }
+    }
+
+    /**
+     * 从页面访问统计结果中提取浏览量
+     * @param statsResult 统计结果对象
+     * @return 浏览量数值
+     */
+    private Integer extractViewCount(Object statsResult) {
+        if (statsResult == null) {
+            return 0;
+        }
+
+        try {
+            if (statsResult instanceof java.util.Map) {
+                java.util.Map<String, Object> statsMap = (java.util.Map<String, Object>) statsResult;
+                Object viewCount = statsMap.get("viewCount");
+                if (viewCount != null) {
+                    if (viewCount instanceof Integer) {
+                        return (Integer) viewCount;
+                    } else if (viewCount instanceof Number) {
+                        return ((Number) viewCount).intValue();
+                    } else {
+                        return Integer.parseInt(viewCount.toString());
+                    }
+                }
+
+                // 尝试其他可能的字段名
+                Object totalViews = statsMap.get("totalViews");
+                if (totalViews != null) {
+                    if (totalViews instanceof Integer) {
+                        return (Integer) totalViews;
+                    } else if (totalViews instanceof Number) {
+                        return ((Number) totalViews).intValue();
+                    } else {
+                        return Integer.parseInt(totalViews.toString());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("解析浏览量统计数据失败: {}", e.getMessage());
+        }
+
+        return 0;
     }
 
 }

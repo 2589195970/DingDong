@@ -19,4 +19,22 @@ public class AgentTeamListVO extends AgentAccountListVO {
      */
     @ApiModelProperty("团队成员数（该代理商的直接下级数量）")
     private Integer teamMemberCount;
+
+    /**
+     * 今日浏览量
+     */
+    @ApiModelProperty("今日浏览量")
+    private Integer todayViewCount;
+
+    /**
+     * 本月浏览量
+     */
+    @ApiModelProperty("本月浏览量")
+    private Integer monthlyViewCount;
+
+    /**
+     * 总浏览量
+     */
+    @ApiModelProperty("总浏览量")
+    private Integer totalViewCount;
 }
