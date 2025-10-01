@@ -38,4 +38,13 @@ public interface AgentCommissionService extends IService<OrderCommissionDetails>
      * @param loginUser
      */
     void agentUpdateCommissionConfig(CommissionConfig commissionConfig,LoginUser loginUser) throws BizException;
+
+    /**
+     * 代理商订单佣金列表导出
+     * @param response HTTP响应
+     * @param agentCommissionSelectBO 查询条件
+     * @param loginUser 登录用户
+     * @throws BizException
+     */
+    void exportOrderCommissionList(javax.servlet.http.HttpServletResponse response, AgentCommissionSelectBO agentCommissionSelectBO, LoginUser loginUser) throws BizException;
 }

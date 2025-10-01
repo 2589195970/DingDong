@@ -13,6 +13,7 @@ import com.ruoyi.common.order.entity.AgentProduct;
 import com.ruoyi.common.order.entity.CommissionConfig;
 import com.ruoyi.common.order.entity.OrderCommissionDetails;
 import com.ruoyi.common.order.vo.AgentCommissionSelectVO;
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.console.mapper.OrderCommissionDetailsMapper;
 import com.ruoyi.console.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,6 +101,49 @@ public class AgentCommissionServiceImpl extends ServiceImpl<OrderCommissionDetai
             for(AgentProduct agentProduct:agentProductList){
                 agentProductInitService.updateAgentProductCommission(agentProduct.getParentProductCode(),agentProduct.getAgentCode(),agentProduct.getProductCommission());
             }
+        }
+    }
+
+    /**
+     * 代理商订单佣金列表导出
+     * @param response HTTP响应
+     * @param agentCommissionSelectBO 查询条件
+     * @param loginUser 登录用户
+     * @throws BizException
+     */
+    @Override
+    public void exportOrderCommissionList(HttpServletResponse response, AgentCommissionSelectBO agentCommissionSelectBO, LoginUser loginUser) throws BizException {
+        try {
+            // 获取代理账户信息
+            AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+            
+            // 查询所有符合条件的数据（不分页）
+            List<AgentCommissionSelectVO> agentCommissionSelectVOS = baseMapper.selectAgentCommissionList(
+                agentAccount.getAgentCode(), 
+                agentCommissionSelectBO.getOrderId(), 
+                agentCommissionSelectBO.getCardName(),
+                agentCommissionSelectBO.getCardPhone(), 
+                agentCommissionSelectBO.getCardId(),
+                agentCommissionSelectBO.getOrderStatus(),
+                agentCommissionSelectBO.getIsRecharged(),
+                agentCommissionSelectBO.getStarTime(),
+                agentCommissionSelectBO.getEndTime(),
+                agentCommissionSelectBO.getOrderCommissionStatus(),
+                0, // offset = 0
+                Integer.MAX_VALUE // 获取所有数据
+            );
+            
+            if (CollectionUtils.isEmpty(agentCommissionSelectVOS)) {
+                throw new BizException("没有符合条件的数据可导出");
+            }
+            
+            // 使用 ExcelUtil 导出数据
+            ExcelUtil<AgentCommissionSelectVO> util = new ExcelUtil<>(AgentCommissionSelectVO.class);
+            util.exportExcel(response, agentCommissionSelectVOS, "代理商佣金数据");
+            
+        } catch (Exception e) {
+            log.error("导出代理商佣金数据异常: {}", e.getMessage(), e);
+            throw new BizException("导出代理商佣金数据失败: " + e.getMessage());
         }
     }
 }

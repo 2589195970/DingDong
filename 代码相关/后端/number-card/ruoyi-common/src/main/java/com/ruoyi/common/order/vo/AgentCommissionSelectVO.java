@@ -1,5 +1,8 @@
 package com.ruoyi.common.order.vo;
 
+import com.ruoyi.common.annotation.Excel;
+import com.ruoyi.common.annotation.Excel.ColumnType;
+import com.ruoyi.common.annotation.Excel.Type;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -20,6 +23,7 @@ public class AgentCommissionSelectVO {
     /**
      * 订单ID
      */
+    @Excel(name = "订单ID")
     @ApiModelProperty("订单ID")
     private String orderId;
 
@@ -27,24 +31,28 @@ public class AgentCommissionSelectVO {
     /**
      * 下游订单号
      */
+    @Excel(name = "下游订单号")
     @ApiModelProperty("下游订单号")
     private String orderDownstreamId;
 
     /**
      * 用户姓名
      */
+    @Excel(name = "用户姓名")
     @ApiModelProperty("用户姓名")
     private String cardName;
 
     /**
      * 用户下单手机号
      */
+    @Excel(name = "用户手机号", cellType = ColumnType.TEXT)
     @ApiModelProperty("用户下单手机号")
     private String cardPhone;
 
     /**
      * 用户身份证
      */
+    @Excel(name = "用户身份证")
     @ApiModelProperty("用户身份证")
     private String cardId;
 
@@ -57,6 +65,7 @@ public class AgentCommissionSelectVO {
     /**
      * 省名称
      */
+    @Excel(name = "省份")
     @ApiModelProperty("省名称")
     private String provinceName;
 
@@ -69,6 +78,7 @@ public class AgentCommissionSelectVO {
     /**
      * 市名称
      */
+    @Excel(name = "城市")
     @ApiModelProperty("市名称")
     private String cityName;
 
@@ -81,6 +91,7 @@ public class AgentCommissionSelectVO {
     /**
      * 县/区名称
      */
+    @Excel(name = "区县")
     @ApiModelProperty("县/区名称")
     private String countyName;
 
@@ -88,12 +99,14 @@ public class AgentCommissionSelectVO {
     /**
      * 用户详细地址
      */
+    @Excel(name = "详细地址")
     @ApiModelProperty("用户详细地址")
     private String cardAddress;
 
     /**
      * 订单状态
      */
+    @Excel(name = "订单状态", readConverterExp = "0=创建,1=激活,2=失败,3=取消")
     @ApiModelProperty("订单状态")
     private Integer orderStatus;
 
@@ -106,54 +119,63 @@ public class AgentCommissionSelectVO {
     /**
      * 是否充值 0 未充值 1已充值是否充值 0 未充值 1已充值
      */
+    @Excel(name = "是否充值", readConverterExp = "0=未充值,1=已充值")
     @ApiModelProperty("是否充值")
     private Integer isRecharged;
 
     /**
      * 充值信息
      */
+    @Excel(name = "充值金额")
     @ApiModelProperty("充值信息")
     private String rechargeAmount;
 
     /**
      * 订单创建时间
      */
+    @Excel(name = "订单创建时间", dateFormat = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty("订单创建时间")
     private Long orderCreateTime;
 
     /**
      * 激活时间
      */
+    @Excel(name = "激活时间", dateFormat = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty("激活时间")
     private Long activeTime;
 
     /**
      * 订单佣金状态 0 未到结算状态 1 待结算 22 部分结算 3已结算 4无法结算
      */
+    @Excel(name = "佣金状态", readConverterExp = "0=未到结算状态,1=待结算,2=部分结算,3=已结算,4=无法结算")
     @ApiModelProperty("订单佣金状态")
     private Integer orderCommissionStatus;
 
     /**
      * 结算时间
      */
+    @Excel(name = "结算时间", dateFormat = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty("结算时间")
     private Long commissionTime;
 
     /**
      * 产品编码
      */
+    @Excel(name = "产品编码")
     @ApiModelProperty("产品编码")
     private String productCode;
 
     /**
      * 产品名称
      */
+    @Excel(name = "产品名称")
     @ApiModelProperty("产品名称")
     private String productName;
 
     /**
      * 产品类型
      */
+    @Excel(name = "产品类型")
     @ApiModelProperty("产品类型")
     private String productType;
 
@@ -166,18 +188,21 @@ public class AgentCommissionSelectVO {
     /**
      * 代理商code
      */
+    @Excel(name = "代理商编码")
     @ApiModelProperty("代理商code")
     private String agentCode;
 
     /**
      * 代理商名称
      */
+    @Excel(name = "代理商名称")
     @ApiModelProperty("代理商名称")
     private String agentName;
 
     /**
      * 创建时间
      */
+    @Excel(name = "创建时间", dateFormat = "yyyy-MM-dd HH:mm:ss")
     @ApiModelProperty("创建时间")
     private Long createTime;
 
@@ -185,18 +210,21 @@ public class AgentCommissionSelectVO {
     /**
      * 产品佣金
      */
+    @Excel(name = "产品佣金(分)")
     @ApiModelProperty("产品佣金")
     private Integer productCommission;
 
     /**
      * 收入佣金(产品佣金-分销佣金)
      */
+    @Excel(name = "收入佣金(分)")
     @ApiModelProperty("收入佣金(产品佣金-分销佣金)")
     private Integer revenueProductCommission;
 
     /**
      * 产品分销佣金
      */
+    @Excel(name = "分销佣金(分)")
     @ApiModelProperty("产品分销佣金")
     private Integer distributionProductCommission;
 

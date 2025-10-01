@@ -53,10 +53,10 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="排名" align="center" prop="ranking" width="80">
         <template slot-scope="scope">
-          <el-tag v-if="scope.row.ranking <= 3" :type="getRankingTagType(scope.row.ranking)" size="small">
+          <el-tag v-if="scope.row.ranking && scope.row.ranking <= 3" :type="getRankingTagType(scope.row.ranking)" size="small">
             {{ scope.row.ranking }}
           </el-tag>
-          <span v-else>{{ scope.row.ranking }}</span>
+          <span v-else>{{ scope.row.ranking || '-' }}</span>
         </template>
       </el-table-column>
       <el-table-column label="代理商编码" align="center" prop="agentCode" />
@@ -94,7 +94,7 @@
 </template>
 
 <script>
-import { getAgentRankingPage, exportAgentRanking } from "@/api/agent";
+import { getAgentRankingPage, exportAgentRanking, exportOrderCommissionList } from "@/api/agent";
 
 export default {
   name: "AgentRanking",
@@ -199,17 +199,39 @@ export default {
     },
     /** 格式化数字 */
     formatNumber(num) {
-      if (num >= 10000) {
-        return (num / 10000).toFixed(1) + '万'
-      } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'k'
+      // 处理空值情况
+      if (num === null || num === undefined || num === '') {
+        return '0'
       }
-      return num.toString()
+      
+      // 确保 num 是数字类型
+      const number = Number(num)
+      if (isNaN(number)) {
+        return '0'
+      }
+      
+      if (number >= 10000) {
+        return (number / 10000).toFixed(1) + '万'
+      } else if (number >= 1000) {
+        return (number / 1000).toFixed(1) + 'k'
+      }
+      return number.toString()
     },
     /** 格式化金额 */
     formatMoney(amount) {
+      // 处理空值情况
+      if (amount === null || amount === undefined || amount === '') {
+        return '0.00'
+      }
+      
+      // 确保 amount 是数字类型
+      const number = Number(amount)
+      if (isNaN(number)) {
+        return '0.00'
+      }
+      
       // 金额单位是分，转换为元
-      const yuan = (amount / 100).toFixed(2);
+      const yuan = (number / 100).toFixed(2);
       return yuan;
     },
     /** 获取排名标签类型 */

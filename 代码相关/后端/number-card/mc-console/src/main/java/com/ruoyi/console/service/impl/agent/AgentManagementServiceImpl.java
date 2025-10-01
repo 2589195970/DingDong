@@ -140,7 +140,8 @@ public class AgentManagementServiceImpl  implements AgentManagementService {
      * 排序规则：按订单总数降序排列，相同订单数时按创建时间升序排列
      * 佣金数据：从t_order_commission表获取真实佣金数据，只统计已激活且已结算的订单佣金
      */
-    public PageResult<AgentRankingVO> selectAgentRankingPage(AgentRankingSelectBO agentRankingSelectBO) throws BizException {
+    @Override
+	public PageResult<AgentRankingVO> selectAgentRankingPage(AgentRankingSelectBO agentRankingSelectBO) throws BizException {
         try {
             // 根据排名类型计算时间范围
             Long startTime = null;

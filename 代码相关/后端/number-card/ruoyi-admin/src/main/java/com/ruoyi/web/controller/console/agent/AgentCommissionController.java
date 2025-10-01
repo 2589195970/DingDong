@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 import static com.ruoyi.common.utils.SecurityUtils.getLoginUser;
 
@@ -91,6 +92,27 @@ public class AgentCommissionController {
         } catch (Exception e) {
             log.info("{}方法异常:{}", TAG, e.getMessage());
             return ResponseEntity.error("出错了,请稍候重试:{}", null);
+        }
+    }
+
+    /**
+     * 代理商订单佣金列表导出
+     *
+     * @return
+     */
+    @PostMapping("/exportOrderCommissionList")
+    @ApiOperation("代理商订单佣金列表导出")
+    public void exportOrderCommissionList(HttpServletResponse response, @RequestBody AgentCommissionSelectBO agentCommissionSelectBO) {
+        try {
+            agentCommissionService.exportOrderCommissionList(response, agentCommissionSelectBO, getLoginUser());
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", TAG, e.getMessage());
+            // 导出异常时设置错误响应
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", TAG, e.getMessage());
+            // 导出异常时设置错误响应
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 

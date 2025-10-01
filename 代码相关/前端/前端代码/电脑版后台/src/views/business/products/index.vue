@@ -51,9 +51,9 @@
             <el-table-column label="产品主图" align="center" prop="productMasterMap" width="120">
                 <template slot-scope="scope">
                     <div style="display: flex; justify-content: center; align-items: center; height: 80px;">
-                        <img 
-                            :src="scope.row.productMasterMap" 
-                            alt="产品主图" 
+                        <img
+                            :src="scope.row.productMasterMap"
+                            alt="产品主图"
                             style="max-width: 100px; max-height: 80px; object-fit: contain; border-radius: 4px;"
                             @error="handleImageError"
                         />
@@ -94,7 +94,7 @@
             <el-table-column label="上架时间" align="center" prop="shelfTime" width="160">
                 <template slot-scope="scope">
                     <span v-if="scope.row.shelfTime">{{ formatDateTime(scope.row.shelfTime) }}</span>
-                    <span v-else style="color: #999;">未上架</span>
+                    <span v-else style="color: #999;">---</span>
                 </template>
             </el-table-column>
             <el-table-column label="佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
@@ -121,7 +121,7 @@
 
                         &thinsp; <el-button @click="share(scope.row)" type="text" size="small">产品海报</el-button>
                     </div>
-                  
+
                     <el-button @click="handlefuzhi1(scope.row)" type="text" size="small">复制链接</el-button>
                     <el-button @click="handleOpen(scope.row)" type="text" size="small">打开链接</el-button>
                 </template>

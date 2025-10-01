@@ -34,6 +34,7 @@
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+                <el-button type="warning" icon="el-icon-download" size="mini" @click="handleExport">导出</el-button>
                 <!-- <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button> -->
             </el-form-item>
         </el-form>
@@ -98,7 +99,7 @@
 </template>
 
 <script>
-    import { selectOrderCommissionListPage } from "@/api/monitor/finance";
+    import { selectOrderCommissionListPage, exportOrderCommissionList } from "@/api/monitor/finance";
     export default {
         name: "Commission",
         dicts: ['sys_oper_type', 'sys_common_status'],
@@ -187,6 +188,39 @@
             /** 搜索按钮操作 */
             handleQuery() {
                 this.getList();
+            },
+
+            /** 导出按钮操作 */
+            handleExport() {
+                // 构建导出参数，与查询条件保持一致
+                const exportParams = { ...this.queryParams };
+                
+                // 处理日期范围
+                if (this.dateRange && this.dateRange.length === 2) {
+                    exportParams.startTime = this.dateRange[0];
+                    exportParams.endTime = this.dateRange[1];
+                }
+                
+                // 调用导出接口
+                exportOrderCommissionList(exportParams).then(response => {
+                    // 创建下载链接
+                    const blob = new Blob([response], { 
+                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                    });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `代理商订单佣金列表_${new Date().getTime()}.xlsx`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                    
+                    this.$message.success('导出成功');
+                }).catch(error => {
+                    console.error('导出失败:', error);
+                    this.$message.error('导出失败，请重试');
+                });
             },
 
             getList() {
