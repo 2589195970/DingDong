@@ -110,7 +110,8 @@
 
     <!-- ================================ 访问统计相关操作 ================================ -->
 
-    <!-- 插入或更新访问统计（核心方法） -->
+    <!-- 插入或更新访问统计（核心方法）
+         注意：view_count按visitor_id去重，确保同一用户一天只计算一次浏览量 -->
     <insert id="insertOrUpdateStatistics">
         INSERT INTO t_page_view_statistics (
             agent_code, view_date, view_count, visitor_count, ip_count
@@ -118,7 +119,7 @@
         SELECT
             #{agentCode} as agent_code,
             #{viewDate} as view_date,
-            COUNT(*) as view_count,
+            COUNT(DISTINCT visitor_id) as view_count,
             COUNT(DISTINCT visitor_id) as visitor_count,
             COUNT(DISTINCT ip_address) as ip_count
         FROM t_page_view_log
@@ -283,16 +284,17 @@
 
     <!-- ================================ 实时统计查询 ================================ -->
 
-    <!-- 获取代理商今日实时统计 -->
+    <!-- 获取代理商今日实时统计
+         注意：所有浏览量统计均按visitor_id去重，同一用户一天只计算一次 -->
     <select id="selectTodayRealTimeStats" resultType="map">
         SELECT
-            COUNT(*) as totalViews,
+            COUNT(DISTINCT visitor_id) as totalViews,
             COUNT(DISTINCT visitor_id) as uniqueVisitors,
             COUNT(DISTINCT ip_address) as uniqueIps,
-            COUNT(CASE WHEN device_type = 'Mobile' THEN 1 END) as mobileViews,
-            COUNT(CASE WHEN device_type = 'PC' THEN 1 END) as pcViews,
-            COUNT(CASE WHEN device_type = 'Tablet' THEN 1 END) as tabletViews,
-            COUNT(CASE WHEN referer IS NULL OR referer = '' THEN 1 END) as directViews,
+            COUNT(DISTINCT CASE WHEN device_type = 'Mobile' THEN visitor_id END) as mobileViews,
+            COUNT(DISTINCT CASE WHEN device_type = 'PC' THEN visitor_id END) as pcViews,
+            COUNT(DISTINCT CASE WHEN device_type = 'Tablet' THEN visitor_id END) as tabletViews,
+            COUNT(DISTINCT CASE WHEN referer IS NULL OR referer = '' THEN visitor_id END) as directViews,
             MAX(visit_time) as lastVisitTime
         FROM t_page_view_log
         WHERE agent_code = #{agentCode}
@@ -341,7 +343,8 @@
              WHERE agent_code = #{agentCode} AND view_date = #{viewDate}) as isConsistent
     </select>
 
-    <!-- 修复统计数据 -->
+    <!-- 修复统计数据
+         注意：view_count按visitor_id去重，确保同一用户一天只计算一次浏览量 -->
     <update id="repairStatisticsData">
         INSERT INTO t_page_view_statistics (
             agent_code, view_date, view_count, visitor_count, ip_count
@@ -349,7 +352,7 @@
         SELECT
             #{agentCode} as agent_code,
             #{viewDate} as view_date,
-            COUNT(*) as view_count,
+            COUNT(DISTINCT visitor_id) as view_count,
             COUNT(DISTINCT visitor_id) as visitor_count,
             COUNT(DISTINCT ip_address) as ip_count
         FROM t_page_view_log

@@ -193,7 +193,19 @@
         <el-row>
           <el-col :span="24">
             <el-form-item label="直播背景图" prop="backgroundImage">
-              <el-input v-model="form.backgroundImage" placeholder="请输入直播背景图URL" />
+              <el-upload
+                class="avatar-uploader"
+                :action="uploadUrl"
+                :show-file-list="false"
+                :on-success="handleUploadSuccess"
+                :headers="headers"
+              >
+                <img v-if="form.backgroundImage" :src="form.backgroundImage" class="avatar">
+                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+              </el-upload>
+              <div style="color: #999; font-size: 12px; margin-top: 5px;">
+                建议尺寸：750x1334像素，支持 JPG、PNG 格式，大小不超过 2MB
+              </div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -260,11 +272,15 @@ import {
   getLiveConfig,
   updateLiveConfig
 } from "@/api/agent/liveAudit";
+import { getToken } from "@/utils/auth";
 
 export default {
   name: "LiveAudit",
   data() {
     return {
+      // 图片上传配置
+      uploadUrl: process.env.VUE_APP_BASE_API + "/picture/addPicture",
+      headers: { Authorization: "Bearer " + getToken() },
       // 遮罩层
       loading: true,
       // 显示搜索条件
@@ -319,13 +335,22 @@ export default {
     this.total = Number(this.total) || 0;
   },
   methods: {
+    /** 图片上传成功回调 */
+    handleUploadSuccess(res, file) {
+      if (res.code === 200) {
+        this.$set(this.form, 'backgroundImage', res.message);
+        this.$modal.msgSuccess("图片上传成功");
+      } else {
+        this.$modal.msgError(res.message || "图片上传失败");
+      }
+    },
     /** 查询直播审核列表 */
     getList() {
       this.loading = true;
       selectLiveAuditListPage(this.queryParams).then(response => {
         if (response.code === 200 && response.data) {
-          this.liveAuditList = response.data.records || [];
-          this.total = parseInt(response.data.total) || 0;
+          this.liveAuditList = response.data.rows || [];
+          this.total = parseInt(response.data.totalRows) || 0;
         } else {
           this.liveAuditList = [];
           this.total = 0;
@@ -461,3 +486,39 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+/* 图片上传样式 */
+.avatar-uploader {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 178px;
+  height: 178px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-uploader:hover {
+  border-color: #409EFF;
+}
+
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  line-height: 178px;
+  text-align: center;
+}
+
+.avatar {
+  width: 178px;
+  height: 178px;
+  display: block;
+  object-fit: contain;
+}
+</style>

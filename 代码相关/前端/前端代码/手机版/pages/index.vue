@@ -243,6 +243,7 @@ import {
   getPageViewStats,
 } from "@/api/home/home.js";
 import { selectRegistrationStatistics } from "@/api/agent/agent.js";
+import { getInfo } from '@/api/login.js';
 import NoticePopup from '@/components/NoticePopup/NoticePopup.vue';
 import { listNotice } from '@/api/system/notice.js';
 import constant from "@/utils/constant";
@@ -583,9 +584,15 @@ export default {
     // 加载浏览量统计数据
     async loadViewStats() {
       try {
-        console.log( this.$store.state.user)
-        // 获取当前代理商编码
-        const agentAccount = this.$store.state.user.agentAccount;
+        // 从接口获取用户信息
+        const userInfoRes = await getInfo();
+        if (userInfoRes.code !== 200 || !userInfoRes.user) {
+          console.warn('获取用户信息失败');
+          return;
+        }
+
+        // 获取代理商编码
+        const agentAccount = userInfoRes.agentAccount;
         if (!agentAccount || !agentAccount.agentCode) {
           console.warn('代理商信息不完整，无法获取浏览量统计');
           return;

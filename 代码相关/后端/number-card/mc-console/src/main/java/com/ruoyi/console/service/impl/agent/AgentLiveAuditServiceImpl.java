@@ -87,9 +87,6 @@ public class AgentLiveAuditServiceImpl extends ServiceImpl<LiveAuditMapper, Live
         if (!CollectionUtil.isEmpty(liveAuditList)) {
             throw new BizException("已存在直播审核记录");
         }
-        if (StringUtils.isEmpty(liveAudit.getBackgroundImage())) {
-            throw new BizException("直播背景图不能为空");
-        }
         if (StringUtils.isEmpty(liveAudit.getDouyinUid())) {
             throw new BizException("抖音UID不能为空");
         }
@@ -99,10 +96,6 @@ public class AgentLiveAuditServiceImpl extends ServiceImpl<LiveAuditMapper, Live
         }
         if (StringUtils.isEmpty(liveAudit.getDouyinAccount())) {
             throw new BizException("抖音号不能为空");
-        }
-        // 验证背景图URL格式
-        if (!liveAudit.getBackgroundImage().matches("^https?://.*\\.(jpg|jpeg|png|gif)$")) {
-            throw new BizException("背景图URL格式错误，应为有效的图片链接");
         }
         liveAudit.setAgentCode(agentAccount.getAgentCode());
         liveAudit.setAgentName(agentAccount.getAgentName());

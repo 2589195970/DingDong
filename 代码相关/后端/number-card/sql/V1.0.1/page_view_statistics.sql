@@ -12,8 +12,8 @@ CREATE TABLE `t_page_view_statistics` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `agent_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '代理商编码',
   `view_date` date NOT NULL COMMENT '访问日期',
-  `view_count` int DEFAULT 0 COMMENT '访问次数',
-  `visitor_count` int DEFAULT 0 COMMENT '独立访客数',
+  `view_count` int DEFAULT 0 COMMENT '独立访客浏览量（按visitor_id去重，同一用户一天只计算一次）',
+  `visitor_count` int DEFAULT 0 COMMENT '独立访客数（与view_count相同，按visitor_id去重）',
   `ip_count` int DEFAULT 0 COMMENT '独立IP数',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -52,7 +52,33 @@ CREATE TABLE `t_page_view_log` (
 -- VALUES ('test_agent', CURDATE(), 0, 0, 0);
 
 -- ================================
--- 4. 索引优化说明
+-- 4. 统计去重逻辑说明
+-- ================================
+-- 重要业务规则：同一用户（visitor_id）一天内只计算一次浏览量
+--
+-- 统计字段说明：
+-- 1. view_count（独立访客浏览量）
+--    - 按visitor_id去重统计
+--    - 同一用户一天内多次访问只计算1次
+--    - SQL计算方式：COUNT(DISTINCT visitor_id)
+--
+-- 2. visitor_count（独立访客数）
+--    - 与view_count计算方式和结果完全相同
+--    - SQL计算方式：COUNT(DISTINCT visitor_id)
+--    - 保留此字段是为了语义清晰和兼容性
+--
+-- 3. ip_count（独立IP数）
+--    - 按ip_address去重统计
+--    - SQL计算方式：COUNT(DISTINCT ip_address)
+--    - 注意：同一IP可能有多个用户（如公司网络、家庭网络）
+--
+-- 实现位置：
+-- - PageViewMapper.xml 中的 insertOrUpdateStatistics
+-- - PageViewMapper.xml 中的 selectTodayRealTimeStats
+-- - PageViewMapper.xml 中的 repairStatisticsData
+
+-- ================================
+-- 5. 索引优化说明
 -- ================================
 -- uk_agent_date: 确保同一代理商同一天只有一条统计记录
 -- idx_agent_code: 支持按代理商快速查询
@@ -63,7 +89,7 @@ CREATE TABLE `t_page_view_log` (
 -- idx_agent_visit_time: 支持代理商的时间范围查询
 
 -- ================================
--- 5. 数据保留策略建议
+-- 6. 数据保留策略建议
 -- ================================
 -- 建议保留策略：
 -- 1. t_page_view_log 明细表保留90天数据
@@ -77,7 +103,7 @@ CREATE TABLE `t_page_view_log` (
 -- DELETE FROM t_page_view_statistics WHERE view_date < DATE_SUB(CURDATE(), INTERVAL 365 DAY);
 
 -- ================================
--- 6. 常用查询SQL示例
+-- 7. 常用查询SQL示例
 -- ================================
 
 -- 查询代理商今日访问统计

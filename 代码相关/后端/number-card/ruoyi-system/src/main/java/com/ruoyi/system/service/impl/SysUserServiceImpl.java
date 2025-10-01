@@ -611,21 +611,24 @@ public class SysUserServiceImpl implements ISysUserService
                 agentAccountInfo.put("createTime", agentInfo.get("create_time"));
                 // 数据库和前端状态定义一致，直接使用数据库值
                 // 统一标准: 0=未认证, 1=已认证, 2=认证中, 3=认证失败
-                agentAccountInfo.put("isRealName", isRealName != null && isRealName == 1);
+                agentAccountInfo.put("yisRealName", isRealName != null && isRealName == 1);
                 agentAccountInfo.put("realNameStatus", isRealName != null ? isRealName : 0);
                 if (agentInfo.get("parent_agent_code") != null) {
                     // 查询上级代理
                     Map<String, Object> parentAgentCode = userMapper.selectAgentAccountByAgentCode(String.valueOf(agentInfo.get("parent_agent_code")));
-                    agentAccountInfo.put("parentAgentCode", parentAgentCode.get("agent_code"));
-                    agentAccountInfo.put("sysUserId", parentAgentCode.get("sys_user_id"));
-                    // 查询上级用户信息
-                    SysUser parentUser = userMapper.selectUserById(Long.valueOf(String.valueOf(parentAgentCode.get("sys_user_id"))));
-                    if (parentUser != null) {
-                        agentAccountInfo.put("parentAgentName", parentUser.getUserName());
-                        agentAccountInfo.put("parentAgentPhone", parentAgentCode.get("phone"));
-                    } else {
-                        agentAccountInfo.put("parentAgentName", "");
-                        agentAccountInfo.put("parentAgentPhone", "");
+                    // 添加空值检查，避免没有上级代理时报错
+                    if (parentAgentCode != null && !parentAgentCode.isEmpty()) {
+                        agentAccountInfo.put("parentAgentCode", parentAgentCode.get("agent_code"));
+                        agentAccountInfo.put("sysUserId", parentAgentCode.get("sys_user_id"));
+                        // 查询上级用户信息
+                        SysUser parentUser = userMapper.selectUserById(Long.valueOf(String.valueOf(parentAgentCode.get("sys_user_id"))));
+                        if (parentUser != null) {
+                            agentAccountInfo.put("parentAgentName", parentUser.getUserName());
+                            agentAccountInfo.put("parentAgentPhone", parentAgentCode.get("phone"));
+                        } else {
+                            agentAccountInfo.put("parentAgentName", "");
+                            agentAccountInfo.put("parentAgentPhone", "");
+                        }
                     }
                 }
                 // 如果已实名或认证中，查询详细的实名审核信息
