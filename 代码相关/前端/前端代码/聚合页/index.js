@@ -152,6 +152,18 @@ new Vue({
       })
     },
 
+    /**
+     * 跳转到产品H5页面
+     * @param {string} h5Url - 产品的H5页面地址
+     */
+    Receive(h5Url) {
+      if (h5Url) {
+        window.location.href = h5Url;
+      } else {
+        vant.Toast('产品链接无效');
+      }
+    },
+
     // ==================== 页面访问统计相关方法 ====================
 
     /**

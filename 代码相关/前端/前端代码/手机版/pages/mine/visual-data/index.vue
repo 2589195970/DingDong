@@ -74,9 +74,9 @@ export default {
       activeTab: 0,
       rankingTypes: {
         1: '佣金排行',
-        2: '订单量排行',
-        3: '激活量排行',
-        4: '团队发展排行'
+        // 2: '订单量排行',
+        // 3: '激活量排行',
+        // 4: '团队发展排行'
       },
       currentRankingType: 1,
       rankingData: [],
