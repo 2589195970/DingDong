@@ -18,6 +18,7 @@ import com.ruoyi.common.order.entity.WithdrawalConfig;
 import com.ruoyi.common.order.entity.WithdrawalRecord;
 import com.ruoyi.common.order.vo.ComputeRateVO;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.console.mapper.WithdrawalApplicationMapper;
 import com.ruoyi.console.service.AgentAccountService;
 import com.ruoyi.console.service.WithdrawalApplicationService;
@@ -60,16 +61,21 @@ public class WithdrawalApplicationServiceImpl extends ServiceImpl<WithdrawalAppl
      * @throws BizException
      */
     public PageResult<WithdrawalApplication> selectWithdrawalApplicationListPage(WithdrawalApplicationSelectBO withdrawalApplicationSelectBO) throws BizException {
-        //读取分页
+        // 读取分页
         Page page = new Page(withdrawalApplicationSelectBO.getPageNo(), withdrawalApplicationSelectBO.getPageSize());
-        Page<WithdrawalApplication> withdrawalApplicationPage = baseMapper.selectPage(page, new LambdaQueryWrapper<WithdrawalApplication>()
+
+        // 仅允许查询当前登录用户的记录
+        Long currentUserId = SecurityUtils.getUserId();
+
+        LambdaQueryWrapper<WithdrawalApplication> wrapper = new LambdaQueryWrapper<WithdrawalApplication>()
+                .eq(WithdrawalApplication::getApplyUserId, currentUserId)
                 .eq(StringUtils.isNotEmpty(withdrawalApplicationSelectBO.getApplicationNumber()), WithdrawalApplication::getApplicationNumber, withdrawalApplicationSelectBO.getApplicationNumber())
-                .eq(StringUtils.isNotEmpty(withdrawalApplicationSelectBO.getApplyAgentCode()), WithdrawalApplication::getApplyAgentCode, withdrawalApplicationSelectBO.getApplyAgentCode())
-                .eq(withdrawalApplicationSelectBO.getApplyUserId() != null, WithdrawalApplication::getApplyUserId, withdrawalApplicationSelectBO.getApplyUserId())
+                // 出于安全考虑，忽略外部传入的 applyUserId 与 applyAgentCode，防止越权
                 .eq(withdrawalApplicationSelectBO.getWithdrawalStatus() != null, WithdrawalApplication::getWithdrawalStatus, withdrawalApplicationSelectBO.getWithdrawalStatus())
                 .eq(withdrawalApplicationSelectBO.getWithdrawalType() != null, WithdrawalApplication::getWithdrawalType, withdrawalApplicationSelectBO.getWithdrawalType())
-                .between((withdrawalApplicationSelectBO.getStarTime() != null && withdrawalApplicationSelectBO.getEndTime() != null), WithdrawalApplication::getCreateTime, withdrawalApplicationSelectBO.getStarTime(), withdrawalApplicationSelectBO.getEndTime())
-        );
+                .between((withdrawalApplicationSelectBO.getStarTime() != null && withdrawalApplicationSelectBO.getEndTime() != null), WithdrawalApplication::getCreateTime, withdrawalApplicationSelectBO.getStarTime(), withdrawalApplicationSelectBO.getEndTime());
+
+        Page<WithdrawalApplication> withdrawalApplicationPage = baseMapper.selectPage(page, wrapper);
         return PageResultFactory.createPageResult(withdrawalApplicationPage);
     }
 

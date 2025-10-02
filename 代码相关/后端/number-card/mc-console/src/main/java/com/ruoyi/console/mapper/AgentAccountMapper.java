@@ -171,4 +171,59 @@ public interface AgentAccountMapper extends BaseMapper<AgentAccount> {
                                                @Param("offset") Integer offset,
                                                @Param("pageSize") Integer pageSize);
 
+    // ==================== 直接下游代理商查询方法 ====================
+    
+    /**
+     * 查询直接下游代理商列表总数（包含团队人数）
+     * @param parentAgentCode 父代理商编码
+     * @param agentName 代理商姓名（模糊查询）
+     * @param isRealName 是否实名
+     * @param isEnabled 是否启用
+     * @param level 等级
+     * @return 总数
+     */
+    Integer selectDirectSubAgentsCountWithTeam(@Param("parentAgentCode") String parentAgentCode,
+                                               @Param("agentName") String agentName,
+                                               @Param("isRealName") Integer isRealName,
+                                               @Param("isEnabled") Integer isEnabled,
+                                               @Param("level") Integer level);
+
+    /**
+     * 查询直接下游代理商列表（包含团队人数）
+     * @param parentAgentCode 父代理商编码
+     * @param agentName 代理商姓名（模糊查询）
+     * @param isRealName 是否实名
+     * @param isEnabled 是否启用
+     * @param level 等级
+     * @param offset 偏移量
+     * @param pageSize 每页大小
+     * @return 代理商列表
+     */
+    List<AgentAccountListVO> selectDirectSubAgentsListWithTeam(@Param("parentAgentCode") String parentAgentCode,
+                                                               @Param("agentName") String agentName,
+                                                               @Param("isRealName") Integer isRealName,
+                                                               @Param("isEnabled") Integer isEnabled,
+                                                               @Param("level") Integer level,
+                                                               @Param("offset") Integer offset,
+                                                               @Param("pageSize") Integer pageSize);
+
+    /**
+     * 查询直接下游代理商列表（包含团队人数）- 简化版本
+     * @param parentAgentCode 父代理商编码
+     * @param agentName 代理商姓名（模糊查询）
+     * @param isRealName 是否实名
+     * @param isEnabled 是否启用
+     * @param level 等级
+     * @param offset 偏移量
+     * @param pageSize 每页大小
+     * @return 代理商列表
+     */
+    List<AgentAccountListVO> selectDirectSubAgentsListWithTeamSimple(@Param("parentAgentCode") String parentAgentCode,
+                                                                     @Param("agentName") String agentName,
+                                                                     @Param("isRealName") Integer isRealName,
+                                                                     @Param("isEnabled") Integer isEnabled,
+                                                                     @Param("level") Integer level,
+                                                                     @Param("offset") Integer offset,
+                                                                     @Param("pageSize") Integer pageSize);
+
 }

@@ -507,4 +507,124 @@
         </choose>
     </select>
 
+    <!-- 查询直接下游代理商列表总数（包含团队人数） -->
+    <select id="selectDirectSubAgentsCountWithTeam" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM t_agent_account a1
+        LEFT JOIN sys_user s ON a1.sys_user_id = s.user_id
+        LEFT JOIN t_withdrawal_record r ON a1.agent_code = r.agent_code
+        WHERE a1.parent_agent_code = #{parentAgentCode}
+        <if test="agentName != null and agentName != ''">
+            AND a1.agent_name LIKE CONCAT('%', #{agentName}, '%')
+        </if>
+        <if test="isRealName != null">
+            AND a1.is_real_name = #{isRealName}
+        </if>
+        <if test="isEnabled != null">
+            AND a1.is_enabled = #{isEnabled}
+        </if>
+        <if test="level != null">
+            AND a1.level = #{level}
+        </if>
+    </select>
+
+    <!-- 查询直接下游代理商列表（包含团队人数） -->
+    <select id="selectDirectSubAgentsListWithTeam" resultType="com.ruoyi.common.order.vo.AgentAccountListVO">
+        SELECT
+            a1.agent_account_id as agentAccountId,
+            s.user_id as sysUserId,
+            s.user_name as sysUserName,
+            a1.parent_agent_code as parentAgentCode,
+            a1.agent_code as agentCode,
+            a1.agent_name as agentName,
+            a1.level as level,
+            a1.is_real_name as isRealName,
+            a1.phone as phone,
+            a1.is_enabled as isEnabled,
+            a1.is_encrypt as isEncrypt,
+            a1.create_time as createTime,
+            r.balance as balance,
+            COALESCE(team_stats.team_cnt, 0) as teamCnt
+        FROM t_agent_account a1
+        LEFT JOIN sys_user s ON a1.sys_user_id = s.user_id
+        LEFT JOIN t_withdrawal_record r ON a1.agent_code = r.agent_code
+        LEFT JOIN (
+            SELECT 
+                parent_agent_code,
+                COUNT(*) as team_cnt
+            FROM t_agent_account
+            WHERE parent_agent_code IS NOT NULL
+            GROUP BY parent_agent_code
+        ) team_stats ON a1.agent_code = team_stats.parent_agent_code
+        WHERE a1.parent_agent_code = #{parentAgentCode}
+        <if test="agentName != null and agentName != ''">
+            AND a1.agent_name LIKE CONCAT('%', #{agentName}, '%')
+        </if>
+        <if test="isRealName != null">
+            AND a1.is_real_name = #{isRealName}
+        </if>
+        <if test="isEnabled != null">
+            AND a1.is_enabled = #{isEnabled}
+        </if>
+        <if test="level != null">
+            AND a1.level = #{level}
+        </if>
+        ORDER BY a1.create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 测试查询：验证团队人数计算 -->
+    <select id="testTeamCountCalculation" resultType="java.util.Map">
+        SELECT 
+            a1.agent_code,
+            a1.agent_name,
+            COUNT(a2.agent_code) as actual_team_count
+        FROM t_agent_account a1
+        LEFT JOIN t_agent_account a2 ON a1.agent_code = a2.parent_agent_code
+        WHERE a1.parent_agent_code = #{parentAgentCode}
+        GROUP BY a1.agent_code, a1.agent_name
+        ORDER BY a1.create_time DESC
+    </select>
+
+    <!-- 查询直接下游代理商列表（包含团队人数）- 简化版本 -->
+    <select id="selectDirectSubAgentsListWithTeamSimple" resultType="com.ruoyi.common.order.vo.AgentAccountListVO">
+        SELECT
+            a1.agent_account_id as agentAccountId,
+            s.user_id as sysUserId,
+            s.user_name as sysUserName,
+            a1.parent_agent_code as parentAgentCode,
+            a1.agent_code as agentCode,
+            a1.agent_name as agentName,
+            a1.level as level,
+            a1.is_real_name as isRealName,
+            a1.phone as phone,
+            a1.is_enabled as isEnabled,
+            a1.is_encrypt as isEncrypt,
+            a1.create_time as createTime,
+            r.balance as balance,
+            COALESCE(COUNT(a2.agent_code), 0) as teamCnt
+        FROM t_agent_account a1
+        LEFT JOIN sys_user s ON a1.sys_user_id = s.user_id
+        LEFT JOIN t_withdrawal_record r ON a1.agent_code = r.agent_code
+        LEFT JOIN t_agent_account a2 ON a1.agent_code = a2.parent_agent_code
+        WHERE a1.parent_agent_code = #{parentAgentCode}
+        <if test="agentName != null and agentName != ''">
+            AND a1.agent_name LIKE CONCAT('%', #{agentName}, '%')
+        </if>
+        <if test="isRealName != null">
+            AND a1.is_real_name = #{isRealName}
+        </if>
+        <if test="isEnabled != null">
+            AND a1.is_enabled = #{isEnabled}
+        </if>
+        <if test="level != null">
+            AND a1.level = #{level}
+        </if>
+        GROUP BY a1.agent_account_id, s.user_id, s.user_name, a1.parent_agent_code, 
+                 a1.agent_code, a1.agent_name, a1.level, a1.is_real_name, a1.phone, 
+                 a1.is_enabled, a1.is_encrypt, a1.create_time, r.balance
+        ORDER BY a1.create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
 </mapper>

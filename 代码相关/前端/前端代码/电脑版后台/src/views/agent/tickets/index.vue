@@ -7,6 +7,7 @@
                     style="width: 240px">
                     <el-option label="流量卡" value="0"></el-option>
                     <el-option label="技术对接" value="1"></el-option>
+                    <el-option label="投诉" value="2"></el-option>
                     <el-option label="其他" value="10"></el-option>
                 </el-select>
             </el-form-item>
@@ -50,6 +51,7 @@
                 <template slot-scope="scope">
                     <p v-if="scope.row.workOrderType==0">流量卡</p>
                     <p v-if="scope.row.workOrderType==1">技术对接</p>
+                    <p v-if="scope.row.workOrderType==2">投诉</p>
                     <p v-if="scope.row.workOrderType==10">其他</p>
                 </template>
             </el-table-column>
@@ -94,6 +96,7 @@
                                 style="width: 240px">
                                 <el-option label="流量卡" value="0"></el-option>
                                 <el-option label="技术对接" value="1"></el-option>
+                                <el-option label="投诉" value="2"></el-option>
                                 <el-option label="其他" value="10"></el-option>
                             </el-select>
                         </el-form-item>

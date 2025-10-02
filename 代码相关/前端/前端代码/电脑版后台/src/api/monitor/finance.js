@@ -104,6 +104,16 @@ export function selectOrderCommissionListPage(data) {
     data: data,
   })
 }
+
+// 导出代理商订单佣金列表
+export function exportOrderCommissionList(data) {
+  return request({
+    url: '/agentCommission/exportOrderCommissionList',
+    method: 'post',
+    data: data,
+    responseType: 'blob'
+  })
+}
 // 计算汇率
 export function computeRate(data) {
   return request({

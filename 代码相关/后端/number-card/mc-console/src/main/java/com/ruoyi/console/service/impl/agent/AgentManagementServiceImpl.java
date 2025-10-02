@@ -1,6 +1,8 @@
 package com.ruoyi.console.service.impl.agent;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.constant.BaseConstant;
+import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.core.page.PageResultFactory;
 import com.ruoyi.common.exception.BizException;
@@ -13,6 +15,7 @@ import com.ruoyi.common.order.entity.AgentAccount;
 import com.ruoyi.common.order.entity.AgentProduct;
 import com.ruoyi.common.order.vo.AgentAccountListVO;
 import com.ruoyi.common.order.vo.AgentRankingVO;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.console.mapper.AgentAccountMapper;
 import com.ruoyi.console.mapper.ProductMapper;
 import com.ruoyi.console.service.*;
@@ -51,25 +54,70 @@ public class AgentManagementServiceImpl  implements AgentManagementService {
     @Resource
     ISysUserService iSysUserService;
 
+	@Resource
+	AgentAccountService agentAccountService;
+
 
 
     /**
-     * 代理商列表查询
+     * 代理商列表查询（只返回直接下游代理商，包含团队人数）
      *
-     * @return
+     * @param agentAccountSelectBO 查询条件
+     * @param loginUser 当前登录用户
+     * @return 代理商列表分页结果
      * @throws BizException
      */
     public PageResult<AgentAccountListVO> selectAgentAccountListPage(AgentAccountSelectBO agentAccountSelectBO) throws BizException {
-        //分页获取代理商列表 查询总数
-        Integer totalRows = agentAccountMapper.selectAgentAccountListCount(agentAccountSelectBO.getParentAgentName(), agentAccountSelectBO.getAgentName(), agentAccountSelectBO.getIsRealName(), agentAccountSelectBO.getIsEnabled(), agentAccountSelectBO.getLevel());
+        // 获取当前登录用户的代理商编码
+	    Long userId = SecurityUtils.getUserId();
+	    AgentAccount agentAccountByUserId = agentAccountService.getAgentAccountByUserId(userId, true);
+	    String currentAgentCode = agentAccountByUserId.getAgentCode();
+
+	    // 分页获取直接下游代理商列表 查询总数
+        Integer totalRows = agentAccountMapper.selectDirectSubAgentsCountWithTeam(
+            currentAgentCode, 
+            agentAccountSelectBO.getAgentName(), 
+            agentAccountSelectBO.getIsRealName(), 
+            agentAccountSelectBO.getIsEnabled(), 
+            agentAccountSelectBO.getLevel()
+        );
+        
         if (totalRows == null || totalRows == BaseConstant.ZERO_INT) {
             return PageResultFactory.createPageResult(new ArrayList<>(), 0L, agentAccountSelectBO.getPageSize(), agentAccountSelectBO.getPageNo());
         }
-        //分页查询代理商产品
-        List<AgentAccountListVO> agentAccountListVOS = agentAccountMapper.selectAgentAccountList(agentAccountSelectBO.getParentAgentName(),
-                agentAccountSelectBO.getAgentName(), agentAccountSelectBO.getIsRealName(), agentAccountSelectBO.getIsEnabled(), agentAccountSelectBO.getLevel(),
-                (agentAccountSelectBO.getPageNo() - 1) * agentAccountSelectBO.getPageSize(), agentAccountSelectBO.getPageSize());
+        
+        // 分页查询直接下游代理商列表（包含团队人数）
+        List<AgentAccountListVO> agentAccountListVOS = agentAccountMapper.selectDirectSubAgentsListWithTeamSimple(
+            currentAgentCode,
+            agentAccountSelectBO.getAgentName(), 
+            agentAccountSelectBO.getIsRealName(), 
+            agentAccountSelectBO.getIsEnabled(), 
+            agentAccountSelectBO.getLevel(),
+            (agentAccountSelectBO.getPageNo() - 1) * agentAccountSelectBO.getPageSize(), 
+            agentAccountSelectBO.getPageSize()
+        );
+        
         return PageResultFactory.createPageResult(agentAccountListVOS, Long.valueOf(totalRows), agentAccountSelectBO.getPageSize(), agentAccountSelectBO.getPageNo());
+    }
+    
+    /**
+     * 获取当前登录用户的代理商编码
+     * @param loginUser 当前登录用户
+     * @return 代理商编码
+     * @throws BizException
+     */
+    private String getCurrentAgentCode(LoginUser loginUser) throws BizException {
+        // 根据用户ID查询代理商信息
+        AgentAccount agentAccount = agentAccountMapper.selectOne(
+            new LambdaQueryWrapper<AgentAccount>()
+                .eq(AgentAccount::getSysUserId, loginUser.getUserId())
+        );
+        
+        if (agentAccount == null) {
+            throw new BizException("当前用户不是代理商");
+        }
+        
+        return agentAccount.getAgentCode();
     }
 
 

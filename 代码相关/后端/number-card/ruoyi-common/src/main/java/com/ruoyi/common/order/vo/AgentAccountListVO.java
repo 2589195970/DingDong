@@ -94,4 +94,10 @@ public class AgentAccountListVO {
      */
     @ApiModelProperty("余额 单位分")
     private Integer balance;
+
+    /**
+     * 团队人数（直接下游代理商数量）
+     */
+    @ApiModelProperty("团队人数")
+    private Integer teamCnt;
 }

@@ -1,6 +1,7 @@
 package com.ruoyi.console.service;
 
 
+import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.AgentAccountSelectBO;
@@ -19,9 +20,11 @@ import com.ruoyi.common.order.vo.AgentRankingVO;
 public interface AgentManagementService  {
 
     /**
-     * 代理商列表查询
+     * 代理商列表查询（只返回直接下游代理商，包含团队人数）
      *
-     * @return
+     * @param agentAccountSelectBO 查询条件
+     * @param loginUser 当前登录用户
+     * @return 代理商列表分页结果
      * @throws BizException
      */
      PageResult<AgentAccountListVO> selectAgentAccountListPage(AgentAccountSelectBO agentAccountSelectBO) throws BizException;

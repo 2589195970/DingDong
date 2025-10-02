@@ -22,7 +22,7 @@ public class WorkOrderSelectBO extends BaseBO{
     /**
      * 0 流量卡 1 技术对接 10其他
      */
-    @ApiModelProperty(value = "工单类型 0 流量卡 1 技术对接 10其他")
+    @ApiModelProperty(value = "工单类型 0 流量卡 1 技术对接 2 投诉 10其他")
     private Integer workOrderType;
 
     /**

@@ -35,12 +35,12 @@ public class AgentManagementController {
 
 
     /**
-     * 代理商列表查询
+     * 代理商列表查询（只返回直接下游代理商，包含团队人数）
      *
      * @return
      */
     @PostMapping("/agentSelectOrderListPage")
-    @ApiOperation("代理商分页查询订单")
+    @ApiOperation("代理商分页查询订单（只返回直接下游代理商，包含团队人数）")
     public ResponseEntity<PageResult<AgentAccountListVO>> selectAgentAccountListPage(@RequestBody AgentAccountSelectBO agentAccountSelectBO) {
         try {
             return ResponseEntity.success(agentManagementService.selectAgentAccountListPage(agentAccountSelectBO));

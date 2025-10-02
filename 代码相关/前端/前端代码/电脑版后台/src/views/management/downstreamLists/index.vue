@@ -28,10 +28,14 @@
             :tree-props="{ children: 'children' }" height="550" :row-class-name="tableRowClassName"
             @selection-change="handleSelectionChange">
             <el-table-column label="ID" align="center" prop="agentAccountId" />
-            <el-table-column label="上级" align="center" prop="parentAgentName" :show-overflow-tooltip="true" />
             <el-table-column label="等级" align="center" prop="level" :show-overflow-tooltip="true" />
             <el-table-column label="用户名" align="center" prop="agentName" :show-overflow-tooltip="true" />
             <el-table-column label="手机号" align="center" prop="phone" :show-overflow-tooltip="true" />
+            <el-table-column label="团队人数" align="center" prop="teamCnt" :show-overflow-tooltip="true">
+                <template slot-scope="scope">
+                    <span class="number-text">{{ formatNumber(scope.row.teamCnt) }}</span>
+                </template>
+            </el-table-column>
             <el-table-column label="余额" align="center" prop="balance" :show-overflow-tooltip="true">
                 <template slot-scope="scope">
                     <p>{{scope.row.balance * 0.01}}元</p>
@@ -392,6 +396,27 @@
                     this.total = res.data.totalRows
                 })
             },
+            
+            /** 格式化数字 */
+            formatNumber(num) {
+                // 处理空值情况
+                if (num === null || num === undefined || num === '') {
+                    return '0'
+                }
+                
+                // 确保 num 是数字类型
+                const number = Number(num)
+                if (isNaN(number)) {
+                    return '0'
+                }
+                
+                if (number >= 10000) {
+                    return (number / 10000).toFixed(1) + '万'
+                } else if (number >= 1000) {
+                    return (number / 1000).toFixed(1) + 'k'
+                }
+                return number.toString()
+            },
 
         },
     }
@@ -411,6 +436,11 @@
     }
 
     .el-table .success-row2 {
+        color: #409EFF;
+    }
+
+    .number-text {
+        font-weight: bold;
         color: #409EFF;
     }
 </style>
