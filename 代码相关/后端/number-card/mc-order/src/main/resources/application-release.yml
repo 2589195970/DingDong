@@ -58,16 +58,13 @@ spring:
         druid:
             # 主库数据源
             master:
-                url: jdbc:mysql://rm-bp190y09aijh9pcwlqo.mysql.rds.aliyuncs.com:3306/numberCard?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+                url: jdbc:mysql://rm-bp190y09aijh9pcwlqo.mysql.rds.aliyuncs.com:3306/numberCard?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai&autoReconnect=true&failOverReadOnly=false
                 username: root
                 password: JCHC4g5%9YRJFeeN
             # 从库数据源
             slave:
                 # 从数据源开关/默认关闭
                 enabled: false
-                url:
-                username:
-                password:
             # 初始连接数
             initialSize: 5
             # 最小连接池数量
@@ -96,7 +93,7 @@ spring:
             statViewServlet:
                 enabled: true
                 # 设置白名单，不填则允许所有访问
-                allow:
+                allow: ""
                 url-pattern: /druid/*
                 # 控制台管理用户名和密码
                 login-username: ruoyi
@@ -111,8 +108,54 @@ spring:
                 wall:
                     config:
                         multi-statement-allow: true
-
-
+# RocketMQ配置
+rocket-mq:
+  accessKey: dev
+  secretKey: dev
+  nameSrvAddr: http://123.56.89.151/:9876
+  groupId: GID_MC_PUSH
+  consumeThreadNums: 5
+  consumeTimeout: 100000
+  reconsumeTimes: 3
+  suspendTimeMillis: 30000
 
 submit:
     h5: https://h5.dingdonghaoka.com/
+
+doudian:
+  batchDecryptUrl: https://xxxxxxxx
+
+okhttp:
+  timeout: 15000
+  maxConnection: 20
+  maxIdleConnections: 5
+  keepAliveDurationMill: 15000
+  resetConnection: true
+  maxHostConnection: 20
+
+server:
+  port: 8081
+
+# 日志配置
+logging:
+  level:
+    com.ruoyi: info
+    org.springframework: warn
+
+# PageHelper分页插件
+pagehelper:
+  helperDialect: mysql
+  supportMethodsArguments: true
+  params: count=countSql
+
+# MyBatisPlus配置
+mybatis-plus:
+  # 搜索指定包别名
+  typeAliasesPackage: com.ruoyi.**.domain
+  # 配置mapper的扫描，找到所有的mapper.xml映射文件
+  mapperLocations: classpath*:mapper/*Mapper.xml
+  # 加载全局的配置文件
+  # configLocation: classpath:mybatis/mybatis-config.xml
+  type-handlers-package: com.ruoyi.common.pojo.main.handler.AESEncipherTypeHandler
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl

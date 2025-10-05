@@ -241,6 +241,12 @@ public class ProductSelectVO {
     private Long createTime;
 
     /**
+     * 上架时间
+     */
+    @ApiModelProperty("上架时间")
+    private Long shelfTime;
+
+    /**
      * 更新时间
      */
     @ApiModelProperty("更新时间")

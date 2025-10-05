@@ -672,7 +672,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 创建日期到数据的映射
         Map<String, Map<String, Object>> dataMap = new HashMap<>();
         for (Map<String, Object> data : trendData) {
-            String orderDate = (String) data.get("orderDate");
+            Object orderDateObj = data.get("orderDate");
+            String orderDate;
+            if (orderDateObj == null) {
+                log.warn("orderDate为null，跳过该数据记录: {}", data);
+                continue;
+            }
+            if (orderDateObj instanceof java.sql.Date) {
+                orderDate = ((java.sql.Date) orderDateObj).toString();
+            } else if (orderDateObj instanceof java.util.Date) {
+                orderDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format((java.util.Date) orderDateObj);
+            } else {
+                orderDate = orderDateObj.toString();
+            }
             dataMap.put(orderDate, data);
         }
         

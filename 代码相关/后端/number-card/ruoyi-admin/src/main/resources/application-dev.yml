@@ -6,16 +6,13 @@ spring:
         druid:
             # 主库数据源
             master:
-              url: jdbc:mysql://123.56.89.151:3306/numbercard?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&autoReconnect=true&failOverReadOnly=false&allowPublicKeyRetrieval=true
+              url: jdbc:mysql://rm-bp190y09aijh9pcwlqo.mysql.rds.aliyuncs.com:3306/numberCard?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai&autoReconnect=true&failOverReadOnly=false
               username: root
-              password: 94loaUawkU0SuUJV@
+              password: JCHC4g5%9YRJFeeN
             # 从库数据源
             slave:
                 # 从数据源开关/默认关闭
-                enabled: false
-                url: 
-                username: 
-                password: 
+                enabled: false 
             # 初始连接数
             initialSize: 5
             # 最小连接池数量
@@ -44,7 +41,7 @@ spring:
             statViewServlet:
                 enabled: true
                 # 设置白名单，不填则允许所有访问
-                allow:
+                allow: ""
                 url-pattern: /druid/*
                 # 控制台管理用户名和密码
                 login-username: ruoyi
@@ -76,6 +73,12 @@ spring:
             timeout: 5000
         address:
             database: 3
+            host: test.sdzdf.com
+            port: 8006
+            password: sdzdfredis20241206
+            timeout: 5000
+        temporarily:
+            database: 4
             host: test.sdzdf.com
             port: 8006
             password: sdzdfredis20241206

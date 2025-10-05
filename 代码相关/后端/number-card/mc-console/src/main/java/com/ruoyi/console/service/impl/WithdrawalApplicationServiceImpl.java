@@ -64,16 +64,19 @@ public class WithdrawalApplicationServiceImpl extends ServiceImpl<WithdrawalAppl
         // 读取分页
         Page page = new Page(withdrawalApplicationSelectBO.getPageNo(), withdrawalApplicationSelectBO.getPageSize());
 
-        // 仅允许查询当前登录用户的记录
+        // 仅允许查询当前登录用户的记录，管理员可查询所有记录
         Long currentUserId = SecurityUtils.getUserId();
+        boolean isAdmin = SecurityUtils.isAdmin(currentUserId);
 
         LambdaQueryWrapper<WithdrawalApplication> wrapper = new LambdaQueryWrapper<WithdrawalApplication>()
-                .eq(WithdrawalApplication::getApplyUserId, currentUserId)
+                .eq(!isAdmin, WithdrawalApplication::getApplyUserId, currentUserId)
                 .eq(StringUtils.isNotEmpty(withdrawalApplicationSelectBO.getApplicationNumber()), WithdrawalApplication::getApplicationNumber, withdrawalApplicationSelectBO.getApplicationNumber())
                 // 出于安全考虑，忽略外部传入的 applyUserId 与 applyAgentCode，防止越权
+                // 管理员可以通过 withdrawStatus 和 withdrawalType 查询所有用户的记录
                 .eq(withdrawalApplicationSelectBO.getWithdrawalStatus() != null, WithdrawalApplication::getWithdrawalStatus, withdrawalApplicationSelectBO.getWithdrawalStatus())
                 .eq(withdrawalApplicationSelectBO.getWithdrawalType() != null, WithdrawalApplication::getWithdrawalType, withdrawalApplicationSelectBO.getWithdrawalType())
-                .between((withdrawalApplicationSelectBO.getStarTime() != null && withdrawalApplicationSelectBO.getEndTime() != null), WithdrawalApplication::getCreateTime, withdrawalApplicationSelectBO.getStarTime(), withdrawalApplicationSelectBO.getEndTime());
+                .between((withdrawalApplicationSelectBO.getStarTime() != null && withdrawalApplicationSelectBO.getEndTime() != null), WithdrawalApplication::getCreateTime, withdrawalApplicationSelectBO.getStarTime(), withdrawalApplicationSelectBO.getEndTime())
+                .orderByDesc(WithdrawalApplication::getCreateTime);
 
         Page<WithdrawalApplication> withdrawalApplicationPage = baseMapper.selectPage(page, wrapper);
         return PageResultFactory.createPageResult(withdrawalApplicationPage);

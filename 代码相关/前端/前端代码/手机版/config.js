@@ -2,7 +2,7 @@
 module.exports = {
   //baseUrl: 'https://www.dingdonghaoka.com/prod-api',
   // baseUrl: 'https://test.haoka.asia/prod-api',
-   baseUrl: 'http://localhost:8080',
+    baseUrl: 'http://localhost:8080',
   // 应用信息
   appInfo: {
     // 应用名称

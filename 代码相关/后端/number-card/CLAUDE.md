@@ -675,3 +675,4 @@ Available API integrations in `ruoyi-common/src/main/java/com/ruoyi/common/apis/
 - Static resources: `ruoyi-admin/src/main/resources/`
 - MyBatis mappers: `**/mapper/**/*Mapper.xml`
 - i18n messages: `ruoyi-admin/src/main/resources/i18n/`
+ 项目使用jdk 1.8打包,目录在  /Users/zhao/Library/Java/JavaVirtualMachines/corretto-1.8.0_462/Contents/Hom

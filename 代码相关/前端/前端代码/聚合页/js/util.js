@@ -1,5 +1,6 @@
-// let baseUrl = 'https://api.haoka.asia/api';
-let baseUrl = 'http://localhost:8081';
+// prod 'https://api.dingdonghaoka.com/api';
+// dev 'localhost:8081';
+let baseUrl = 'https://api.dingdonghaoka.com/api';
 function getQueryString(name) {
   var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)","i");
   var r = window.location.search.substr(1).match(reg);
