@@ -18,72 +18,89 @@
       <!-- 高级筛选 -->
       <view class="advanced-filter" v-show="showAdvancedFilter">
         <view class="filter-card">
-          <view class="filter-row">
-            <view class="filter-item">
-              <view class="filter-label">订单号</view>
-              <input class="filter-input" placeholder="请输入订单号" v-model="params.orderId" />
-            </view>
-            <view class="filter-item">
-              <view class="filter-label">收件人</view>
-              <input class="filter-input" placeholder="请输入收件人姓名" v-model="params.cardName" />
-            </view>
-          </view>
-          <view class="filter-row">
-            <view class="filter-item">
-              <view class="filter-label">手机号</view>
-              <input class="filter-input" placeholder="请输入手机号" v-model="params.cardPhone" />
-            </view>
-            <view class="filter-item">
-              <view class="filter-label">产品名称</view>
-              <input class="filter-input" placeholder="请输入产品名称" v-model="params.productName" />
-            </view>
-          </view>
-          <view class="filter-row">
-            <view class="filter-item">
-              <view class="filter-label">订单状态</view>
-              <view class="select-picker" @click="showOrderStatus = true">
-                <text class="select-text" v-if="selectedOrderStatus">{{ selectedOrderStatus.name }}</text>
-                <text class="select-placeholder" v-else>选择订单状态</text>
-                <text class="iconfont icon-down"></text>
+          <!-- 常用筛选条件（默认显示，单列） -->
+          <view class="basic-filters">
+            <view class="filter-row basic-row">
+              <view class="filter-item">
+                <view class="filter-label">订单状态</view>
+                <view class="select-picker" @click="showOrderStatus = true">
+                  <text class="select-text" v-if="selectedOrderStatus">{{ selectedOrderStatus.name }}</text>
+                  <text class="select-placeholder" v-else>选择订单状态</text>
+                  <text class="iconfont icon-down"></text>
+                </view>
               </view>
             </view>
-            <view class="filter-item">
-              <view class="filter-label">首充状态</view>
-              <view class="select-picker" @click="showIsRecharged = true">
-                <text class="select-text" v-if="selectedIsRecharged">{{ selectedIsRecharged.name }}</text>
-                <text class="select-placeholder" v-else>选择首充状态</text>
-                <text class="iconfont icon-down"></text>
+            <view class="filter-row basic-row">
+              <view class="filter-item">
+                <view class="filter-label">时间范围</view>
+                <view class="date-picker" @click="show = true">
+                  <text class="date-text" v-if="first && last">{{ first }} ~ {{ last }}</text>
+                  <text class="date-placeholder" v-else>选择日期范围</text>
+                  <text class="iconfont icon-right"></text>
+                </view>
               </view>
             </view>
           </view>
-          <view class="filter-row">
-            <view class="filter-item">
-              <view class="filter-label">佣金状态</view>
-              <view class="select-picker" @click="showCommissionStatus = true">
-                <text class="select-text" v-if="selectedCommissionStatus">{{ selectedCommissionStatus.name }}</text>
-                <text class="select-placeholder" v-else>选择佣金状态</text>
-                <text class="iconfont icon-down"></text>
+
+          <!-- 更多筛选条件（展开后显示，两列） -->
+          <view class="more-filters" :class="{ 'show': showMoreFilter }">
+            <view class="filter-row">
+              <view class="filter-item">
+                <view class="filter-label">订单号</view>
+                <input class="filter-input" placeholder="请输入订单号" v-model="params.orderId" />
+              </view>
+              <view class="filter-item">
+                <view class="filter-label">收件人</view>
+                <input class="filter-input" placeholder="请输入收件人姓名" v-model="params.cardName" />
               </view>
             </view>
-            <view class="filter-item" v-if="currentOrderType === 0">
-              <view class="filter-label">订单来源</view>
-              <view class="select-picker" @click="showOrderSource = true">
-                <text class="select-text" v-if="selectedOrderSource">{{ selectedOrderSource.name }}</text>
-                <text class="select-placeholder" v-else>选择订单来源</text>
-                <text class="iconfont icon-down"></text>
+            <view class="filter-row">
+              <view class="filter-item">
+                <view class="filter-label">手机号</view>
+                <input class="filter-input" placeholder="请输入手机号" v-model="params.cardPhone" />
+              </view>
+              <view class="filter-item">
+                <view class="filter-label">产品名称</view>
+                <input class="filter-input" placeholder="请输入产品名称" v-model="params.productName" />
+              </view>
+            </view>
+            <view class="filter-row">
+              <view class="filter-item">
+                <view class="filter-label">首充状态</view>
+                <view class="select-picker" @click="showIsRecharged = true">
+                  <text class="select-text" v-if="selectedIsRecharged">{{ selectedIsRecharged.name }}</text>
+                  <text class="select-placeholder" v-else>选择首充状态</text>
+                  <text class="iconfont icon-down"></text>
+                </view>
+              </view>
+              <view class="filter-item">
+                <view class="filter-label">佣金状态</view>
+                <view class="select-picker" @click="showCommissionStatus = true">
+                  <text class="select-text" v-if="selectedCommissionStatus">{{ selectedCommissionStatus.name }}</text>
+                  <text class="select-placeholder" v-else>选择佣金状态</text>
+                  <text class="iconfont icon-down"></text>
+                </view>
+              </view>
+            </view>
+            <view class="filter-row" v-if="currentOrderType === 0">
+              <view class="filter-item full-width">
+                <view class="filter-label">订单来源</view>
+                <view class="select-picker" @click="showOrderSource = true">
+                  <text class="select-text" v-if="selectedOrderSource">{{ selectedOrderSource.name }}</text>
+                  <text class="select-placeholder" v-else>选择订单来源</text>
+                  <text class="iconfont icon-down"></text>
+                </view>
               </view>
             </view>
           </view>
-          <view class="filter-row">
-            <view class="filter-item full-width">
-              <view class="filter-label">时间范围</view>
-              <view class="date-picker" @click="show = true">
-                <text class="date-text" v-if="first && last">{{ first }} ~ {{ last }}</text>
-                <text class="date-placeholder" v-else>选择日期范围</text>
-                <text class="iconfont icon-right"></text>
-              </view>
-            </view>
+
+          <!-- 展开/收起按钮 -->
+          <view class="filter-toggle-btn" @click="toggleMoreFilter">
+            <text class="toggle-text">{{ showMoreFilter ? '收起筛选' : '更多筛选' }}</text>
+            <text class="iconfont" :class="showMoreFilter ? 'icon-up' : 'icon-down'"></text>
           </view>
+
+          <!-- 操作按钮 -->
           <view class="filter-actions">
             <view class="filter-btn reset-btn" @click="resetFilter">重置</view>
             <view class="filter-btn search-btn" @click="handleSearch">搜索</view>
@@ -237,6 +254,7 @@ export default {
 
       // 高级筛选
       showAdvancedFilter: true, // 是否显示高级筛选
+      showMoreFilter: false, // 是否显示更多筛选选项
 
       // 订单状态选择
       listOrderStatus: [
@@ -352,6 +370,11 @@ export default {
     // 切换高级筛选
     toggleAdvancedFilter() {
       this.showAdvancedFilter = !this.showAdvancedFilter;
+    },
+
+    // 切换更多筛选
+    toggleMoreFilter() {
+      this.showMoreFilter = !this.showMoreFilter;
     },
 
     // 重置筛选
@@ -592,105 +615,196 @@ page {
     border-radius: 8rpx;
     padding: 30rpx;
 
-    .filter-row {
-      display: flex;
-      gap: 20rpx;
-      margin-bottom: 20rpx;
+    // 常用筛选条件（单列）
+    .basic-filters {
+      .basic-row {
+        margin-bottom: 20rpx;
 
-      &:last-child {
-        margin-bottom: 0;
+        .filter-item {
+          display: flex;
+          align-items: center;
+
+          .filter-label {
+            width: 120rpx;
+            font-size: 28rpx;
+            color: #333;
+            flex-shrink: 0;
+          }
+
+          .filter-input,
+          .date-picker,
+          .select-picker {
+            flex: 1;
+            height: 60rpx;
+            padding: 0 16rpx;
+            background-color: #f5f6f7;
+            border-radius: 6rpx;
+            font-size: 26rpx;
+            color: #333;
+            border: none;
+            min-width: 0;
+          }
+
+          .date-picker {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            .date-text {
+              font-size: 26rpx;
+              color: #333;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .date-placeholder {
+              font-size: 26rpx;
+              color: #999;
+            }
+
+            .iconfont {
+              font-size: 20rpx;
+              color: #c0c0c0;
+              flex-shrink: 0;
+            }
+          }
+
+          .select-picker {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            .select-text {
+              font-size: 26rpx;
+              color: #333;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .select-placeholder {
+              font-size: 26rpx;
+              color: #999;
+            }
+
+            .iconfont {
+              font-size: 20rpx;
+              color: #c0c0c0;
+              flex-shrink: 0;
+            }
+          }
+        }
+      }
+    }
+
+    // 更多筛选条件（两列，默认隐藏）
+    .more-filters {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+
+      &.show {
+        max-height: 1000rpx; /* 足够大的高度 */
+        transition: max-height 0.5s ease-in;
       }
 
-      .filter-item {
-        flex: 1;
+      .filter-row {
         display: flex;
-        align-items: center;
-        min-width: 0; /* 防止flex子项溢出 */
+        gap: 20rpx;
+        margin-bottom: 20rpx;
 
-        &.full-width {
-          flex: 1 1 100%;
+        &:last-child {
+          margin-bottom: 0;
         }
 
-        .filter-label {
-          width: 120rpx;
-          font-size: 28rpx;
-          color: #333;
-          flex-shrink: 0;
-        }
-
-        .filter-input {
+        .filter-item {
           flex: 1;
-          height: 60rpx;
-          padding: 0 16rpx;
-          background-color: #f5f6f7;
-          border-radius: 6rpx;
-          font-size: 26rpx;
-          color: #333;
-          border: none;
-          min-width: 0; /* 防止input溢出 */
-        }
-
-        .date-picker {
-          flex: 1;
-          height: 60rpx;
-          padding: 0 16rpx;
-          background-color: #f5f6f7;
-          border-radius: 6rpx;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          min-width: 0; /* 防止溢出 */
+          min-width: 0;
 
-          .date-text {
-            font-size: 26rpx;
+          &.full-width {
+            flex: 1 1 100%;
+          }
+
+          .filter-label {
+            width: 120rpx;
+            font-size: 28rpx;
             color: #333;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-
-          .date-placeholder {
-            font-size: 26rpx;
-            color: #999;
-          }
-
-          .iconfont {
-            font-size: 20rpx;
-            color: #c0c0c0;
             flex-shrink: 0;
           }
-        }
 
-        .select-picker {
-          flex: 1;
-          height: 60rpx;
-          padding: 0 16rpx;
-          background-color: #f5f6f7;
-          border-radius: 6rpx;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          min-width: 0; /* 防止溢出 */
-
-          .select-text {
+          .filter-input {
+            flex: 1;
+            height: 60rpx;
+            padding: 0 16rpx;
+            background-color: #f5f6f7;
+            border-radius: 6rpx;
             font-size: 26rpx;
             color: #333;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            border: none;
+            min-width: 0;
           }
 
-          .select-placeholder {
-            font-size: 26rpx;
-            color: #999;
-          }
+          .select-picker {
+            flex: 1;
+            height: 60rpx;
+            padding: 0 16rpx;
+            background-color: #f5f6f7;
+            border-radius: 6rpx;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 0;
 
-          .iconfont {
-            font-size: 20rpx;
-            color: #c0c0c0;
-            flex-shrink: 0;
+            .select-text {
+              font-size: 26rpx;
+              color: #333;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .select-placeholder {
+              font-size: 26rpx;
+              color: #999;
+            }
+
+            .iconfont {
+              font-size: 20rpx;
+              color: #c0c0c0;
+              flex-shrink: 0;
+            }
           }
         }
+      }
+    }
+
+    // 展开/收起按钮
+    .filter-toggle-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 20rpx 0;
+      padding: 15rpx 0;
+      border-top: 1rpx solid #eaeef1;
+      color: #666;
+      font-size: 28rpx;
+      cursor: pointer;
+      transition: color 0.3s ease;
+
+      &:active {
+        color: #f09b7f;
+      }
+
+      .toggle-text {
+        margin-right: 10rpx;
+      }
+
+      .iconfont {
+        font-size: 24rpx;
+        transition: transform 0.3s ease;
       }
     }
 
