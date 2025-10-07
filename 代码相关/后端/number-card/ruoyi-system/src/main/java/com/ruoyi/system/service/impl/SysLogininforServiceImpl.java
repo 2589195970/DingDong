@@ -3,6 +3,7 @@ package com.ruoyi.system.service.impl;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.SysLogininfor;
 import com.ruoyi.system.mapper.SysLogininforMapper;
 import com.ruoyi.system.service.ISysLogininforService;
@@ -32,13 +33,18 @@ public class SysLogininforServiceImpl implements ISysLogininforService
 
     /**
      * 查询系统登录日志集合
-     * 
+     *
      * @param logininfor 访问日志对象
      * @return 登录记录集合
      */
     @Override
     public List<SysLogininfor> selectLogininforList(SysLogininfor logininfor)
     {
+        // 非管理员只能查询自己的登录日志
+        if (!SecurityUtils.isAdmin(SecurityUtils.getUserId()))
+        {
+            logininfor.setUserName(SecurityUtils.getUsername());
+        }
         return logininforMapper.selectLogininforList(logininfor);
     }
 

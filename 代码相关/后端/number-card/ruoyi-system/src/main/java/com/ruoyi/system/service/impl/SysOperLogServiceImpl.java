@@ -3,6 +3,7 @@ package com.ruoyi.system.service.impl;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.SysOperLog;
 import com.ruoyi.system.mapper.SysOperLogMapper;
 import com.ruoyi.system.service.ISysOperLogService;
@@ -31,13 +32,18 @@ public class SysOperLogServiceImpl implements ISysOperLogService
 
     /**
      * 查询系统操作日志集合
-     * 
+     *
      * @param operLog 操作日志对象
      * @return 操作日志集合
      */
     @Override
     public List<SysOperLog> selectOperLogList(SysOperLog operLog)
     {
+        // 非管理员只能查询自己的操作日志
+        if (!SecurityUtils.isAdmin(SecurityUtils.getUserId()))
+        {
+            operLog.setOperName(SecurityUtils.getUsername());
+        }
         return operLogMapper.selectOperLogList(operLog);
     }
 

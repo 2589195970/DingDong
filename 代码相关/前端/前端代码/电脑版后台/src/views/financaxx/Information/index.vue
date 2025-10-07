@@ -152,7 +152,6 @@
 
 
 <script>
-    import Stomp from 'stompjs'
     import { getAgentApiVO, getAgentExtendUrlVO, getAgentInfoVO, updateCallbackUrl, updateAgentPhone } from "@/api/monitor/finance";
     import { addNameAudit, updateNameAudit, selectNameAudit } from "@/api/monitor/business";
     import { getToken } from "@/utils/auth";

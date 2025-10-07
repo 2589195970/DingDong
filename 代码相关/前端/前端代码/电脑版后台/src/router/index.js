@@ -133,6 +133,38 @@ export const constantRoutes = [
         meta: { title: '代理商排名', icon: 'chart' }
       }
     ]
+  },
+  {
+    path: '/system',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: 'notice',
+        component: () => import('@/views/system/notice/index'),
+        name: 'SystemNotice',
+        meta: { title: '通知管理', icon: 'notice' }
+      }
+    ]
+  },
+  {
+    path: '/finance',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: 'api-config',
+        component: () => import('@/views/financaxx/Information/api-config'),
+        name: 'ApiConfig',
+        meta: { title: 'API配置管理' }
+      },
+      {
+        path: 'personal-info',
+        component: () => import('@/views/financaxx/Information/personal-info'),
+        name: 'PersonalInfo',
+        meta: { title: '个人信息管理' }
+      }
+    ]
   }
 ]
 

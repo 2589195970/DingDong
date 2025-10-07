@@ -127,11 +127,17 @@ export function filterDynamicRoutes(routes) {
 }
 
 export const loadView = (view) => {
-  if (process.env.NODE_ENV === 'development') {
-    return (resolve) => require([`@/views/${view}`], resolve)
-  } else {
-    // 使用 import 实现生产环境的路由懒加载
-    return () => import(`@/views/${view}`)
+  try {
+    if (process.env.NODE_ENV === 'development') {
+      return (resolve) => require([`@/views/${view}`], resolve)
+    } else {
+      // 使用 import 实现生产环境的路由懒加载
+      return () => import(`@/views/${view}`)
+    }
+  } catch (error) {
+    console.error(`无法加载组件: @/views/${view}`, error)
+    // 返回一个404组件或者空组件
+    return () => import('@/views/error/404')
   }
 }
 

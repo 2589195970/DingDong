@@ -196,7 +196,7 @@
           </div>
           <div class="notification-container">
             <div class="notification-list" v-loading="notificationLoading">
-              <div class="notification-item" v-for="(item, index) in notifications" :key="item.id || index">
+              <div class="notification-item" v-for="(item, index) in notifications" :key="item.id || index" @click="handleNotificationClick(item)">
                 <div class="notification-icon">
                   <i :class="getNotificationIcon(item.type)" :style="{color: getNotificationColor(item.type)}"></i>
                 </div>
@@ -1122,6 +1122,12 @@ export default {
         default:
           return 'info'
       }
+    },
+
+    // 处理通知点击事件
+    handleNotificationClick() {
+      // 直接跳转到通知管理页面
+      this.$router.push('/system/notice')
     }
   }
 }

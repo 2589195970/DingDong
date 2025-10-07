@@ -99,6 +99,12 @@
           <el-button
             size="mini"
             type="text"
+            icon="el-icon-view"
+            @click="handleView(scope.row)"
+          >查看</el-button>
+          <el-button
+            size="mini"
+            type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['system:notice:edit']"
@@ -166,6 +172,28 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
+
+    <!-- 查看公告详情对话框 -->
+    <el-dialog title="公告详情" :visible.sync="viewOpen" width="780px" append-to-body>
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="公告标题">{{ viewForm.noticeTitle }}</el-descriptions-item>
+        <el-descriptions-item label="公告类型">
+          <dict-tag :options="dict.type.sys_notice_type" :value="viewForm.noticeType"/>
+        </el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <dict-tag :options="dict.type.sys_notice_status" :value="viewForm.status"/>
+        </el-descriptions-item>
+        <el-descriptions-item label="创建者">{{ viewForm.createBy }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ parseTime(viewForm.createTime) }}</el-descriptions-item>
+        <el-descriptions-item label="更新时间">{{ parseTime(viewForm.updateTime) }}</el-descriptions-item>
+        <el-descriptions-item label="公告内容" :span="2">
+          <div v-html="viewForm.noticeContent" style="max-height: 300px; overflow-y: auto;"></div>
+        </el-descriptions-item>
+      </el-descriptions>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="viewOpen = false">关 闭</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -195,6 +223,8 @@ export default {
       title: "",
       // 是否显示弹出层
       open: false,
+      // 是否显示查看详情弹出层
+      viewOpen: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -205,6 +235,8 @@ export default {
       },
       // 表单参数
       form: {},
+      // 查看表单参数
+      viewForm: {},
       // 表单校验
       rules: {
         noticeTitle: [
@@ -266,6 +298,14 @@ export default {
       this.reset();
       this.open = true;
       this.title = "添加公告";
+    },
+    /** 查看按钮操作 */
+    handleView(row) {
+      const noticeId = row.noticeId;
+      getNotice(noticeId).then(response => {
+        this.viewForm = response.data;
+        this.viewOpen = true;
+      });
     },
     /** 修改按钮操作 */
     handleUpdate(row) {

@@ -76,6 +76,8 @@ export default {
             this.$modal.msgSuccess("修改成功");
             this.user.phonenumber = this.form.phonenumber;
             this.user.email = this.form.email;
+            // 通知父组件刷新用户信息
+            this.$emit('refresh');
           });
         }
       });

@@ -134,7 +134,7 @@
             </div>
         </el-dialog>
 
-        <el-dialog :visible.sync="juopen" width="350px" append-to-body fullscreen="true">
+        <el-dialog :visible.sync="juopen" width="350px" append-to-body :fullscreen="true">
             <el-form ref="form" v-model="formJu" label-width="100px">
                 <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="addWorkClick"
                     v-hasPermi="['channel:channelManagement:add']">添加回复</el-button>
