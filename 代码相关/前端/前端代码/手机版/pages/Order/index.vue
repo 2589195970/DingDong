@@ -912,47 +912,14 @@ page {
     }
   }
 
-  // 小屏幕下筛选区域改为单列布局
+  // 小屏幕下优化筛选区域，但保持两列布局
   .advanced-filter {
     .filter-card {
       padding: 20rpx;
 
       .filter-row {
-        flex-direction: column;
         gap: 15rpx;
 
-        .filter-item {
-          .filter-label {
-            width: 100rpx;
-            font-size: 26rpx;
-          }
-
-          .filter-input,
-          .date-picker,
-          .select-picker {
-            height: 56rpx;
-            font-size: 24rpx;
-          }
-
-          .date-text,
-          .select-text {
-            font-size: 24rpx;
-          }
-
-          .iconfont {
-            font-size: 18rpx;
-          }
-        }
-      }
-    }
-  }
-}
-
-// 超小屏幕适配
-@media screen and (max-width: 600rpx) {
-  .advanced-filter {
-    .filter-card {
-      .filter-row {
         .filter-item {
           .filter-label {
             width: 90rpx;
@@ -973,15 +940,59 @@ page {
           .select-placeholder {
             font-size: 22rpx;
           }
+
+          .iconfont {
+            font-size: 18rpx;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 超小屏幕适配，保持两列布局
+@media screen and (max-width: 600rpx) {
+  .advanced-filter {
+    .filter-card {
+      padding: 15rpx;
+
+      .filter-row {
+        gap: 12rpx;
+        margin-bottom: 15rpx;
+
+        .filter-item {
+          .filter-label {
+            width: 80rpx;
+            font-size: 22rpx;
+          }
+
+          .filter-input,
+          .date-picker,
+          .select-picker {
+            height: 48rpx;
+            padding: 0 10rpx;
+            font-size: 20rpx;
+          }
+
+          .date-text,
+          .select-text,
+          .date-placeholder,
+          .select-placeholder {
+            font-size: 20rpx;
+          }
+
+          .iconfont {
+            font-size: 16rpx;
+          }
         }
       }
 
       .filter-actions {
-        gap: 15rpx;
+        gap: 12rpx;
 
         .filter-btn {
-          height: 70rpx;
-          font-size: 28rpx;
+          height: 64rpx;
+          font-size: 26rpx;
         }
       }
     }
