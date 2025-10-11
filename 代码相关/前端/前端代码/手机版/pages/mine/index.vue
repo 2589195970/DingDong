@@ -175,6 +175,9 @@
       </view>
 
     </view>
+
+    <!-- 为最后一个功能按钮区域添加底部间距 -->
+    <view style="height: 60px;"></view>
     <u-modal :show="commissionopen" @confirm="confirm" ref="uModal" @cancel="cancel" :showCancelButton='true'
              confirmText="保存图片" :asyncClose="true">
       <image :src="sc.shopQrcodeMap" alt="" class="qrcode-image"/>
@@ -227,7 +230,9 @@ export default {
       return this.$store.state.user.avatar
     },
     windowHeight() {
-      return uni.getSystemInfoSync().windowHeight - 50
+      const systemInfo = uni.getSystemInfoSync();
+      // 确保有足够的页面高度来显示所有内容
+      return Math.max(systemInfo.windowHeight, 800);
     }
   },
   methods: {
@@ -427,7 +432,7 @@ page {
 
     .mine-actions {
       margin: 15px 15px;
-      padding: 20px 0px;
+      padding: 25px 15px;
       border-radius: 8px;
       background-color: white;
 
@@ -436,7 +441,7 @@ page {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
 
         .btn-icon {
           width: 45px;
@@ -578,6 +583,7 @@ page {
     }
   }
 
+  
   // 收益展示卡片样式
   .revenue-card {
     display: flex;

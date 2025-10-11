@@ -122,13 +122,13 @@
 							<!-- <div style="font-size: 12px;" class="textwz">{{dict.productGsdq}}</div> -->
 							<span style="font-size: 12px;" class="textwz">{{dict.productFafs}}</span>
 							<!-- <div style="font-size: 12px;" class="textwz">{{dict.productHyqx}}</div> -->
-							<div style="font-size: 12px; color: #599FE0; display: flex; justify-content: space-between;"
+							<div style="font-size: 12px; color: #599FE0; display: flex; align-items: center; justify-content: space-between; margin-top: 8px;"
 								class="textwz">
-								<div>
-									<div>{{dict.productScsm}}</div>
+								<div style="flex: 1; min-width: 0; margin-right: 10px;">
+									<div style="word-wrap: break-word; word-break: break-all;">{{dict.productScsm}}</div>
 								</div>
 								<button
-									style="width: 120px; height: 30px; font-size: 14px; background-color: red;color: #fff;border-radius: 23px;float: right;"
+									style="width: 120px; height: 30px; font-size: 14px; background-color: red; color: #fff; border-radius: 23px; flex-shrink: 0;"
 									@click="Receive(dict.h5Url)">免费领取</button>
 							</div>
 						</div>

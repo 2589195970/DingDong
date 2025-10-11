@@ -6,6 +6,7 @@ import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.vo.AgentApiVO;
 import com.ruoyi.common.order.vo.AgentExtendUrlVO;
 import com.ruoyi.common.order.vo.AgentInfoVO;
+import org.springframework.web.multipart.MultipartFile;
 
 
 /**
@@ -58,4 +59,20 @@ public interface AgentExtendUrlService  {
      * @throws BizException
      */
     void updateAgentPhone(LoginUser loginUser,String phone,String smsCode) throws BizException;
+
+    /**
+     *
+     * 更新海报图
+     * @return
+     * @throws BizException
+     */
+    String updatePosterImages(LoginUser loginUser, MultipartFile file, Integer posterIndex) throws BizException;
+
+    /**
+     *
+     * 更新海报图 - 通过URL
+     * @return
+     * @throws BizException
+     */
+    String updatePosterImages(LoginUser loginUser, String imageUrl, Integer posterIndex) throws BizException;
 }

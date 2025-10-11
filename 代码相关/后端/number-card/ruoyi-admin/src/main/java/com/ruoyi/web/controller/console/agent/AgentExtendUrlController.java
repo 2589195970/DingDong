@@ -16,6 +16,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 
@@ -125,6 +126,26 @@ public class AgentExtendUrlController {
             return ResponseEntity.error(e.getMessage(),null);
         } catch (Exception e) {
             log.info("{}方法异常:{}", "getAgentApiVO", e.getMessage());
+            return ResponseEntity.error("出错了,请稍候重试:{}", null);
+        }
+    }
+
+    /**
+     * 更新海报图 - 直接处理文件上传和数据库更新
+     * @return
+     */
+    @PostMapping("/updatePosterImages")
+    @ApiOperation("更新海报图")
+    public ResponseEntity updatePosterImages(@RequestParam("file") MultipartFile file,
+                                          @RequestParam("posterIndex") Integer posterIndex) {
+        try {
+            String resultUrl = agentExtendUrlService.updatePosterImages(getLoginUser(), file, posterIndex);
+            return ResponseEntity.success(resultUrl);
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "updatePosterImages", e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "updatePosterImages", e.getMessage());
             return ResponseEntity.error("出错了,请稍候重试:{}", null);
         }
     }

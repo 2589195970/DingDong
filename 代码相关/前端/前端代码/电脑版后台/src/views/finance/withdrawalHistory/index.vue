@@ -57,10 +57,7 @@
             </el-table-column>
             <el-table-column label="收款信息" align="left" prop="operatorType" :show-overflow-tooltip="true">
                 <template slot-scope="scope">
-                    <div v-if="scope.row.withdrawalType==0">
-                        <img :src="scope.row.wxUrl" alt="" style="width: 100px;">
-                    </div>
-                    <div v-if="scope.row.withdrawalType==1">
+                        <div v-if="scope.row.withdrawalType==1">
                         <p>支付宝姓名:{{scope.row.zfbAccountName}}</p>
                         <p>支付宝账号:{{scope.row.zfbAccount}}</p>
                     </div>
@@ -124,10 +121,7 @@
         </el-dialog>
         <el-dialog :visible.sync="open" width="350px" append-to-body :close-on-click-modal="false">
             <el-form ref="form" v-model="form" label-width="100px">
-                <div v-if="form.withdrawalType==0">
-                    <img :src="form.wxUrl" alt="" style="width: 100px;">
-                </div>
-                <div v-if="form.withdrawalType==1">
+                  <div v-if="form.withdrawalType==1">
                     <p>支付宝姓名:{{form.zfbAccountName}}</p>
                     <p>支付宝账号:{{form.zfbAccount}}</p>
                 </div>

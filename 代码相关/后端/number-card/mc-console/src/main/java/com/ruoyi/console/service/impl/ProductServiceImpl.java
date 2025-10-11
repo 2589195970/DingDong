@@ -28,6 +28,7 @@ import com.ruoyi.common.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -71,6 +72,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     @Resource
     AgentProductInitService agentProductInitService;
+
+    @Resource
+    ProductNoticeService productNoticeService;
 
     @Resource
     QrCodeService qrCodeService;
@@ -352,6 +356,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
      * @throws BizException
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateProductStatus(ProductUpdateStatusBO productUpdateStatusBO,LoginUser loginUser) throws BizException {
         if(productUpdateStatusBO==null||productUpdateStatusBO.getProductId()==null||productUpdateStatusBO.getProductStatus()==null){
             throw new BizException("参数不能为空");
@@ -360,26 +365,63 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if(product==null){
             throw new BizException("产品不存在:{}",productUpdateStatusBO.getProductId());
         }
-        
+
+        // 保存原状态，用于后续公告创建
+        Integer oldStatus = product.getProductStatus();
+
         // 更新产品状态
         product.setProductStatus(productUpdateStatusBO.getProductStatus());
         product.setUpdateTime(System.currentTimeMillis());
-        
+
         // 如果是上架操作，设置上架时间
         if(productUpdateStatusBO.getProductStatus() == 1) {
             product.setShelfTime(System.currentTimeMillis());
         }
-        
+
         baseMapper.updateById(product);
-        
+
+        // 【新增】创建产品状态变更公告
+        try {
+            productNoticeService.createProductStatusNotice(product, oldStatus, productUpdateStatusBO.getProductStatus(), loginUser.getUsername());
+        } catch (Exception e) {
+            log.warn("创建产品状态变更公告失败，产品ID：{}, 错误：{}", product.getProductId(), e.getMessage());
+            // 公告创建失败不影响主流程，只记录警告日志
+        }
+
+        // 获取当前操作用户的代理商信息
+        AgentAccount currentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+
+        // 更新当前代理商自己的产品状态
+        updateCurrentAgentProduct(product, productUpdateStatusBO.getProductStatus(), currentAgentAccount.getAgentCode());
+
         // 只有下架操作才影响下游代理商
         if(productUpdateStatusBO.getProductStatus() == 0) {
-            // 获取当前操作用户的代理商信息
-            AgentAccount currentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
-            
             // 递归下架所有下游代理商的产品
             updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode());
         }
+    }
+
+    /**
+     * 更新当前代理商自己的产品状态
+     * @param product 产品信息
+     * @param newStatus 新状态
+     * @param agentCode 代理商编码
+     */
+    private void updateCurrentAgentProduct(Product product, Integer newStatus, String agentCode) {
+        AgentProduct agentProduct = new AgentProduct();
+        agentProduct.setProductStatus(newStatus);
+        agentProduct.setUpdateTime(System.currentTimeMillis());
+
+        // 如果是上架操作，设置上架时间
+        if(newStatus == 1) {
+            agentProduct.setCreateTime(System.currentTimeMillis());
+        }
+
+        agentProductService.update(agentProduct,
+            new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getParentProductCode, product.getProductCode())
+                .eq(AgentProduct::getAgentCode, agentCode)
+        );
     }
 
     /**

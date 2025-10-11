@@ -39,9 +39,48 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			<if test="createBy != null and createBy != ''">
 				AND create_by like concat('%', #{createBy}, '%')
 			</if>
+
+			<!-- 基于用户注册时间的过滤 -->
+			<if test="currentUserCreateTime != null and isAdmin != true">
+				AND (
+					<!-- 普通公告：只在用户注册时间之后创建的 -->
+					(notice_type != '2' AND create_time &gt;= #{currentUserCreateTime})
+					<!-- 或 产品公告：对所有用户可见 -->
+					OR notice_title = '产品上下架公告'
+				)
+			</if>
 		</where>
+		ORDER BY create_time DESC
     </select>
-    
+
+    <!-- 【新增】根据用户权限查询公告列表 -->
+    <select id="selectNoticeListByUserScope" parameterType="java.util.Map" resultMap="SysNoticeResult">
+        <include refid="selectNoticeVo"/>
+        <where>
+            <!-- 基础状态过滤 -->
+            status = '0'
+
+            <!-- 基于用户权限的过滤 -->
+            <if test="isAdmin != true and currentUserCreateTime != null">
+                AND (
+                    <!-- 普通公告：只在用户注册时间之后创建的 -->
+                    (notice_type != '2' AND create_time &gt;= #{currentUserCreateTime})
+                    <!-- 或 产品公告：对所有用户可见 -->
+                    OR notice_title = '产品上下架公告'
+                )
+            </if>
+
+            <!-- 其他查询条件 -->
+            <if test="noticeTitle != null and noticeTitle != ''">
+                AND notice_title like concat('%', #{noticeTitle}, '%')
+            </if>
+            <if test="noticeType != null and noticeType != ''">
+                AND notice_type = #{noticeType}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
     <insert id="insertNotice" parameterType="SysNotice">
         insert into sys_notice (
 			<if test="noticeTitle != null and noticeTitle != '' ">notice_title, </if>

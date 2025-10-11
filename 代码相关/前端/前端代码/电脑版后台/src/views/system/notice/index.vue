@@ -69,15 +69,23 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
+    <!-- 公告详情弹窗 -->
+    <notice-detail :visible.sync="detailVisible" :notice-data="currentNotice" />
+
     <el-table v-loading="loading" :data="noticeList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" prop="noticeId" width="100" />
-      <el-table-column
-        label="公告标题"
-        align="center"
-        prop="noticeTitle"
-        :show-overflow-tooltip="true"
-      />
+      <el-table-column label="公告标题" align="center" prop="noticeTitle" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <div style="cursor: pointer;" @click="showNoticeDetail(scope.row)">
+            <div v-if="isProductNotice(scope.row)">
+              <el-tag size="mini" type="warning" style="margin-right: 8px;">产品公告</el-tag>
+              {{ scope.row.noticeTitle }}
+            </div>
+            <span v-else>{{ scope.row.noticeTitle }}</span>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="公告类型" align="center" prop="noticeType" width="100">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_notice_type" :value="scope.row.noticeType"/>
@@ -198,11 +206,15 @@
 </template>
 
 <script>
-import { listNotice, getNotice, delNotice, addNotice, updateNotice } from "@/api/system/notice";
+import { listNotice, getNotice, delNotice, addNotice, updateNotice, listNoticeByUserScope } from "@/api/system/notice";
+import NoticeDetail from '@/components/NoticeDetail';
 
 export default {
   name: "Notice",
   dicts: ['sys_notice_status', 'sys_notice_type'],
+  components: {
+    NoticeDetail
+  },
   data() {
     return {
       // 遮罩层
@@ -225,6 +237,12 @@ export default {
       open: false,
       // 是否显示查看详情弹出层
       viewOpen: false,
+      // 是否使用权限过滤接口
+      useUserScope: true,
+      // 详情弹窗可见性
+      detailVisible: false,
+      // 当前查看的公告
+      currentNotice: null,
       // 查询参数
       queryParams: {
         pageNum: 1,
@@ -252,13 +270,34 @@ export default {
     this.getList();
   },
   methods: {
+    // 判断是否为产品公告
+    isProductNotice(notice) {
+      return notice.noticeTitle === '产品上下架公告';
+    },
+
+    // 显示公告详情
+    showNoticeDetail(notice) {
+      this.currentNotice = notice;
+      this.detailVisible = true;
+    },
+
     /** 查询公告列表 */
     getList() {
       this.loading = true;
-      listNotice(this.queryParams).then(response => {
+
+      // 根据配置选择使用权限过滤接口或原接口
+      const apiMethod = this.useUserScope ? listNoticeByUserScope : listNotice;
+
+      apiMethod(this.queryParams).then(response => {
         this.noticeList = response.rows;
         this.total = response.total;
         this.loading = false;
+      }).catch(() => {
+        // 如果权限接口失败，降级使用原接口
+        if (this.useUserScope) {
+          this.useUserScope = false;
+          this.getList();
+        }
       });
     },
     // 取消按钮

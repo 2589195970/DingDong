@@ -124,13 +124,7 @@
       <view style="display: flex;justify-content: space-between;">
         <view class="shu1">
           <u-icon name="integral" color="#f09b7f"></u-icon>
-          代理商管理
-        </view>
-        <view class="shu1">
-          总数：{{ dailidata.agentAccountTotal }}
-        </view>
-        <view class="shu1">
-          查看
+          浏览数据
         </view>
       </view>
       <view class="daili-kan" style="display: flex; flex-wrap: nowrap; justify-content: space-around;margin-top: 20px;">
@@ -258,7 +252,6 @@ export default {
       noticePopupVisible: false,
       currentNotice: {},
       noticeList: [], // 通知列表数据
-      noticeShownThisSession: false, // 本次会话是否已显示过通知
       productList: {
         totalWithdrawalAmount: 0,
         todayWithdrawalAmount: 0,
@@ -301,7 +294,8 @@ export default {
     this.loadViewStats(); // 加载浏览量统计数据
   },
   onShow() {
-    // 移除每次显示页面时的通知检查，避免重复弹出
+    // 页面显示时重新检查通知（支持刷新页面检测新通知）
+    this.loadNotices();
   },
   computed: {
     agentAccount() {
@@ -526,30 +520,63 @@ export default {
       });
     },
 
+    // 获取已读通知ID列表
+    getReadNoticeIds() {
+      try {
+        const readIds = uni.getStorageSync('readNoticeIds');
+        return Array.isArray(readIds) ? readIds : [];
+      } catch (e) {
+        console.warn('获取已读通知ID列表失败:', e);
+        return [];
+      }
+    },
+
+    // 检查通知是否已读
+    isNoticeRead(noticeId) {
+      const readIds = this.getReadNoticeIds();
+      return readIds.includes(noticeId);
+    },
+
+    // 标记通知为已读
+    markNoticeAsRead(noticeId) {
+      try {
+        const readIds = this.getReadNoticeIds();
+        if (!readIds.includes(noticeId)) {
+          readIds.push(noticeId);
+          uni.setStorageSync('readNoticeIds', readIds);
+        }
+      } catch (e) {
+        console.warn('标记通知已读失败:', e);
+      }
+    },
+
     // 加载通知公告
     loadNotices() {
-      // 如果本次会话已经显示过通知，则不再显示
-      if (this.noticeShownThisSession) {
-        return;
-      }
-
       listNotice({
         pageNum: 1,
         pageSize: 1 // 只取第一条
       }).then(res => {
         if (res.code === 200 && res.rows && res.rows.length > 0) {
-          this.currentNotice = res.rows[0];
-          this.noticePopupVisible = true;
+          const latestNotice = res.rows[0];
+
+          // 检查最新通知是否已读
+          if (!this.isNoticeRead(latestNotice.noticeId)) {
+            this.currentNotice = latestNotice;
+            this.noticePopupVisible = true;
+          }
         }
       }).catch(err => {
+        console.error('加载通知失败:', err);
       });
     },
 
     // 关闭通知弹窗
     handleNoticeClose() {
       this.noticePopupVisible = false;
-      // 标记本次会话已显示过通知
-      this.noticeShownThisSession = true;
+      // 标记通知为已读
+      if (this.currentNotice && this.currentNotice.noticeId) {
+        this.markNoticeAsRead(this.currentNotice.noticeId);
+      }
     },
 
     // 加载通知列表（首页显示前3条）

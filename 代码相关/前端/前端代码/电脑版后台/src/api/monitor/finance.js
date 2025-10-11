@@ -164,3 +164,23 @@ export function updateAgentPhone(data,chah) {
     method: "get",
   })
 }
+
+// 更新海报图
+export function updatePosterImages(data) {
+  return request({
+    url: "/agentExtendUrl/updatePosterImages",
+    method: "post",
+    data: data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    transformRequest: [function(data, headers) {
+      // 如果是FormData，直接返回，不做JSON转换
+      if (data instanceof FormData) {
+        delete headers['Content-Type']; // 让浏览器自动设置multipart/form-data boundary
+        return data;
+      }
+      return data;
+    }]
+  })
+}

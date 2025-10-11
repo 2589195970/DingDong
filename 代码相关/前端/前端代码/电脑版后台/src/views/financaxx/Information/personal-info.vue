@@ -1,33 +1,39 @@
 <template>
   <div class="app-container">
-    <!-- 用户基本信息卡片 -->
-    <el-card class="box-card">
-      <div slot="header" class="clearfix">
-        <span>个人信息</span>
-      </div>
-      <el-row :gutter="20">
-        <!-- 左侧：用户头像和基本信息 -->
-        <el-col :span="6" :xs="24">
-          <div class="user-profile">
-            <div class="text-center">
-              <userAvatar :user="user" />
-            </div>
-            <ul class="list-group list-group-striped">
-              <li class="list-group-item">
-                <svg-icon icon-class="user" />用户名称
-                <div class="pull-right">{{ user.userName || '未设置' }}</div>
-              </li>
-              <li class="list-group-item">
-                <svg-icon icon-class="date" />创建日期
-                <div class="pull-right">{{ user.createTime || '未知' }}</div>
-              </li>
-            </ul>
-          </div>
-        </el-col>
+    <div class="profile-header">
+      <h2 class="page-title">个人信息中心</h2>
+      <p class="page-subtitle">管理您的个人资料和账户设置</p>
+    </div>
 
-        <!-- 右侧：表单信息 -->
-        <el-col :span="18" :xs="24">
-          <el-tabs v-model="activeTab">
+    <el-row :gutter="24">
+      <!-- 左侧：用户头像和基本信息 -->
+      <el-col :span="6" :xs="24">
+        <div class="user-profile">
+          <div class="avatar-section">
+            <userAvatar :user="user" />
+          </div>
+          <div class="user-info-card">
+            <div class="info-item">
+              <div class="info-label">
+                <svg-icon icon-class="user" />
+                <span>用户名称</span>
+              </div>
+              <div class="info-value">{{ user.userName || '未设置' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">
+                <svg-icon icon-class="date" />
+                <span>创建日期</span>
+              </div>
+              <div class="info-value">{{ user.createTime || '未知' }}</div>
+            </div>
+          </div>
+        </div>
+      </el-col>
+
+      <!-- 右侧：表单信息 -->
+      <el-col :span="18" :xs="24">
+        <el-tabs v-model="activeTab" class="profile-tabs">
             <!-- 基本资料 -->
             <el-tab-pane label="基本资料" name="userinfo">
               <userInfo :user="user" @refresh="getUserProfile" />
@@ -45,7 +51,7 @@
                   <el-form-item label="当前手机号：">
                     <div v-if="queryParams2.phone">
                       <span>{{queryParams2.phone}}</span>
-                      &emsp; &emsp;<span @click="clickPhone(queryParams2)" style="color: blue; cursor: pointer;">点击更换</span>
+                      &emsp; &emsp;<span @click="clickPhone(queryParams2)" class="clickable-text">点击更换</span>
                     </div>
                     <span v-if="!queryParams2.phone">未绑定</span>
                   </el-form-item>
@@ -58,17 +64,17 @@
               <el-form label-width="150px" class="demo-ruleForm" :inline="true">
                 <div class="form-content">
                   <el-form-item label="认证状态：">
-                    <div v-if="queryParams2.isRealName==0">
+                    <div v-if="queryParams2.isRealName === 0">
                       <span>未实名</span>
-                      &emsp; &emsp; <span @click="clickName" style="color: blue; cursor: pointer;"> 点击实名</span>
+                      &emsp; &emsp; <span @click="clickName" class="clickable-text"> 点击实名</span>
                     </div>
-                    <div v-if="queryParams2.isRealName==1">
+                    <div v-else-if="queryParams2.isRealName === 1">
                       <span>已实名</span>
                     </div>
-                    <div v-if="queryParams2.isRealName==2||queryParams2.isRealName==3">
-                      <span v-if="queryParams2.isRealName==2">实名认证中</span>
-                      <span v-if="queryParams2.isRealName==3" style="color: red;">实名认证失败</span>
-                      <span @click="clickName1" style="color: blue; cursor: pointer;"> 更改实名信息</span>
+                    <div v-else-if="queryParams2.isRealName === 2 || queryParams2.isRealName === 3">
+                      <span v-if="queryParams2.isRealName === 2">实名认证中</span>
+                      <span v-else-if="queryParams2.isRealName === 3" style="color: red;">实名认证失败</span>
+                      <span @click="clickName1" class="clickable-text"> 更改实名信息</span>
                     </div>
                   </el-form-item>
                 </div>
@@ -77,7 +83,6 @@
           </el-tabs>
         </el-col>
       </el-row>
-    </el-card>
 
     <!-- 手机号修改弹窗 -->
     <el-dialog :visible.sync="openphone" width="450px" append-to-body :close-on-click-modal="false">
@@ -207,11 +212,11 @@ export default {
     // 获取验证码
     getCode1() {
       if (this.formphone.phone) {
-        if (this.countdown == "获取验证码") {
+        if (this.countdown === "获取验证码") {
           sendSms(this.encryptAndEncode({
             phoneNumber: this.formphone.phone,
             smsTemplateType: 0,
-          })).then((res) => {
+          })).then(() => {
             this.$message({
               message: "验证码已发送",
               type: "success",
@@ -309,71 +314,188 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-.text-center {
+// 页面头部样式
+.profile-header {
   text-align: center;
+  margin-bottom: 32px;
+  padding: 20px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  color: white;
+
+  .page-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .page-subtitle {
+    font-size: 16px;
+    margin: 0;
+    opacity: 0.9;
+  }
 }
 
-.list-group {
-  padding-left: 0;
-  list-style: none;
+// 用户资料卡片
+.user-profile {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  }
 }
 
-.list-group-striped {
-  border-top: 1px solid #e4e7ed;
-  border-bottom: 1px solid #e4e7ed;
+.avatar-section {
+  text-align: center;
+  margin-bottom: 24px;
 }
 
-.list-group-item {
-  border-bottom: 1px solid #e4e7ed;
-  border-left: 1px solid #e4e7ed;
-  border-right: 1px solid #e4e7ed;
-  padding: 11px 0;
-  font-size: 13px;
+.user-info-card {
+  .info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f2f5;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      display: flex;
+      align-items: center;
+      color: #606266;
+      font-size: 14px;
+
+      .svg-icon {
+        margin-right: 8px;
+        color: #409EFF;
+        font-size: 16px;
+      }
+
+      span {
+        font-weight: 500;
+      }
+    }
+
+    .info-value {
+      color: #303133;
+      font-weight: 600;
+      font-size: 14px;
+    }
+  }
 }
 
-.pull-right {
-  float: right !important;
+// Tab样式
+.profile-tabs {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+
+  ::v-deep .el-tabs__header {
+    margin-bottom: 24px;
+  }
+
+  ::v-deep .el-tabs__nav-wrap::after {
+    display: none;
+  }
+
+  ::v-deep .el-tabs__item {
+    font-size: 15px;
+    font-weight: 500;
+    color: #606266;
+    padding: 0 24px;
+
+    &.is-active {
+      color: #409EFF;
+      font-weight: 600;
+    }
+  }
+
+  ::v-deep .el-tabs__active-bar {
+    background: #409EFF;
+    height: 3px;
+    border-radius: 2px;
+  }
 }
 
+// 表单样式
 .form-content {
-  padding: 20px;
+  padding: 16px 0;
 }
 
-.el-form-item__content {
-  width: 80%;
-}
-
-.el-input-medium {
-  width: 80%;
-}
-
-.el-form-item {
-  width: 100%;
-}
-
-.box-card {
+::v-deep .el-form-item {
   margin-bottom: 20px;
+
+  .el-form-item__label {
+    color: #606266;
+    font-weight: 500;
+  }
 }
 
-.clearfix:before,
-.clearfix:after {
-  display: table;
-  content: "";
-}
-.clearfix:after {
-  clear: both;
+::v-deep .el-input__inner {
+  border-radius: 8px;
+  border: 1px solid #e0e6ed;
+  transition: all 0.3s ease;
+
+  &:focus {
+    border-color: #409EFF;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+  }
 }
 
-.avatar-uploader .el-upload {
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
+// 按钮样式
+::v-deep .el-button {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &--primary {
+    background: linear-gradient(135deg, #409EFF 0%, #1890ff 100%);
+    border: none;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+    }
+  }
+}
+
+// 点击链接样式
+.clickable-text {
+  color: #409EFF;
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: #1890ff;
+    text-decoration: underline;
+  }
 }
 
-.avatar-uploader .el-upload:hover {
-  border-color: #409EFF;
+// 上传组件样式
+::v-deep .avatar-uploader {
+  .el-upload {
+    border: 2px dashed #d9d9d9;
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #409EFF;
+      background: rgba(64, 158, 255, 0.02);
+    }
+  }
 }
 
 .avatar-uploader-icon {
@@ -389,20 +511,47 @@ export default {
   width: 178px;
   height: 178px;
   display: block;
+  border-radius: 12px;
 }
 
+// 验证码样式
 .login-code {
   width: 25%;
   height: 38px;
   float: right;
   text-align: center;
-  border-radius: 20px;
+  border-radius: 8px;
   border: 1px solid #dcdfe6;
   cursor: pointer;
+  background: #f5f7fa;
+  color: #606266;
+  font-size: 14px;
+  line-height: 38px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #409EFF;
+    color: white;
+    border-color: #409EFF;
+  }
 }
 
-.login-code img {
-  cursor: pointer;
-  vertical-align: middle;
+// 响应式设计
+@media (max-width: 768px) {
+  .profile-header {
+    padding: 16px;
+
+    .page-title {
+      font-size: 24px;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+    }
+  }
+
+  .user-profile {
+    margin-bottom: 16px;
+  }
 }
 </style>

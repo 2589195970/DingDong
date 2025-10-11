@@ -49,18 +49,7 @@
         </view>
       </view>
 
-      <!-- 微信收款码 -->
-      <view v-if="queryParams.withdrawalType=='0'" class="info-card">
-        <view class="info-item">
-          <view class="item-left">微信收款码</view>
-          <view class="item-right">
-            <u-upload :fileList="fileList1" @afterRead="afterRead" @delete="deletePic" name="1" :headers="headers"
-                      multiple
-                      :maxCount="1"></u-upload>
-          </view>
-        </view>
-      </view>
-
+  
       <!-- 支付宝信息 -->
       <view v-if="queryParams.withdrawalType=='1'" class="info-card">
         <view class="info-item has-border">
@@ -165,10 +154,7 @@ export default {
       // 实名认证检查相关
       isRealNameVerified: false,
       showRealNameTip: false,
-      radiolist: [{
-        name: '微信',
-        disabled: false
-      },
+      radiolist: [
         {
           name: '支付宝',
           disabled: false
@@ -179,7 +165,7 @@ export default {
         },
       ],
       // u-radio-group的v-model绑定的值如果设置为某个radio的name，就会被默认选中
-      radiovalue: '微信',
+      radiovalue: '支付宝',
       uploadUrl: process.env.VUE_APP_BASE_API + "/picture/addPicture", // 上传的图片服务器地址,
       headers: {
         Authorization: "Bearer " + getToken()
@@ -187,7 +173,6 @@ export default {
       // 表格数据
       list: [],
       ruleForm: [],
-      fileList1: [],
       imageUrl: false,
       // 导入文件
       form: {},
@@ -196,7 +181,7 @@ export default {
       api: [],
       groupCode: [],
       queryParams: {
-        withdrawalType: '0',
+        withdrawalType: '1',
 
       },
       querwithd: {},
@@ -305,63 +290,9 @@ export default {
       }
       return statusMap[status] || '未认证';
     },
-    deletePic(event) {
-      this[`fileList${event.name}`].splice(event.index, 1);
-    },
-    // 新增图片
-    async afterRead(event) {
-      // 当设置 multiple 为 true 时, file 为数组格式，否则为对象格式
-      let lists = [].concat(event.file);
-      let fileListLen = this[`fileList${event.name}`].length;
-      lists.map((item) => {
-        this[`fileList${event.name}`].push({
-          ...item,
-          status: "uploading",
-          message: "上传中",
-        });
-      });
-      for (let i = 0; i < lists.length; i++) {
-        const result = await this.uploadFilePromise(lists[i].url);
-        let item = this[`fileList${event.name}`][fileListLen];
-        this[`fileList${event.name}`].splice(
-            fileListLen,
-            1,
-            Object.assign(item, {
-              status: "success",
-              message: "",
-              url: result,
-            })
-        );
-        fileListLen++;
-      }
-
-    },
-    uploadFilePromise(url) {
-      return new Promise((resolve, reject) => {
-        let a = uni.uploadFile({
-          url: "https://www.dingdonghaoka.com/prod-api/picture/addPicture", // 仅为示例，非真实的接口地址
-          filePath: url,
-          name: "file",
-          header: this.headers,
-          success: (res) => {
-            setTimeout(() => {
-              resolve(res.data);
-              console.log(JSON.parse(res.data))
-              var wxUrl = JSON.parse(res.data)
-              this.queryParams.wxUrl = wxUrl.message;
-              console.log(this.queryParams.wxUrl)
-            }, 1000);
-          },
-        });
-      });
-
-    },
-
+    
     groupChange(n) {
-      if (n == "微信") {
-        this.queryParams.withdrawalType = '0'
-
-      } else if (n == "支付宝") {
+      if (n == "支付宝") {
         this.queryParams.withdrawalType = '1'
       } else if (n == "银行卡") {
         this.queryParams.withdrawalType = '2'
@@ -385,14 +316,7 @@ export default {
     handleSelectionChange(val) {
 
     },
-    handleAvatarSuccess(res, file) {
-      this.$set(this.queryParams, 'wxUrl', res.message)
     },
-    // 图片返回
-    handlesuccess(file) {
-      // this.queryParams.productPlacardMap = file.msg;
-    },
-  },
 }
 </script>
 <style lang="scss" scoped>

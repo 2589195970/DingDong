@@ -2,19 +2,19 @@
     <div class="app-container">
         <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
             label-width="100px">
-            <el-form-item prop="businessType">
+            <el-form-item>
                 <el-select v-model="queryParams.orderSource" placeholder="订单来源" clearable filterable
                     style="width: 240px">
                     <el-option v-for="dict in orderSource" :key="dict.id" :label="dict.name" :value="dict.id" />
                 </el-select>
             </el-form-item>
-            <el-form-item prop="businessType">
+            <el-form-item>
                 <el-select v-model="queryParams.orderStatus" placeholder="订单状态" clearable filterable
                     style="width: 240px">
                     <el-option v-for="dict in orderStatus" :key="dict.id" :label="dict.name" :value="dict.id" />
                 </el-select>
             </el-form-item>
-            <el-form-item prop="businessType">
+            <el-form-item>
                 <el-select v-model="queryParams.isRecharged" placeholder="首充状态" clearable filterable
                     style="width: 240px">
                     <el-option v-for="dict in isRecharged" :key="dict.id" :label="dict.name" :value="dict.id" />
@@ -38,32 +38,32 @@
             <el-form-item prop="responsiblePeople">
                 <el-input v-model="queryParams.cardId" placeholder="开卡人身份证"></el-input>
             </el-form-item>
-            <el-form-item prop="businessType">
+            <el-form-item>
                 <el-select v-model="queryParams.upstreamApiId" placeholder="请选择接口" clearable filterable>
                     <el-option v-for="dict in upstreamApiCode" :key="dict.upstreamApiType" :label="dict.upstreamApiName"
                         :value="dict.upstreamApiId" />
                 </el-select>
             </el-form-item>
-            
-            <el-form-item prop="businessType">
+
+            <el-form-item>
                 <el-select v-model="queryParams.downstreamCode" placeholder="下游代理" clearable filterable>
                     <el-option v-for="dict in downstreamCode" :key="dict.agentCode" :label="dict.agentName"
                         :value="dict.agentCode" />
                 </el-select>
             </el-form-item>
-            <el-form-item prop="businessType">
+            <el-form-item>
                 <el-select v-model="queryParams.orderCommissionStatus" placeholder="佣金状态" clearable filterable>
                     <el-option v-for="dict in orderCommissionStatus" :key="dict.id" :label="dict.name"
                         :value="dict.id" />
                 </el-select>
             </el-form-item>
-            <el-form-item prop="businessType">
+            <el-form-item>
                 <el-select v-model="queryParams.isNotNullOrderUpstreamId" placeholder="上游单号是否为空" clearable filterable>
                     <el-option v-for="dict in isNotNullOrderUpstreamId" :key="dict.id" :label="dict.name"
                         :value="dict.id" />
                 </el-select>
             </el-form-item>
-         
+
             <el-form-item>
                 <el-date-picker v-model="dateRange" style="width: 240px" value-format="timestamp" type="daterange"
                     range-separator="至" start-placeholder="下单时间" end-placeholder="结束日期"
@@ -137,7 +137,7 @@
                         <span v-if="scope.row.orderCommissionStatus==4">无法结算</span>
                     </span><br>
                     <span>佣金说明：{{scope.row.orderCommissionMessage}}</span><br>
-                    
+
                     <span>下单时间：{{formatTimestamp(scope.row.createTime)}}</span><br>
                 </template>
             </el-table-column>
@@ -176,14 +176,14 @@
             <el-form ref="form" v-model="form" label-width="100px">
                 <el-row>
                     <el-col :span="24">
-                        <el-form-item prop="businessType" label="原产品">
+                        <el-form-item label="原产品">
                             <el-input v-model="form.productName" style="width: 240px" :disabled="true"></el-input>
                         </el-form-item>
                     </el-col>
                 </el-row>
                 <el-row>
                     <el-col :span="24">
-                        <el-form-item prop="businessType" label="新产品">
+                        <el-form-item label="新产品">
                             <el-select v-model="form.productCode" placeholder="新产品" clearable filterable
                                 style="width: 240px">
                                 <el-option v-for="dict in productCodeList " :key="dict.productCode"
@@ -239,7 +239,7 @@
             <el-form ref="cambiareform" v-model="cambiareform" label-width="100px">
                 <el-row>
                     <el-col :span="24">
-                        <el-form-item prop="businessType" label="订单来源">
+                        <el-form-item label="订单来源">
                             <el-select v-model="cambiareform.orderSource" placeholder="订单来源" clearable filterable
                                 style="width: 240px">
                                 <el-option v-for="dict in orderSource" :key="dict.id" :label="dict.name"
@@ -250,7 +250,7 @@
                 </el-row>
                 <el-row>
                     <el-col :span="24">
-                        <el-form-item prop="businessType" label="订单状态">
+                        <el-form-item label="订单状态">
                             <el-select v-model="cambiareform.orderStatus" placeholder="订单状态" clearable filterable
                                 style="width: 240px">
                                 <el-option v-for="dict in orderStatus" :key="dict.id" :label="dict.name"
@@ -302,7 +302,7 @@
                             :value="dict.agentCode" />
                     </el-select>
                 </el-form-item>
-                <el-form-item prop="businessType" label="产品">
+                <el-form-item label="产品">
                     <el-select v-model="upload.productCode" placeholder="产品" clearable filterable style="width: 200px">
                         <el-option v-for="dict in productCodeList " :key="dict.productCode" :label="dict.productName"
                             :value="dict.productCode" />
@@ -557,10 +557,10 @@
                 selectOrderBalance({"orderId":data.orderId}).then((res) => {
                     this.$alert(res.message, '余额', {
                     confirmButtonText: '确定',
-                  
+
                 });
                 })
-                
+
             },
             registroOP(data) {
                 this.registro = true;
@@ -626,12 +626,12 @@
             },
             tableRowClassName({ row, rowIndex }) {
                 if (row.contactExpireTime) {
-                    var begindate = new Date(Date.parse(this.changeTime(row.contactExpireTime))); //将开始时间由字符串格式转换为日期格式       
-                    begindate = new Date(Date.parse(begindate)); //将开始时间由字符串格式转换为日期格式       
-                    var myDate = new Date(); //此处将服务器当前日期作为结束日期，也可为其他任意时间 
-                    var startDate = begindate.getTime(); //将开始日期转换成毫秒 
-                    var endDate = myDate.getTime(); //将结束日期转换成毫秒  
-                    var day = parseInt((startDate - endDate) / 1000 / 3600 / 24); //结束日期减去开始日期后转换成天数    
+                    var begindate = new Date(Date.parse(this.changeTime(row.contactExpireTime))); //将开始时间由字符串格式转换为日期格式
+                    begindate = new Date(Date.parse(begindate)); //将开始时间由字符串格式转换为日期格式
+                    var myDate = new Date(); //此处将服务器当前日期作为结束日期，也可为其他任意时间
+                    var startDate = begindate.getTime(); //将开始日期转换成毫秒
+                    var endDate = myDate.getTime(); //将结束日期转换成毫秒
+                    var day = parseInt((startDate - endDate) / 1000 / 3600 / 24); //结束日期减去开始日期后转换成天数
                     console.log('day', day); //day 457
                     if (day < 0) {
                         return 'warning-row';

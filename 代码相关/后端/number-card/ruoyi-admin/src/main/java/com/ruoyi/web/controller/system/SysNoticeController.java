@@ -1,6 +1,8 @@
 package com.ruoyi.web.controller.system;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -15,8 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.domain.entity.SysUser;
+import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.SysNotice;
 import com.ruoyi.system.service.ISysNoticeService;
 
@@ -87,5 +92,35 @@ public class SysNoticeController extends BaseController
     public AjaxResult remove(@PathVariable Long[] noticeIds)
     {
         return toAjax(noticeService.deleteNoticeByIds(noticeIds));
+    }
+
+    /**
+     * 【新增】根据用户权限获取通知公告列表
+     */
+    @GetMapping("/listByUserScope")
+    public TableDataInfo listByUserScope(SysNotice notice)
+    {
+        startPage();
+
+        // 构建查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("noticeTitle", notice.getNoticeTitle());
+        params.put("noticeType", notice.getNoticeType());
+
+        // 【核心】获取当前用户信息和权限判断
+        LoginUser loginUser = SecurityUtils.getLoginUser();
+        SysUser currentUser = loginUser.getUser();
+
+        // Admin判断：userId = 1 为超级管理员
+        boolean isAdmin = SysUser.isAdmin(currentUser.getUserId());
+        params.put("isAdmin", isAdmin);
+
+        // 非Admin用户需要过滤注册时间
+        if (!isAdmin) {
+            params.put("currentUserCreateTime", currentUser.getCreateTime());
+        }
+
+        List<SysNotice> list = noticeService.selectNoticeListByUserScope(notice, params);
+        return getDataTable(list);
     }
 }

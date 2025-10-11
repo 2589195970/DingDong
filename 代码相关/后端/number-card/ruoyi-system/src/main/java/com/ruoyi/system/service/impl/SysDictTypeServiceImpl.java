@@ -8,6 +8,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.entity.SysDictData;
 import com.ruoyi.common.core.domain.entity.SysDictType;
@@ -20,10 +21,11 @@ import com.ruoyi.system.service.ISysDictTypeService;
 
 /**
  * 字典 业务层处理
- * 
+ *
  * @author ruoyi
  */
 @Service
+@Slf4j
 public class SysDictTypeServiceImpl implements ISysDictTypeService
 {
     @Autowired
@@ -38,7 +40,12 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService
     @PostConstruct
     public void init()
     {
-        loadingDictCache();
+        try {
+            loadingDictCache();
+        } catch (Exception e) {
+            // Redis连接失败时不阻止应用启动，只记录警告日志
+            log.warn("初始化字典缓存失败，可能是Redis连接问题: {}", e.getMessage());
+        }
     }
 
     /**
@@ -137,12 +144,17 @@ public class SysDictTypeServiceImpl implements ISysDictTypeService
     @Override
     public void loadingDictCache()
     {
-        SysDictData dictData = new SysDictData();
-        dictData.setStatus("0");
-        Map<String, List<SysDictData>> dictDataMap = dictDataMapper.selectDictDataList(dictData).stream().collect(Collectors.groupingBy(SysDictData::getDictType));
-        for (Map.Entry<String, List<SysDictData>> entry : dictDataMap.entrySet())
-        {
-            DictUtils.setDictCache(entry.getKey(), entry.getValue().stream().sorted(Comparator.comparing(SysDictData::getDictSort)).collect(Collectors.toList()));
+        try {
+            SysDictData dictData = new SysDictData();
+            dictData.setStatus("0");
+            Map<String, List<SysDictData>> dictDataMap = dictDataMapper.selectDictDataList(dictData).stream().collect(Collectors.groupingBy(SysDictData::getDictType));
+            for (Map.Entry<String, List<SysDictData>> entry : dictDataMap.entrySet())
+            {
+                DictUtils.setDictCache(entry.getKey(), entry.getValue().stream().sorted(Comparator.comparing(SysDictData::getDictSort)).collect(Collectors.toList()));
+            }
+        } catch (Exception e) {
+            // Redis连接失败时不阻止应用启动，只记录警告日志
+            log.warn("加载字典缓存失败，可能是Redis连接问题: {}", e.getMessage());
         }
     }
 

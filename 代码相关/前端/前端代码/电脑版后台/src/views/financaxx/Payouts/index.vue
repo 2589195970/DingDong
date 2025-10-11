@@ -8,23 +8,12 @@
         <div class="topss">
             <el-form-item label="提现模式" prop="resource">
                 <el-radio-group v-model="queryParams.withdrawalType">
-                    <el-radio label="0">微信</el-radio>
                     <el-radio label="1">支付宝</el-radio>
                     <el-radio label="2">银行卡</el-radio>
                 </el-radio-group>
             </el-form-item>
             <br>
-            <div v-if="queryParams.withdrawalType=='0'" class="wxskm">
-                <el-form-item label="微信收款码" prop="resource">
-                    <el-upload class="avatar-uploader" :action="uploadUrl" :show-file-list="false"
-                        :on-success="handleAvatarSuccess" :before-upload="handlesuccess" :headers=headers>
-                        <img v-if="queryParams.wxUrl" :src="queryParams.wxUrl" class="avatar">
-                        <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-                    </el-upload>
-                </el-form-item>
-
-            </div>
-            <div v-if="queryParams.withdrawalType=='1'">
+              <div v-if="queryParams.withdrawalType=='1'">
                 <el-form-item label="支付宝账号">
                     <el-input v-model="queryParams.zfbAccount" placeholder="支付宝账号"></el-input>
                 </el-form-item>
@@ -98,7 +87,7 @@
                 api: [],
                 groupCode: [],
                 queryParams: {
-                    withdrawalType: '0',
+                    withdrawalType: '1',
 
                 },
                 querwithd: {},
@@ -191,10 +180,7 @@
         text-align: center;
     }
 
-    .wxskm .el-icon-plus:before {
-        line-height: 178px;
-    }
-
+  
     .avatar {
         width: 178px;
         height: 178px;

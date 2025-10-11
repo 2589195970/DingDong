@@ -104,16 +104,10 @@ public class WithdrawalRecordDetails {
     private String remark;
 
     /**
-     * 提现类型 0 微信 1 支付宝 2 已打款
+     * 提现类型 1 支付宝 2 银行卡
      */
-    @ApiModelProperty(value = "提现类型 0 微信 1 支付宝 2 已打款")
+    @ApiModelProperty(value = "提现类型 1 支付宝 2 银行卡")
     private Integer applyWithdrawalType;
-
-    /**
-     * 微信收款码url
-     */
-    @ApiModelProperty(value = "微信收款码url")
-    private String wxUrl;
 
     /**
      * 支付宝账号
@@ -163,6 +157,20 @@ public class WithdrawalRecordDetails {
      */
     @ApiModelProperty("更新时间")
     private Long updateTime;
+
+    /**
+     * 微信链接
+     */
+    @ApiModelProperty("微信链接")
+    private String wxUrl;
+
+    public String getWxUrl() {
+        return wxUrl;
+    }
+
+    public void setWxUrl(String wxUrl) {
+        this.wxUrl = wxUrl;
+    }
 
 
 

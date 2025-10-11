@@ -203,12 +203,34 @@ public class PageViewServiceImpl implements PageViewService {
                 result.put("monthVisitors", totalVisitors);
                 result.put("monthIps", totalIps);
 
+            } else if ("all".equals(dateRange)) {
+                // 全部时间统计 - 获取该代理商的所有统计数据
+                List<PageViewStatistics> allStats = pageViewMapper.selectViewTrend(agentCode, "", today);
+                result.put("allTrend", allStats);
+
+                // 计算全部时间汇总
+                int totalViews = allStats.stream().mapToInt(s -> s.getViewCount() != null ? s.getViewCount() : 0).sum();
+                int totalVisitors = allStats.stream().mapToInt(s -> s.getVisitorCount() != null ? s.getVisitorCount() : 0).sum();
+                int totalIps = allStats.stream().mapToInt(s -> s.getIpCount() != null ? s.getIpCount() : 0).sum();
+
+                result.put("allViews", totalViews);
+                result.put("allVisitors", totalVisitors);
+                result.put("allIps", totalIps);
+
             } else {
-                // 指定日期统计
-                PageViewStatistics dateStats = pageViewMapper.selectStatistics(agentCode, dateRange);
-                result.put("dateViews", dateStats != null ? dateStats.getViewCount() : 0);
-                result.put("dateVisitors", dateStats != null ? dateStats.getVisitorCount() : 0);
-                result.put("dateIps", dateStats != null ? dateStats.getIpCount() : 0);
+                // 指定日期统计 - 验证日期格式
+                if (dateRange != null && !dateRange.isEmpty() && dateRange.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                    PageViewStatistics dateStats = pageViewMapper.selectStatistics(agentCode, dateRange);
+                    result.put("dateViews", dateStats != null ? dateStats.getViewCount() : 0);
+                    result.put("dateVisitors", dateStats != null ? dateStats.getVisitorCount() : 0);
+                    result.put("dateIps", dateStats != null ? dateStats.getIpCount() : 0);
+                } else {
+                    // 无效日期格式，返回0值
+                    result.put("dateViews", 0);
+                    result.put("dateVisitors", 0);
+                    result.put("dateIps", 0);
+                    result.put("error", "无效的日期格式，请使用YYYY-MM-DD格式");
+                }
             }
 
             result.put("updateTime", System.currentTimeMillis());

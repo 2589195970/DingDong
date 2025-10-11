@@ -163,7 +163,9 @@
     <select id="selectViewTrend" resultMap="PageViewStatisticsResult">
         SELECT * FROM t_page_view_statistics
         WHERE agent_code = #{agentCode}
-        AND view_date BETWEEN #{startDate} AND #{endDate}
+        <if test="startDate != null and startDate != '' and endDate != null and endDate != ''">
+            AND view_date BETWEEN #{startDate} AND #{endDate}
+        </if>
         ORDER BY view_date DESC
     </select>
 

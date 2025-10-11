@@ -87,7 +87,7 @@ mybatis-plus:
   # configLocation: classpath:mybatis/mybatis-config.xml
   # type-handlers-package: com.ruoyi.common.pojo.main.handler.AESEncipherTypeHandler
   configuration:
-    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 # PageHelper分页插件
 pagehelper:

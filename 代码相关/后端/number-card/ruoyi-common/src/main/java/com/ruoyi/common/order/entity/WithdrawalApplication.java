@@ -80,16 +80,10 @@ public class WithdrawalApplication {
     private Integer withdrawalStatus;
 
     /**
-     * 提现类型 0 微信 1 支付宝 2 已打款
+     * 提现类型 1 支付宝 2 银行卡
      */
-    @ApiModelProperty(value = "提现类型 0 微信 1 支付宝 2 已打款")
+    @ApiModelProperty(value = "提现类型 1 支付宝 2 银行卡")
     private Integer withdrawalType;
-
-    /**
-     * 微信收款码url
-     */
-    @ApiModelProperty(value = "微信收款码url")
-    private String wxUrl;
 
     /**
      * 支付宝账号
@@ -152,6 +146,20 @@ public class WithdrawalApplication {
      */
     @ApiModelProperty("更新时间")
     private Long updateTime;
+
+    /**
+     * 微信链接
+     */
+    @ApiModelProperty("微信链接")
+    private String wxUrl;
+
+    public String getWxUrl() {
+        return wxUrl;
+    }
+
+    public void setWxUrl(String wxUrl) {
+        this.wxUrl = wxUrl;
+    }
 
 
 

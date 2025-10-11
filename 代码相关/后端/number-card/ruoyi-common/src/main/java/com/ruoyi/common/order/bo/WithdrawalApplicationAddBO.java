@@ -29,17 +29,11 @@ public class WithdrawalApplicationAddBO {
 
 
     /**
-     * 提现类型 0 微信 1 支付宝 2 已打款
+     * 提现类型 1 支付宝 2 银行卡
      */
     @NotNull(message = "提现类型不能为空")
-    @ApiModelProperty(value = "提现类型 0 微信 1 支付宝 2 已打款")
+    @ApiModelProperty(value = "提现类型 1 支付宝 2 银行卡")
     private Integer withdrawalType;
-
-    /**
-     * 微信收款码url
-     */
-    @ApiModelProperty(value = "微信收款码url")
-    private String wxUrl;
 
     /**
      * 支付宝账号

@@ -31,6 +31,9 @@ public class SysNotice extends BaseEntity
     /** 公告状态（0正常 1关闭） */
     private String status;
 
+    /** 当前用户注册时间（用于权限过滤） */
+    private String currentUserCreateTime;
+
     public Long getNoticeId()
     {
         return noticeId;
@@ -82,6 +85,16 @@ public class SysNotice extends BaseEntity
     public String getStatus()
     {
         return status;
+    }
+
+    public void setCurrentUserCreateTime(String currentUserCreateTime)
+    {
+        this.currentUserCreateTime = currentUserCreateTime;
+    }
+
+    public String getCurrentUserCreateTime()
+    {
+        return currentUserCreateTime;
     }
 
     @Override

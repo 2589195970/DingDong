@@ -136,6 +136,20 @@
 			}
 		},
 		{
+			"path": "pages/ProductMonthly/index",
+			"style": {
+				"navigationBarTitleText": "月结产品",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/ProductInstant/index",
+			"style": {
+				"navigationBarTitleText": "秒结产品",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/Order/orderxiangqing",
 			"style": {
 				"navigationBarTitleText": "订单详情",
@@ -237,23 +251,17 @@
 				"text": "订单"
 			},
 			{
-				"pagePath": "pages/Product/index",
+				"pagePath": "pages/ProductMonthly/index",
 				"iconPath": "static/images/tabbar/work.png",
 				"selectedIconPath": "static/images/tabbar/work-1.png",
-				"text": "商品"
+				"text": "月产品"
 			},
-			// {
-			// 	"pagePath": "pages/mine/index",
-			// 	"iconPath": "/static/images/tabbar/daili.png",
-			// 	"selectedIconPath": "static/images/tabbar/daili-1.png",
-			// 	"text": "代理"
-			// },
-			// {
-			// 	"pagePath": "pages/work/index",
-			// 	"iconPath": "static/images/tabbar/work.png",
-			// 	"selectedIconPath": "static/images/tabbar/work_.png",
-			// 	"text": "工作台"
-			// },
+			{
+				"pagePath": "pages/ProductInstant/index",
+				"iconPath": "static/images/tabbar/work.png",
+				"selectedIconPath": "static/images/tabbar/work-1.png",
+				"text": "秒产品"
+			},
 			{
 				"pagePath": "pages/mine/index",
 				"iconPath": "static/images/tabbar/mine.png",
@@ -264,7 +272,6 @@
 	},
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		// "navigationBarTitleText": "",
 		"navigationBarBackgroundColor": "#FFFFFF"
 	}
 }

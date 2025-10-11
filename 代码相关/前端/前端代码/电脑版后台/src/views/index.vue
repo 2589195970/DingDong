@@ -6,7 +6,11 @@
         <el-card class="box-card order-card">
           <div class="card-content">
             <div class="card-left">
-              <i class="el-icon-shopping-cart-2 card-icon"></i>
+              <div class="card-icon-wrapper">
+                <svg class="card-icon" viewBox="0 0 24 24" fill="none">
+                  <path d="M8 2v4M16 2v4M3 10h18M5 4h14c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
             </div>
             <div class="card-right">
               <div class="card-header">
@@ -26,7 +30,11 @@
         <el-card class="box-card active-card">
           <div class="card-content">
             <div class="card-left">
-              <i class="el-icon-rocket card-icon"></i>
+              <div class="card-icon-wrapper">
+                <svg class="card-icon" viewBox="0 0 24 24" fill="none">
+                  <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
             </div>
             <div class="card-right">
               <div class="card-header">
@@ -46,7 +54,11 @@
         <el-card class="box-card commission-card">
           <div class="card-content">
             <div class="card-left">
-              <i class="el-icon-wallet card-icon"></i>
+              <div class="card-icon-wrapper">
+                <svg class="card-icon" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
             </div>
             <div class="card-right">
               <div class="card-header">
@@ -66,7 +78,11 @@
         <el-card class="box-card agent-card">
           <div class="card-content">
             <div class="card-left">
-              <i class="el-icon-user-solid card-icon"></i>
+              <div class="card-icon-wrapper">
+                <svg class="card-icon" viewBox="0 0 24 24" fill="none">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
             </div>
             <div class="card-right">
               <div class="card-header">
@@ -409,7 +425,7 @@ export default {
             }
           }
         ],
-        color: ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399']
+        color: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1']
       },
       // 订单趋势图配置
       orderTrendOptions: {
@@ -487,10 +503,10 @@ export default {
             symbolSize: 6,
             lineStyle: {
               width: 3,
-              color: '#409EFF'
+              color: '#1890ff'
             },
             itemStyle: {
-              color: '#409EFF',
+              color: '#1890ff',
               borderWidth: 2,
               borderColor: '#fff'
             },
@@ -502,9 +518,9 @@ export default {
                 x2: 0,
                 y2: 1,
                 colorStops: [{
-                  offset: 0, color: 'rgba(64, 158, 255, 0.3)'
+                  offset: 0, color: 'rgba(24, 144, 255, 0.25)'
                 }, {
-                  offset: 1, color: 'rgba(64, 158, 255, 0.05)'
+                  offset: 1, color: 'rgba(24, 144, 255, 0.03)'
                 }]
               }
             }
@@ -518,10 +534,10 @@ export default {
             symbolSize: 5,
             lineStyle: {
               width: 2,
-              color: '#67C23A'
+              color: '#52c41a'
             },
             itemStyle: {
-              color: '#67C23A',
+              color: '#52c41a',
               borderWidth: 2,
               borderColor: '#fff'
             },
@@ -533,9 +549,9 @@ export default {
                 x2: 0,
                 y2: 1,
                 colorStops: [{
-                  offset: 0, color: 'rgba(103, 194, 58, 0.25)'
+                  offset: 0, color: 'rgba(82, 196, 26, 0.25)'
                 }, {
-                  offset: 1, color: 'rgba(103, 194, 58, 0.03)'
+                  offset: 1, color: 'rgba(82, 196, 26, 0.03)'
                 }]
               }
             }
@@ -549,10 +565,10 @@ export default {
             symbolSize: 5,
             lineStyle: {
               width: 2,
-              color: '#E6A23C'
+              color: '#faad14'
             },
             itemStyle: {
-              color: '#E6A23C',
+              color: '#faad14',
               borderWidth: 2,
               borderColor: '#fff'
             },
@@ -564,9 +580,9 @@ export default {
                 x2: 0,
                 y2: 1,
                 colorStops: [{
-                  offset: 0, color: 'rgba(230, 162, 60, 0.25)'
+                  offset: 0, color: 'rgba(250, 173, 20, 0.25)'
                 }, {
-                  offset: 1, color: 'rgba(230, 162, 60, 0.03)'
+                  offset: 1, color: 'rgba(250, 173, 20, 0.03)'
                 }]
               }
             }
@@ -657,9 +673,9 @@ export default {
                 x2: 1,
                 y2: 0,
                 colorStops: [{
-                  offset: 0, color: '#67C23A'
+                  offset: 0, color: '#52c41a'
                 }, {
-                  offset: 1, color: '#85ce61'
+                  offset: 1, color: '#73d13d'
                 }]
               },
               borderRadius: [0, 4, 4, 0]
@@ -685,9 +701,9 @@ export default {
                 x2: 1,
                 y2: 0,
                 colorStops: [{
-                  offset: 0, color: '#409EFF'
+                  offset: 0, color: '#1890ff'
                 }, {
-                  offset: 1, color: '#66b1ff'
+                  offset: 1, color: '#40a9ff'
                 }]
               },
               borderRadius: [0, 4, 4, 0]
@@ -1134,39 +1150,117 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-// 统计卡片样式
+// 高级统计卡片样式 - 专业设计师级别
 .box-card {
-  border: 1px solid #EBEEF5;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-  height: 100px; // 固定卡片高度
+  border: none;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  height: 110px;
+  background: linear-gradient(145deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(91, 95, 222, 0.03) 0%, transparent 70%);
+    transition: all 0.6s ease;
+    opacity: 0;
+  }
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.15),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    &::before {
+      opacity: 1;
+    }
+
+    &::after {
+      opacity: 1;
+    }
+
+    .card-icon-wrapper {
+      transform: scale(1.1) rotate(5deg);
+      box-shadow:
+        0 8px 20px rgba(91, 95, 222, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .card-number {
+      transform: scale(1.05);
+    }
   }
 
   :deep(.el-card__body) {
-    padding: 16px; // 减少内边距
+    padding: 24px;
+    position: relative;
+    z-index: 2;
   }
 
   .card-content {
     display: flex;
     align-items: center;
-    height: 68px; // 固定内容高度
+    height: 62px;
   }
 
   .card-left {
-    margin-right: 12px;
+    margin-right: 20px;
 
-    .card-icon {
-      font-size: 32px;
-      width: 48px;
-      height: 48px;
-      line-height: 48px;
-      text-align: center;
-      border-radius: 50%;
-      color: #fff;
+    .card-icon-wrapper {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 16px;
+        padding: 2px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.6), transparent);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: exclude;
+        mask-composite: exclude;
+        z-index: 2;
+      }
+
+  
+      .card-icon {
+        width: 28px;
+        height: 28px;
+        color: #ffffff;
+        z-index: 3;
+        position: relative;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
     }
   }
 
@@ -1177,79 +1271,163 @@ export default {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
+      margin-bottom: 10px;
 
       span {
-        font-size: 13px;
-        color: #606266;
-        font-weight: 500;
+        font-size: 15px;
+        color: #6b7280;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-size: 12px;
       }
     }
 
     .card-number {
-      font-size: 24px;
-      font-weight: bold;
-      color: #303133;
-      margin-bottom: 2px;
+      font-size: 32px;
+      font-weight: 800;
+      color: #1f2937;
+      margin-bottom: 6px;
       line-height: 1;
+      letter-spacing: -0.05em;
+      transition: all 0.3s ease;
+      background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .card-desc {
-      font-size: 11px;
-      color: #909399;
+      font-size: 13px;
+      color: #9ca3af;
+      font-weight: 500;
+      letter-spacing: 0.025em;
     }
   }
 
-  // 不同卡片的主题色
-  &.order-card .card-icon {
-    background: linear-gradient(135deg, #409EFF, #66b1ff);
+  // 不同卡片的主题色 - 使用RuoYi风格色彩
+  &.order-card .card-icon-wrapper {
+    background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+    box-shadow:
+      0 8px 20px rgba(24, 144, 255, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
-  &.active-card .card-icon {
-    background: linear-gradient(135deg, #67C23A, #85ce61);
+  &.active-card .card-icon-wrapper {
+    background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+    box-shadow:
+      0 8px 20px rgba(82, 196, 26, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
-  &.commission-card .card-icon {
-    background: linear-gradient(135deg, #E6A23C, #ebb563);
+  &.commission-card .card-icon-wrapper {
+    background: linear-gradient(135deg, #faad14 0%, #ffc53d 100%);
+    box-shadow:
+      0 8px 20px rgba(250, 173, 20, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
-  &.agent-card .card-icon {
-    background: linear-gradient(135deg, #F56C6C, #f78989);
+  &.agent-card .card-icon-wrapper {
+    background: linear-gradient(135deg, #f5222d 0%, #ff4d4f 100%);
+    box-shadow:
+      0 8px 20px rgba(245, 34, 45, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 }
 
-// 趋势指示器样式
+// 高级趋势指示器样式
 .trend-indicator {
-  font-size: 10px;
-  font-weight: bold;
-  padding: 1px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
   border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
 
   i {
-    margin-right: 1px;
-    font-size: 9px;
+    font-size: 11px;
+    position: relative;
+    z-index: 2;
+  }
+
+  span {
+    position: relative;
+    z-index: 2;
   }
 
   &.trend-up {
-    color: #67C23A;
-    background: rgba(103, 194, 58, 0.1);
+    color: #52c41a;
+    background: linear-gradient(135deg, rgba(82, 196, 26, 0.1), rgba(82, 196, 26, 0.15));
+    border: 1px solid rgba(82, 196, 26, 0.2);
+    box-shadow: 0 2px 4px rgba(82, 196, 26, 0.1);
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(82, 196, 26, 0.15), rgba(82, 196, 26, 0.2));
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(82, 196, 26, 0.2);
+    }
   }
 
   &.trend-down {
-    color: #F56C6C;
-    background: rgba(245, 108, 108, 0.1);
+    color: #f5222d;
+    background: linear-gradient(135deg, rgba(245, 34, 45, 0.1), rgba(245, 34, 45, 0.15));
+    border: 1px solid rgba(245, 34, 45, 0.2);
+    box-shadow: 0 2px 4px rgba(245, 34, 45, 0.1);
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(245, 34, 45, 0.15), rgba(245, 34, 45, 0.2));
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(245, 34, 45, 0.2);
+    }
   }
 
   &.trend-equal {
-    color: #909399;
-    background: rgba(144, 147, 153, 0.1);
+    color: #8c8c8c;
+    background: linear-gradient(135deg, rgba(140, 140, 140, 0.1), rgba(140, 140, 140, 0.15));
+    border: 1px solid rgba(140, 140, 140, 0.2);
+    box-shadow: 0 2px 4px rgba(140, 140, 140, 0.1);
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(140, 140, 140, 0.15), rgba(140, 140, 140, 0.2));
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(140, 140, 140, 0.2);
+    }
   }
 
   &.trend-new {
-    color: #409EFF;
-    background: rgba(64, 158, 255, 0.1);
+    color: #1890ff;
+    background: linear-gradient(135deg, rgba(24, 144, 255, 0.1), rgba(24, 144, 255, 0.15));
+    border: 1px solid rgba(24, 144, 255, 0.2);
+    box-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(24, 144, 255, 0.15), rgba(24, 144, 255, 0.2));
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(24, 144, 255, 0.2);
+    }
   }
-}
+
+  }
 
 // 通知徽章样式
 .notification-badge {
@@ -1500,16 +1678,43 @@ export default {
   }
 }
 
-// 整体容器优化
+// RuoYi风格容器背景 - 稳重的蓝色系
 .app-container {
-  padding: 16px;
-  min-height: calc(100vh - 84px); // 减去头部导航高度
-  overflow: hidden; // 防止页面滚动
+  padding: 32px;
+  min-height: calc(100vh - 84px);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(24, 144, 255, 0.008) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(82, 196, 26, 0.008) 0%, transparent 50%),
+    linear-gradient(135deg, #f5f7fa 0%, #e8eef2 100%);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(circle at 15% 85%, rgba(24, 144, 255, 0.012) 0%, transparent 40%),
+      radial-gradient(circle at 85% 15%, rgba(40, 169, 255, 0.012) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(82, 196, 26, 0.008) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: -1;
+    animation: float 30s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    33% { transform: translate(-10px, -10px) rotate(120deg); }
+    66% { transform: translate(10px, -5px) rotate(240deg); }
+  }
 }
 
 // 行间距优化
 .mb20 {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 
   &:last-child {
     margin-bottom: 0;
@@ -1518,19 +1723,28 @@ export default {
 
 // 卡片内容填充优化
 :deep(.el-card) {
-  border-radius: 8px;
-  border: 1px solid #E4E7ED;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  background: #ffffff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
 
   .el-card__header {
-    background: #FAFBFC;
-    border-bottom: 1px solid #E4E7ED;
-    padding: 16px 20px;
+    background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
+    border-bottom: 1px solid #f1f5f9;
+    padding: 18px 24px;
     font-weight: 600;
-    color: #303133;
+    color: #1f2937;
+    font-size: 15px;
+    letter-spacing: 0.025em;
   }
 
   .el-card__body {
-    padding: 20px;
+    padding: 24px;
   }
 }
 

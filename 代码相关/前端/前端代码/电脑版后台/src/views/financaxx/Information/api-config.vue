@@ -19,12 +19,132 @@
               </el-form-item>
               <el-form-item label="推广邀请：">
                 <span>{{queryParams1.extendUrl}}</span>
-                &emsp; &emsp;<span v-if="queryParams1.registerQrcodeMap1"
-                  @click="share(queryParams1.registerQrcodeMap1)" style="color: red; cursor: pointer;">海报图1</span>
-                &emsp; &emsp;<span v-if="queryParams1.registerQrcodeMap2"
-                  @click="share(queryParams1.registerQrcodeMap2)" style="color: red; cursor: pointer;">海报图2</span>
-                &emsp; &emsp;<span v-if="queryParams1.registerQrcodeMap3"
-                  @click="share(queryParams1.registerQrcodeMap3)" style="color: red; cursor: pointer;">海报图3</span>
+              </el-form-item>
+              <el-form-item label="推广海报图：">
+                <div class="poster-container">
+                  <!-- 海报图1 -->
+                  <div class="poster-item">
+                    <div class="poster-wrapper">
+                      <img
+                        v-if="queryParams1.registerQrcodeMap1"
+                        :src="queryParams1.registerQrcodeMap1"
+                        alt="海报图1"
+                        class="poster-image"
+                        @click="share(queryParams1.registerQrcodeMap1)"
+                      >
+                      <div v-else class="poster-placeholder">
+                        <i class="el-icon-picture-outline"></i>
+                        <span>暂无海报图1</span>
+                      </div>
+                      <div class="poster-actions">
+                        <el-upload
+                          class="poster-upload"
+                          action=""
+                          :http-request="(file) => uploadPoster(file, 1)"
+                          :show-file-list="false"
+                          accept="image/jpeg,image/jpg,image/png"
+                          :before-upload="beforePosterUpload"
+                        >
+                          <el-button size="mini" type="primary" icon="el-icon-upload">
+                            {{ queryParams1.registerQrcodeMap1 ? '替换' : '上传' }}
+                          </el-button>
+                        </el-upload>
+                        <el-button
+                          v-if="queryParams1.registerQrcodeMap1"
+                          size="mini"
+                          type="success"
+                          icon="el-icon-view"
+                          @click="share(queryParams1.registerQrcodeMap1)"
+                        >
+                          预览
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="poster-title">海报图1</div>
+                  </div>
+
+                  <!-- 海报图2 -->
+                  <div class="poster-item">
+                    <div class="poster-wrapper">
+                      <img
+                        v-if="queryParams1.registerQrcodeMap2"
+                        :src="queryParams1.registerQrcodeMap2"
+                        alt="海报图2"
+                        class="poster-image"
+                        @click="share(queryParams1.registerQrcodeMap2)"
+                      >
+                      <div v-else class="poster-placeholder">
+                        <i class="el-icon-picture-outline"></i>
+                        <span>暂无海报图2</span>
+                      </div>
+                      <div class="poster-actions">
+                        <el-upload
+                          class="poster-upload"
+                          action=""
+                          :http-request="(file) => uploadPoster(file, 2)"
+                          :show-file-list="false"
+                          accept="image/jpeg,image/jpg,image/png"
+                          :before-upload="beforePosterUpload"
+                        >
+                          <el-button size="mini" type="primary" icon="el-icon-upload">
+                            {{ queryParams1.registerQrcodeMap2 ? '替换' : '上传' }}
+                          </el-button>
+                        </el-upload>
+                        <el-button
+                          v-if="queryParams1.registerQrcodeMap2"
+                          size="mini"
+                          type="success"
+                          icon="el-icon-view"
+                          @click="share(queryParams1.registerQrcodeMap2)"
+                        >
+                          预览
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="poster-title">海报图2</div>
+                  </div>
+
+                  <!-- 海报图3 -->
+                  <div class="poster-item">
+                    <div class="poster-wrapper">
+                      <img
+                        v-if="queryParams1.registerQrcodeMap3"
+                        :src="queryParams1.registerQrcodeMap3"
+                        alt="海报图3"
+                        class="poster-image"
+                        @click="share(queryParams1.registerQrcodeMap3)"
+                      >
+                      <div v-else class="poster-placeholder">
+                        <i class="el-icon-picture-outline"></i>
+                        <span>暂无海报图3</span>
+                      </div>
+                      <div class="poster-actions">
+                        <el-upload
+                          class="poster-upload"
+                          action=""
+                          :http-request="(file) => uploadPoster(file, 3)"
+                          :show-file-list="false"
+                          accept="image/jpeg,image/jpg,image/png"
+                          :before-upload="beforePosterUpload"
+                        >
+                          <el-button size="mini" type="primary" icon="el-icon-upload">
+                            {{ queryParams1.registerQrcodeMap3 ? '替换' : '上传' }}
+                          </el-button>
+                        </el-upload>
+                        <el-button
+                          v-if="queryParams1.registerQrcodeMap3"
+                          size="mini"
+                          type="success"
+                          icon="el-icon-view"
+                          @click="share(queryParams1.registerQrcodeMap3)"
+                        >
+                          预览
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="poster-title">海报图3</div>
+                  </div>
+                </div>
               </el-form-item>
             </div>
           </el-form>
@@ -89,7 +209,8 @@
 </template>
 
 <script>
-import { getAgentApiVO, getAgentExtendUrlVO, updateCallbackUrl } from "@/api/monitor/finance";
+import { getAgentApiVO, getAgentExtendUrlVO, updateCallbackUrl, updatePosterImages } from "@/api/monitor/finance";
+import { getToken } from "@/utils/auth";
 
 export default {
   name: "ApiConfig",
@@ -100,7 +221,9 @@ export default {
       form: {},
       open: false,
       shareOpen: false,
-      sharedata: ''
+      sharedata: '',
+      uploadUrl: process.env.VUE_APP_BASE_API + "/picture/addPicture",
+      headers: { Authorization: "Bearer " + getToken() }
     };
   },
   beforeCreate() {
@@ -152,6 +275,72 @@ export default {
           this.queryParams = this.queryParams
         });
       })
+    },
+
+    // 上传前校验
+    beforePosterUpload(file) {
+      // 检查文件类型
+      const isImage = file.type === 'image/jpeg' || file.type === 'image/jpg' || file.type === 'image/png';
+      const isLt5M = file.size / 1024 / 1024 < 5;
+
+      if (!isImage) {
+        this.$message.error('只能上传 JPG/PNG 格式的图片!');
+        return false;
+      }
+      if (!isLt5M) {
+        this.$message.error('图片大小不能超过 5MB!');
+        return false;
+      }
+
+      this.$message({
+        message: '正在上传海报图...',
+        type: 'info'
+      });
+
+      return true;
+    },
+
+    // 上传海报图
+    async uploadPoster(uploadFile, posterIndex) {
+      try {
+        // 检查文件类型和大小
+        const isImage = uploadFile.file.type === 'image/jpeg' || uploadFile.file.type === 'image/jpg' || uploadFile.file.type === 'image/png';
+        const isLt5M = uploadFile.file.size / 1024 / 1024 < 5;
+
+        if (!isImage) {
+          this.$message.error('只能上传 JPG/PNG 格式的图片!');
+          return;
+        }
+        if (!isLt5M) {
+          this.$message.error('图片大小不能超过 5MB!');
+          return;
+        }
+
+        // 创建FormData
+        const formData = new FormData();
+        formData.append('file', uploadFile.file);
+        formData.append('posterIndex', posterIndex);
+
+        // 调用后端接口
+        const response = await updatePosterImages(formData);
+
+        if (response.code === 200) {
+          this.$message({
+            type: 'success',
+            message: '海报图上传成功!'
+          });
+
+          // 刷新数据
+          getAgentExtendUrlVO().then((res) => {
+            this.queryParams1 = { ...res.data };
+          });
+        } else {
+          this.$message.error(response.message || '上传失败');
+        }
+      } catch (error) {
+        console.error('上传失败:', error);
+        this.$message.error('上传失败，请稍后重试');
+      }
     }
   }
 }
@@ -185,5 +374,149 @@ export default {
 }
 .clearfix:after {
   clear: both;
+}
+
+// 海报图容器样式
+.poster-container {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+
+  .poster-item {
+    flex: 1;
+    min-width: 200px;
+
+    .poster-wrapper {
+      border: 2px dashed #d9d9d9;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      background-color: #fafafa;
+      transition: border-color 0.3s;
+
+      &:hover {
+        border-color: #409eff;
+      }
+
+      .poster-image {
+        width: 100%;
+        max-width: 200px;
+        height: 280px;
+        object-fit: cover;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: transform 0.3s;
+
+        &:hover {
+          transform: scale(1.02);
+        }
+      }
+
+      .poster-placeholder {
+        width: 100%;
+        max-width: 200px;
+        height: 280px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+        margin: 0 auto;
+
+        i {
+          font-size: 48px;
+          margin-bottom: 10px;
+          color: #c0c4cc;
+        }
+
+        span {
+          font-size: 14px;
+        }
+      }
+
+      .poster-actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        align-items: center;
+
+        // 统一所有按钮样式
+        .el-button {
+          padding: 7px 15px !important;
+          font-size: 12px !important;
+          min-width: 60px !important;
+          height: 32px !important;
+          line-height: 1 !important;
+          border-radius: 4px !important;
+          box-sizing: border-box !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        }
+
+        .poster-upload {
+          display: inline-block;
+
+          // 重置Element Upload组件的默认样式
+          .el-upload {
+            display: inline-block;
+
+            .el-button {
+              // 继承上面的统一样式
+            }
+          }
+        }
+      }
+    }
+
+    .poster-title {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 14px;
+      color: #666;
+      font-weight: 500;
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .poster-container {
+    flex-direction: column;
+    gap: 15px;
+
+    .poster-item {
+      min-width: auto;
+
+      .poster-wrapper {
+        .poster-image {
+          max-width: 150px;
+          height: 210px;
+        }
+
+        .poster-placeholder {
+          max-width: 150px;
+          height: 210px;
+
+          i {
+            font-size: 36px;
+          }
+        }
+
+        .poster-actions {
+          // 移动端按钮调整
+          .el-button {
+            padding: 6px 12px !important;
+            font-size: 11px !important;
+            min-width: 50px !important;
+            height: 28px !important;
+          }
+        }
+      }
+    }
+  }
 }
 </style>

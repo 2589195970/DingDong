@@ -14,6 +14,7 @@ import com.ruoyi.common.order.bo.WorkOrderAddBO;
 import com.ruoyi.common.order.bo.WorkOrderSelectBO;
 import com.ruoyi.common.order.entity.*;
 import com.ruoyi.common.order.vo.WorkOrderSelectVO;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.console.mapper.WorkOrderMapper;
 import com.ruoyi.console.mapper.WorkOrderRecoverMapper;
@@ -56,7 +57,8 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     public PageResult<WorkOrderSelectVO> selectWorkOrderListPage(WorkOrderSelectBO workOrderSelectBO, LoginUser loginUser) throws BizException {
         //读取分页
         Page page = new Page(workOrderSelectBO.getPageNo(),workOrderSelectBO.getPageSize());
-        if(loginUser!=null){
+        // 非管理员只能查询自己的工单
+        if(loginUser!=null && !SecurityUtils.isAdmin(loginUser.getUserId())){
             AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
             workOrderSelectBO.setAgentCode(agentAccount.getAgentCode());
         }

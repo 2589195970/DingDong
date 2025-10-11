@@ -128,11 +128,17 @@ export function filterDynamicRoutes(routes) {
 
 export const loadView = (view) => {
   try {
+    // 处理路径映射问题
+    let actualView = view
+    if (view === 'agent/numberCard/orders/agentIndex') {
+      actualView = 'agent/numberCard/agentOrders/agentIndex'
+    }
+
     if (process.env.NODE_ENV === 'development') {
-      return (resolve) => require([`@/views/${view}`], resolve)
+      return (resolve) => require([`@/views/${actualView}`], resolve)
     } else {
       // 使用 import 实现生产环境的路由懒加载
-      return () => import(`@/views/${view}`)
+      return () => import(`@/views/${actualView}`)
     }
   } catch (error) {
     console.error(`无法加载组件: @/views/${view}`, error)

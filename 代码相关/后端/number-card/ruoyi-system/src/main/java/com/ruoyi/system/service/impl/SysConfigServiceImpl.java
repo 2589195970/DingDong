@@ -9,6 +9,7 @@ import com.ruoyi.common.annotation.DataSource;
 import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.redis.RedisCache;
+import lombok.extern.slf4j.Slf4j;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.enums.DataSourceType;
 import com.ruoyi.common.exception.ServiceException;
@@ -19,10 +20,11 @@ import com.ruoyi.system.service.ISysConfigService;
 
 /**
  * 参数配置 服务层实现
- * 
+ *
  * @author ruoyi
  */
 @Service
+@Slf4j
 public class SysConfigServiceImpl implements ISysConfigService
 {
     @Autowired
@@ -37,7 +39,12 @@ public class SysConfigServiceImpl implements ISysConfigService
     @PostConstruct
     public void init()
     {
-        loadingConfigCache();
+        try {
+            loadingConfigCache();
+        } catch (Exception e) {
+            // Redis连接失败时不阻止应用启动，只记录警告日志
+            log.warn("初始化配置缓存失败，可能是Redis连接问题: {}", e.getMessage());
+        }
     }
 
     /**
@@ -174,10 +181,15 @@ public class SysConfigServiceImpl implements ISysConfigService
     @Override
     public void loadingConfigCache()
     {
-        List<SysConfig> configsList = configMapper.selectConfigList(new SysConfig());
-        for (SysConfig config : configsList)
-        {
-            redisCache.setCacheObject(getCacheKey(config.getConfigKey()), config.getConfigValue());
+        try {
+            List<SysConfig> configsList = configMapper.selectConfigList(new SysConfig());
+            for (SysConfig config : configsList)
+            {
+                redisCache.setCacheObject(getCacheKey(config.getConfigKey()), config.getConfigValue());
+            }
+        } catch (Exception e) {
+            // Redis连接失败时不阻止应用启动，只记录警告日志
+            log.warn("加载配置缓存失败，可能是Redis连接问题: {}", e.getMessage());
         }
     }
 

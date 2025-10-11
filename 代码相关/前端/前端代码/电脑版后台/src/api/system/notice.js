@@ -42,3 +42,12 @@ export function delNotice(noticeId) {
     method: 'delete'
   })
 }
+
+// 【新增】根据用户权限获取公告列表
+export function listNoticeByUserScope(query) {
+  return request({
+    url: '/system/notice/listByUserScope',
+    method: 'get',
+    params: query
+  })
+}

@@ -12,22 +12,12 @@
                 <div class="topss">
                     <el-form-item label="提现模式" prop="resource">
                         <el-radio-group v-model="queryParams.withdrawalType">
-                            <el-radio label="0">微信</el-radio>
                             <el-radio label="1">支付宝</el-radio>
                             <el-radio label="2">银行卡</el-radio>
                         </el-radio-group>
                     </el-form-item>
                     <br>
-                    <div v-if="queryParams.withdrawalType=='0'" class="wxskm">
-                        <el-form-item label="微信收款码" prop="resource">
-                            <el-upload class="avatar-uploader" :action="uploadUrl" :show-file-list="false"
-                                :on-success="handleAvatarSuccess" :before-upload="handlesuccess" :headers=headers>
-                                <img v-if="queryParams.wxUrl" :src="queryParams.wxUrl" class="avatar">
-                                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-                            </el-upload>
-                        </el-form-item>
-                    </div>
-                    <div v-if="queryParams.withdrawalType=='1'">
+                      <div v-if="queryParams.withdrawalType=='1'">
                         <el-form-item label="支付宝账号">
                             <el-input v-model="queryParams.zfbAccount" placeholder="支付宝账号"></el-input>
                         </el-form-item>
@@ -79,8 +69,7 @@
                 <el-form-item prop="businessType">
                     <el-select v-model="historyQueryParams.withdrawalType" placeholder="请选择提现方式" clearable filterable
                         style="width: 240px">
-                        <el-option label="微信" value="0"></el-option>
-                        <el-option label="支付宝" value="1"></el-option>
+                                <el-option label="支付宝" value="1"></el-option>
                         <el-option label="银行卡" value="2"></el-option>
                     </el-select>
                 </el-form-item>
@@ -105,8 +94,7 @@
                 <el-table-column label="代理商" align="center" prop="applyAgentName" />
                 <el-table-column label="提现方式" align="center" prop="withdrawalType" :show-overflow-tooltip="true">
                     <template slot-scope="scope">
-                        <p v-if="scope.row.withdrawalType==0">微信</p>
-                        <p v-if="scope.row.withdrawalType==1">支付宝</p>
+                                    <p v-if="scope.row.withdrawalType==1">支付宝</p>
                         <p v-if="scope.row.withdrawalType==2">银行卡</p>
                     </template>
                 </el-table-column>
@@ -127,10 +115,7 @@
                 </el-table-column>
                 <el-table-column label="收款信息" align="left" prop="operatorType" :show-overflow-tooltip="true">
                     <template slot-scope="scope">
-                        <div v-if="scope.row.withdrawalType==0">
-                            <img :src="scope.row.wxUrl" alt="" style="width: 100px;">
-                        </div>
-                        <div v-if="scope.row.withdrawalType==1">
+                                  <div v-if="scope.row.withdrawalType==1">
                             <p>支付宝姓名:{{scope.row.zfbAccountName}}</p>
                             <p>支付宝账号:{{scope.row.zfbAccount}}</p>
                         </div>
@@ -194,7 +179,7 @@ export default {
             
             // 提现相关数据
             queryParams: {
-                withdrawalType: '0',
+                withdrawalType: '1',
             },
             querwithd: {},
             pz: {},

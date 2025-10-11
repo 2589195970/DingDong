@@ -56,10 +56,7 @@
             </el-table-column>
             <el-table-column label="收款信息" align="center" prop="operatorType" :show-overflow-tooltip="true" >
                 <template slot-scope="scope">
-                    <div v-if="scope.row.withdrawalType==0" >
-                        <img :src="scope.row.wxUrl" alt="" style="width: 100px;">
-                    </div>
-                    <div v-if="scope.row.withdrawalType==1" >
+                      <div v-if="scope.row.withdrawalType==1" >
                         <p>支付宝姓名:{{scope.row.zfbAccountName}}</p>
                         <p>支付宝账号:{{scope.row.zfbAccount}}</p>
                     </div>

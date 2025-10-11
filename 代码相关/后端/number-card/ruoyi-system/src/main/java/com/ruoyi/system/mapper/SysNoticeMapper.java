@@ -1,6 +1,7 @@
 package com.ruoyi.system.mapper;
 
 import java.util.List;
+import java.util.Map;
 import com.ruoyi.system.domain.SysNotice;
 
 /**
@@ -20,11 +21,19 @@ public interface SysNoticeMapper
 
     /**
      * 查询公告列表
-     * 
+     *
      * @param notice 公告信息
      * @return 公告集合
      */
     public List<SysNotice> selectNoticeList(SysNotice notice);
+
+    /**
+     * 【新增】根据用户权限查询公告列表
+     *
+     * @param params 查询参数（包含用户权限信息）
+     * @return 公告集合
+     */
+    public List<SysNotice> selectNoticeListByUserScope(Map<String, Object> params);
 
     /**
      * 新增公告
