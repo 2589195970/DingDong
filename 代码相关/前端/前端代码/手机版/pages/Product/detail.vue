@@ -217,9 +217,12 @@ page {
   .detail-image-container {
     border-radius: 12rpx;
     overflow: hidden;
+    display: flex;
+    justify-content: center;
 
     .detail-image {
-      width: 100%;
+      width: 512rpx;
+      height: auto;
       display: block;
       border-radius: 12rpx;
     }
@@ -272,6 +275,7 @@ page {
 // 特殊样式适配
 // 修复某些情况下图片显示问题
 .detail-image {
+  width: 512rpx;
   max-width: 100%;
   height: auto;
 }

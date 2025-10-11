@@ -19,8 +19,11 @@ body {
     "Noto Sans CJK SC", "Droid Sans Fallback", sans-serif;
   font-size: 16px !important;
   max-width: 440px;
+  width: 100%;
   margin: 0 auto;
-  align-items: center;
+  padding: 0;
+  box-sizing: border-box;
+  position: relative;
 }
 .van-cell {
   font-size: 16px;
@@ -906,9 +909,10 @@ p {
 
 .container {
   max-width: 440px;
+  width: 100%;
   margin: 0 auto;
-    padding: 120px 15px 15px;
-    min-height: 100vh;
+  padding: 15px;
+  min-height: 100vh;
   /* border: 1px solid #ccc; */
   border-radius: 5px;
   background-image: url(./img/orderquerybg.jpg);
@@ -917,6 +921,11 @@ p {
   background-repeat: no-repeat;
   text-align: center;
   background-color: #CCE5FF;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 h2 {
@@ -938,8 +947,8 @@ h2 {
 
 .search-input {
   padding: 12px 16px;
-  width: 90%;
-  max-width: 320px;
+  width: 350px;
+  max-width: 90%;
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 25px;
@@ -959,7 +968,7 @@ h2 {
 
 .search-button {
   width: 90%;
-  max-width: 300px;
+  max-width: 320px;
   padding: 12px 20px;
   margin: 15px auto 10px;
   font-size: 18px;

@@ -116,7 +116,7 @@ rocket-mq:
   suspendTimeMillis: 30000
 
 submit:
-  h5: https://h5.haoka.asia/
+  h5: https://h5.dingdonghaoka.com/
 
 doudian:
   batchDecryptUrl: https://xxxxxxxx

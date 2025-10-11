@@ -366,6 +366,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             throw new BizException("产品不存在:{}",productUpdateStatusBO.getProductId());
         }
 
+        // 获取当前操作用户的代理商信息
+        AgentAccount currentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+
+        // 如果是上架操作，检查上级代理商的产品状态
+        if(productUpdateStatusBO.getProductStatus() == 1) {
+            checkParentAgentProductStatus(product, currentAgentAccount, loginUser);
+        }
+
         // 保存原状态，用于后续公告创建
         Integer oldStatus = product.getProductStatus();
 
@@ -388,9 +396,6 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             // 公告创建失败不影响主流程，只记录警告日志
         }
 
-        // 获取当前操作用户的代理商信息
-        AgentAccount currentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
-
         // 更新当前代理商自己的产品状态
         updateCurrentAgentProduct(product, productUpdateStatusBO.getProductStatus(), currentAgentAccount.getAgentCode());
 
@@ -398,6 +403,44 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if(productUpdateStatusBO.getProductStatus() == 0) {
             // 递归下架所有下游代理商的产品
             updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode());
+        }
+    }
+
+    /**
+     * 检查上级代理商产品状态
+     * @param product 产品信息
+     * @param currentAgentAccount 当前代理商
+     * @param loginUser 登录用户信息
+     * @throws BizException 如果上级代理商产品未上架，抛出异常
+     */
+    private void checkParentAgentProductStatus(Product product, AgentAccount currentAgentAccount, LoginUser loginUser) throws BizException {
+        // 如果是admin用户，直接允许上架，不受上级控制
+        if (loginUser.getUser().isAdmin()) {
+            return;
+        }
+
+        // 如果当前代理商没有上级代理商（顶级代理商），直接允许上架
+        if (StringUtils.isEmpty(currentAgentAccount.getParentAgentCode())) {
+            return;
+        }
+
+        // 检查主产品表 t_product 中的状态
+        Product parentProduct = baseMapper.selectById(product.getProductId());
+        if (parentProduct != null && parentProduct.getProductStatus() != 1) {
+            throw new BizException("请先联系上级代理商完成商品上架，仅在上级代理商上架后，您方可进行上架操作");
+        }
+
+        // 检查上级代理商的 t_agent_product 表中的状态
+        AgentProduct parentAgentProduct = agentProductService.getOne(
+            new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getParentProductCode, product.getProductCode())
+                .eq(AgentProduct::getAgentCode, currentAgentAccount.getParentAgentCode())
+                .eq(AgentProduct::getParentAgentCode, currentAgentAccount.getParentAgentCode())
+        );
+        if(parentAgentProduct == null){
+
+        }else if (parentAgentProduct.getProductStatus() != 1) {
+            throw new BizException("请先联系上级代理商完成商品上架，仅在上级代理商上架后，您方可进行上架操作");
         }
     }
 

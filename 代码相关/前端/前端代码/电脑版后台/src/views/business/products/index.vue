@@ -54,7 +54,7 @@
                         <img
                             :src="scope.row.productMasterMap"
                             alt="产品主图"
-                            style="max-width: 100px; max-height: 80px; object-fit: contain; border-radius: 4px;"
+                            style="width: 256px; height: auto; object-fit: contain; border-radius: 4px;"
                             @error="handleImageError"
                         />
                     </div>
@@ -576,6 +576,18 @@
             changeTime(time) {
                 return time.replace(/(\d{4})(\d{2})(\d{2})/, '$1/$2/$3');
             },
+            /** 格式化日期时间 */
+            formatDateTime(dateTime) {
+                if (!dateTime) return '';
+                const date = new Date(dateTime);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const seconds = String(date.getSeconds()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            },
 
             /** 搜索按钮操作 */
             handleQuery() {
@@ -723,15 +735,15 @@
     .avatar-uploader-icon {
         font-size: 28px;
         color: #8c939d;
-        width: 178px;
-        height: 178px;
-        line-height: 178px;
+        width: 256px;
+        height: 256px;
+        line-height: 256px;
         text-align: center;
     }
 
     .avatar {
-        width: 178px;
-        height: 178px;
+        width: 256px;
+        height: auto;
         display: block;
     }
 

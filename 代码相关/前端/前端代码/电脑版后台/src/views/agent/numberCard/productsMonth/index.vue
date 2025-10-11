@@ -86,6 +86,23 @@
 
             <el-table-column align="center" label="操作" >
                 <template slot-scope="scope">
+                    <el-button
+                        v-if="scope.row.productStatus == 0"
+                        @click="handleUpdateStatus(scope.row, 1)"
+                        type="text"
+                        size="small"
+                        style="color: #67C23A;">
+                        上架
+                    </el-button>
+                    <el-button
+                        v-if="scope.row.productStatus == 1"
+                        @click="handleUpdateStatus(scope.row, 0)"
+                        type="text"
+                        size="small"
+                        style="color: #F56C6C;">
+                        下架
+                    </el-button>
+                    <br>
                     <el-button @click="share(scope.row)" type="text" size="small">产品海报</el-button>
                     <br>
                     <el-button @click="handleCommission(scope.row)" type="text" size="small">下游佣金</el-button>
@@ -332,6 +349,29 @@
 
             },
 
+
+            /** 产品上下架 */
+            handleUpdateStatus(row, status) {
+                const action = status === 1 ? '上架' : '下架';
+                this.$confirm(`确认要${action}产品"${row.productName}"吗?`, '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    const data = {
+                        productId: row.productId,
+                        productStatus: status
+                    };
+                    updateProductStatus(data).then(response => {
+                        this.$modal.msgSuccess(`${action}成功`);
+                        this.getList();
+                    }).catch(() => {
+                        // axios拦截器已经处理了错误消息，这里不需要重复处理
+                    });
+                }).catch(() => {
+                    // 用户取消操作
+                });
+            },
 
             getList() {
                 agentSelectProductListPage(this.queryParams).then((res) => {

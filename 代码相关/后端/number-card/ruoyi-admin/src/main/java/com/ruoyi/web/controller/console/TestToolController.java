@@ -71,7 +71,7 @@ public class TestToolController {
     @ApiOperation("")
     public ResponseEntity getQrCodePosterUrl(@RequestBody Map<String,Object> map) {
         try {
-            qrCodeService.getQrCodePosterUrl("https://h5.haoka.asia/?productCode=tyfzviqz&agentCode=msyn2kps");
+            qrCodeService.getQrCodePosterUrl("https://h5.dingdonghaoka.com/?productCode=tyfzviqz&agentCode=msyn2kps");
             return ResponseEntity.success();
         } catch (Exception e) {
             log.info("{}方法异常:{}", TAG, e.getMessage());
@@ -88,7 +88,7 @@ public class TestToolController {
     @PostMapping("/getProductPoster")
     public ResponseEntity getProductPoster(@RequestBody Map<String,Object> map) {
         try {
-            qrCodeService.getProductPoster("http://yun.shengda.live/numberCard/287f6ad5-fbf5-498d-8dfd-da641089f01c.jpg","https://yun.shengda.live/numberCard/fb96c08f-0dfa-4af6-86bc-7913dbdeb917.jpeg","https://h5.haoka.asia/?productCode=tyfzviqz&agentCode=msyn2kps");
+            qrCodeService.getProductPoster("http://yun.shengda.live/numberCard/287f6ad5-fbf5-498d-8dfd-da641089f01c.jpg","https://yun.shengda.live/numberCard/fb96c08f-0dfa-4af6-86bc-7913dbdeb917.jpeg","https://h5.dingdonghaoka.com/?productCode=tyfzviqz&agentCode=msyn2kps");
             return ResponseEntity.success();
         } catch (Exception e) {
             log.info("{}方法异常:{}", TAG, e.getMessage());

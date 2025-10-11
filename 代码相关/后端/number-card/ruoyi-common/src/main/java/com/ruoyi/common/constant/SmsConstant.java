@@ -1,6 +1,5 @@
 package com.ruoyi.common.constant;
 
-import io.swagger.annotations.ApiModelProperty;
 
 /**
  * 短信服务相关常量
@@ -13,7 +12,7 @@ public class SmsConstant {
     /**
      * 请求地址
      */
-    public static final String SMS_UEL = "http://106.14.200.170:8888/sms.aspx";
+    public static final String SMS_UEL = "http://47.100.19.157:8888/sms.aspx?action=send";
 
     /**
      * 企业ID
@@ -22,7 +21,7 @@ public class SmsConstant {
 
     public static final String SMS_ACCOUNT = "dingdong";
 
-    public static final String SMS_PASSWORD = "hmmSZMyt@khYV7Pz";
+    public static final String SMS_PASSWORD = "DDhdnjjs13gb4@@";
 
 
     /**

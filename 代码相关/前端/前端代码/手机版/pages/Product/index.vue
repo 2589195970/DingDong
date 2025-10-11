@@ -514,9 +514,10 @@ page {
   padding: 0 20rpx;
 }
 
-// 产品卡片（电商风格左图右文布局）
+// 产品卡片（电商风格垂直布局）
 .product-card {
   display: flex;
+  flex-direction: column;
   background-color: #fff;
   border-radius: 16rpx;
   margin-bottom: 20rpx;
@@ -529,17 +530,16 @@ page {
   }
 }
 
-// 左侧图片区域
+// 图片区域
 .product-image-section {
-  width: 200rpx;
-  flex-shrink: 0;
-  margin-right: 24rpx;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  margin-bottom: 24rpx;
 
   .product-image {
-    width: 100%;
-    height: 140rpx;
+    width: 512rpx;
+    height: auto;
     border-radius: 12rpx;
     background-color: #f5f6f7;
     margin-bottom: 12rpx;
