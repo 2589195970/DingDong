@@ -175,3 +175,24 @@ function getUrlParamObj() {
   }
   return obj;
 }
+
+/**
+ * 获取聚合页URL
+ */
+function getAggregationPageUrl() {
+  // 获取当前域名
+  const currentDomain = window.location.protocol + '//' + window.location.host;
+
+  // 根据当前域名判断环境并构建聚合页URL
+  if (window.location.host.includes('h5.dingdonghaoka.com')) {
+    // 生产环境：h5.dingdonghaoka.com 跳转到 shop.dingdonghaoka.com/聚合页/
+    // 添加URL参数，让聚合页直接进入订单查询模式
+    return 'https://shop.dingdonghaoka.com/聚合页/index.html?mode=order-query';
+  } else if (window.location.host.includes('localhost')) {
+    // 本地开发环境
+    return '../聚合页/index.html?mode=order-query';
+  } else {
+    // 其他环境或测试环境，根据实际情况配置
+    return 'https://shop.dingdonghaoka.com/聚合页/index.html?mode=order-query';
+  }
+}

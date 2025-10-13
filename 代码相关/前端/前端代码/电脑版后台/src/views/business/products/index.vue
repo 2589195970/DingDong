@@ -54,7 +54,7 @@
                         <img
                             :src="scope.row.productMasterMap"
                             alt="产品主图"
-                            style="width: 256px; height: auto; object-fit: contain; border-radius: 4px;"
+                            style="max-width: 100px; max-height: 80px; object-fit: contain; border-radius: 4px;"
                             @error="handleImageError"
                         />
                     </div>

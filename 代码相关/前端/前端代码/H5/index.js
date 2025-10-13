@@ -260,6 +260,12 @@ new Vue({
       document.scrollingElement.scrollTop = 0;
     },
 
+    // 跳转到查询订单页面
+    goToOrderQuery() {
+      const aggregationPageUrl = getAggregationPageUrl();
+      window.location.href = aggregationPageUrl;
+    },
+
     chooseDivNone() {
       this.chooseDiv = false;
       this.time = 120;

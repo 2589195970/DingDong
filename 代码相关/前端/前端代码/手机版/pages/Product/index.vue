@@ -398,11 +398,27 @@ export default {
               });
               this.soplist(); // 刷新列表
             }).catch(err => {
-              uni.showToast({
-                title: '下架失败',
-                icon: 'error',
-                duration: 2000
-              });
+              // 处理错误信息
+              // 如果是字符串'500'，说明request.js已经处理了toast显示，不需要重复显示
+              if (err === '500' || err === 500) {
+                // request.js已经显示了具体的错误信息，这里可以选择不显示或显示通用提示
+                // uni.showToast({
+                //   title: '操作失败，请查看详细信息',
+                //   icon: 'error',
+                //   duration: 2000
+                // });
+              } else if (typeof err === 'string' && err.includes('500')) {
+                // 处理其他包含500的字符串错误
+                console.error('下架失败:', err);
+              } else {
+                // 处理其他类型的错误
+                const errorMsg = err?.msg || err?.message || err || '下架失败，请稍后重试';
+                uni.showToast({
+                  title: errorMsg,
+                  icon: 'error',
+                  duration: 3000
+                });
+              }
             });
           }
         }
@@ -428,11 +444,27 @@ export default {
               });
               this.soplist(); // 刷新列表
             }).catch(err => {
-              uni.showToast({
-                title: '上架失败',
-                icon: 'error',
-                duration: 2000
-              });
+              // 处理错误信息
+              // 如果是字符串'500'，说明request.js已经处理了toast显示，不需要重复显示
+              if (err === '500' || err === 500) {
+                // request.js已经显示了具体的错误信息，这里可以选择不显示或显示通用提示
+                // uni.showToast({
+                //   title: '操作失败，请查看详细信息',
+                //   icon: 'error',
+                //   duration: 2000
+                // });
+              } else if (typeof err === 'string' && err.includes('500')) {
+                // 处理其他包含500的字符串错误
+                console.error('上架失败:', err);
+              } else {
+                // 处理其他类型的错误
+                const errorMsg = err?.msg || err?.message || err || '上架失败，请稍后重试';
+                uni.showToast({
+                  title: errorMsg,
+                  icon: 'error',
+                  duration: 3000
+                });
+              }
             });
           }
         }

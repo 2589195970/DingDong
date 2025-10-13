@@ -12,6 +12,7 @@
             <el-form-item label="运营商" prop="region">
                 <el-select v-model="ruleForm.operatorType" placeholder="请选择运营商">
                     <el-option label="中国移动" value="0"></el-option>
+                    <el-option label="中国移动" value="0"></el-option>
                     <el-option label="中国电信" value="1"></el-option>
                     <el-option label="中国联通" value="2"></el-option>
                     <el-option label="中国广电" value="3"></el-option>

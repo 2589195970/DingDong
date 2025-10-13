@@ -664,3 +664,39 @@ footer a {
   color: white;
   font-size: 13px;
 }
+
+/* 查询订单悬浮按钮 */
+.float-order-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 80px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+.float-order-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+}
+
+.float-order-btn .van-icon {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.float-order-btn span {
+  font-weight: 500;
+  line-height: 1;
+}

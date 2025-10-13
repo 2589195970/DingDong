@@ -17,7 +17,6 @@
 
 <body>
 	<div id="app">
-
 		<div id="p-con">
 			<div style="position: relative;">
 				<img class="full-img" :src="productList.productMasterMap" alt="" />
@@ -73,7 +72,6 @@
 					</van-form>
 				</div>
 			</div>
-
 			<!-- 默认展开图片 -->
 			<img class="full-img" :src="productList.productDetailMap" alt="" />
 
@@ -87,6 +85,12 @@
 
 			<img v-if="config.submitBtnImg && backTopBtnVisible" :src="config.submitBtnImg.url" class="back-btn" alt=""
 				@click="scrollToTop()" />
+
+			<!-- 查询订单悬浮按钮 -->
+			<div class="float-order-btn" @click="goToOrderQuery">
+				<van-icon name="records" />
+				<span>查询订单</span>
+			</div>
 
 			<!-- 地区弹窗 -->
 			<van-popup v-model="areaVisible" class="area-popup" position="bottom">

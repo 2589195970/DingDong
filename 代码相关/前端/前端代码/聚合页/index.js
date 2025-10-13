@@ -72,7 +72,14 @@ new Vue({
   created() {
     this.agentCode= getQueryString('agentCode')
     this.initializeVisitor();
-    this.soplist();
+
+    // 检查URL参数，如果mode=order-query则直接进入订单查询页面
+    const mode = getQueryString('mode');
+    if (mode === 'order-query') {
+      this.orderdata(); // 直接调用订单查询方法
+    } else {
+      this.soplist(); // 正常加载产品列表
+    }
   },
 
   mounted() {
