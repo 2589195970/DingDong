@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.PhotoDefaultConfigMapper">
+
+    <resultMap type="com.ruoyi.common.order.entity.PhotoDefaultConfig" id="PhotoDefaultConfigResult">
+        <result property="configId"           column="config_id"           />
+        <result property="configName"         column="config_name"         />
+        <result property="configType"         column="config_type"         />
+        <result property="photoConfig"        column="photo_config"        />
+        <result property="description"        column="description"        />
+        <result property="isActive"           column="is_active"           />
+        <result property="createBy"           column="create_by"           />
+        <result property="createTime"         column="create_time"         />
+        <result property="updateBy"           column="update_by"           />
+        <result property="updateTime"         column="update_time"         />
+        <result property="remark"             column="remark"              />
+    </resultMap>
+
+    <sql id="selectPhotoDefaultConfigVo">
+        select config_id, config_name, config_type, photo_config, description, is_active, create_by, create_time, update_by, update_time, remark from t_photo_default_config
+    </sql>
+
+    <select id="selectPhotoDefaultConfigList" parameterType="com.ruoyi.common.order.entity.PhotoDefaultConfig" resultMap="PhotoDefaultConfigResult">
+        <include refid="selectPhotoDefaultConfigVo"/>
+        <where>
+            <if test="configName != null  and configName != ''"> and config_name like concat('%', #{configName}, '%')</if>
+            <if test="configType != null "> and config_type = #{configType}</if>
+            <if test="isActive != null "> and is_active = #{isActive}</if>
+            <if test="createBy != null  and createBy != ''"> and create_by like concat('%', #{createBy}, '%')</if>
+            <if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+                and date_format(create_time,'%y%m%d') &gt;= date_format(#{params.beginTime},'%y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+                and date_format(create_time,'%y%m%d') &lt;= date_format(#{params.endTime},'%y%m%d')
+            </if>
+        </where>
+        order by is_active desc, config_type asc, create_time desc
+    </select>
+
+    <select id="selectPhotoDefaultConfigByConfigId" parameterType="Long" resultMap="PhotoDefaultConfigResult">
+        <include refid="selectPhotoDefaultConfigVo"/>
+        where config_id = #{configId}
+    </select>
+
+    <select id="selectPhotoDefaultConfigByConfigName" parameterType="String" resultMap="PhotoDefaultConfigResult">
+        <include refid="selectPhotoDefaultConfigVo"/>
+        where config_name = #{configName} limit 1
+    </select>
+
+    <select id="checkConfigNameUnique" resultType="int">
+        select count(1) from t_photo_default_config
+        where config_name = #{configName}
+        <if test="configId != null">
+            and config_id != #{configId}
+        </if>
+        limit 1
+    </select>
+
+    <select id="countActiveConfigs" parameterType="Integer" resultType="int">
+        select count(1) from t_photo_default_config
+        where config_type = #{configType} and is_active = 1
+    </select>
+
+    <select id="selectDefaultTemplateConfigs" resultMap="PhotoDefaultConfigResult">
+        <include refid="selectPhotoDefaultConfigVo"/>
+        where config_type = 1 and is_active = 1
+        order by create_time desc
+    </select>
+
+    <select id="selectConfigsByType" resultMap="PhotoDefaultConfigResult">
+        <include refid="selectPhotoDefaultConfigVo"/>
+        <where>
+            <if test="configType != null"> and config_type = #{configType}</if>
+            <if test="isActive != null"> and is_active = #{isActive}</if>
+        </where>
+        order by is_active desc, create_time desc
+    </select>
+
+    <insert id="insertPhotoDefaultConfig" parameterType="com.ruoyi.common.order.entity.PhotoDefaultConfig" useGeneratedKeys="true" keyProperty="configId">
+        insert into t_photo_default_config
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="configName != null and configName != ''">config_name,</if>
+            <if test="configType != null">config_type,</if>
+            <if test="photoConfig != null and photoConfig != ''">photo_config,</if>
+            <if test="description != null">description,</if>
+            <if test="isActive != null">is_active,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="configName != null and configName != ''">#{configName},</if>
+            <if test="configType != null">#{configType},</if>
+            <if test="photoConfig != null and photoConfig != ''">#{photoConfig},</if>
+            <if test="description != null">#{description},</if>
+            <if test="isActive != null">#{isActive},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updatePhotoDefaultConfig" parameterType="com.ruoyi.common.order.entity.PhotoDefaultConfig">
+        update t_photo_default_config
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="configName != null and configName != ''">config_name = #{configName},</if>
+            <if test="configType != null">config_type = #{configType},</if>
+            <if test="photoConfig != null">photo_config = #{photoConfig},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="isActive != null">is_active = #{isActive},</if>
+            <if test="createBy != null and createBy != ''">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where config_id = #{configId}
+    </update>
+
+    <update id="updateConfigStatus">
+        update t_photo_default_config set is_active = #{isActive} where config_id = #{configId}
+    </update>
+
+    <delete id="deletePhotoDefaultConfigByConfigId" parameterType="Long">
+        delete from t_photo_default_config where config_id = #{configId}
+    </delete>
+
+    <delete id="deletePhotoDefaultConfigByConfigIds" parameterType="String">
+        delete from t_photo_default_config where config_id in
+        <foreach item="configId" collection="array" open="(" separator="," close=")">
+            #{configId}
+        </foreach>
+    </delete>
+
+</mapper>
