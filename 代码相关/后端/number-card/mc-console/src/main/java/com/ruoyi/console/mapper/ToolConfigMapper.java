@@ -1,7 +1,6 @@
 package com.ruoyi.console.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ruoyi.common.order.entity.AgentProduct;
 import com.ruoyi.common.order.entity.ToolConfig;
 import org.apache.ibatis.annotations.Mapper;
 

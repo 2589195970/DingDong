@@ -26,44 +26,7 @@ CREATE TABLE IF NOT EXISTS `t_photo_default_config` (
 
 -- 2. 插入默认照片配置模板
 INSERT INTO `t_photo_default_config` (`config_name`, `config_type`, `photo_config`, `description`, `create_by`, `remark`)
-VALUES ('标准身份验证模板', 1, '[
-  {
-    "photoType": 1,
-    "photoTypeName": "身份证正面",
-    "required": 1,
-    "title": "身份证正面照片",
-    "description": "请上传清晰的身份证正面照片，确保证件完整、无遮挡、无反光",
-    "exampleUrl": "/static/examples/id-card-front-example.jpg",
-    "maxSize": 5242880,
-    "supportedFormats": "jpg,jpeg,png",
-    "minWidth": 800,
-    "minHeight": 600
-  },
-  {
-    "photoType": 2,
-    "photoTypeName": "身份证反面",
-    "required": 1,
-    "title": "身份证反面照片",
-    "description": "请上传清晰的身份证反面照片，确保证件完整、国徽清晰可见",
-    "exampleUrl": "/static/examples/id-card-back-example.jpg",
-    "maxSize": 5242880,
-    "supportedFormats": "jpg,jpeg,png",
-    "minWidth": 800,
-    "minHeight": 600
-  },
-  {
-    "photoType": 3,
-    "photoTypeName": "免冠照片",
-    "required": 1,
-    "title": "免冠照片",
-    "description": "请上传近期免冠正面照片，要求正面免冠、背景简洁、表情自然",
-    "exampleUrl": "/static/examples/person-photo-example.jpg",
-    "maxSize": 5242880,
-    "supportedFormats": "jpg,jpeg,png",
-    "minWidth": 300,
-    "minHeight": 400
-  }
-]', '标准身份验证照片配置模板，包含身份证正面、反面和免冠照片要求', 'admin', '系统默认的照片审核配置模板，用于新商品自动配置')
+VALUES ('标准身份验证模板', 1, '[{"photoType":1,"photoTypeName":"身份证正面","required":1,"title":"身份证正面照片","description":"请上传清晰的身份证正面照片，确保证件完整、无遮挡、无反光","exampleUrl":"/static/examples/id-card-front-example.jpg","maxSize":5242880,"supportedFormats":"jpg,jpeg,png","minWidth":800,"minHeight":600},{"photoType":2,"photoTypeName":"身份证反面","required":1,"title":"身份证反面照片","description":"请上传清晰的身份证反面照片，确保证件完整、国徽清晰可见","exampleUrl":"/static/examples/id-card-back-example.jpg","maxSize":5242880,"supportedFormats":"jpg,jpeg,png","minWidth":800,"minHeight":600},{"photoType":3,"photoTypeName":"免冠照片","required":1,"title":"免冠照片","description":"请上传近期免冠正面照片，要求正面免冠、背景简洁、表情自然","exampleUrl":"/static/examples/person-photo-example.jpg","maxSize":5242880,"supportedFormats":"jpg,jpeg,png","minWidth":300,"minHeight":400}]', '标准身份验证照片配置模板，包含身份证正面、反面和免冠照片要求', 'admin', '系统默认的照片审核配置模板，用于新商品自动配置')
 ON DUPLICATE KEY UPDATE
 `photo_config` = VALUES(`photo_config`),
 `update_time` = CURRENT_TIMESTAMP,

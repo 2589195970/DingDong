@@ -670,10 +670,10 @@ footer a {
   position: fixed;
   right: 20px;
   bottom: 80px;
-  width: 60px;
-  height: 60px;
+  width: 120px;
+  height: 40px;
   background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-  border-radius: 50%;
+  border-radius:15px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -691,12 +691,434 @@ footer a {
   box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
 }
 
-.float-order-btn .van-icon {
-  font-size: 20px;
-  margin-bottom: 2px;
-}
 
 .float-order-btn span {
+    font-size: 20px;
   font-weight: 500;
   line-height: 1;
+}
+
+/* 照片上传样式 */
+.photo-upload-section {
+    margin: 15px 10px 0 10px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.photo-upload-title {
+    padding: 15px 15px 10px 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.required-star {
+    color: #ff4444;
+    margin-right: 5px;
+    font-size: 14px;
+}
+
+.photo-upload-container {
+    padding: 10px;
+}
+
+.photo-upload-item {
+    margin-bottom: 15px;
+}
+
+.photo-upload-item:last-child {
+    margin-bottom: 0;
+}
+
+.photo-card {
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fafafa;
+    transition: all 0.3s ease;
+}
+
+.photo-card:hover {
+    border-color: #4EAAEF;
+    box-shadow: 0 2px 8px rgba(78, 170, 239, 0.1);
+}
+
+.photo-card-header {
+    padding: 12px 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #e6e6e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.photo-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+.photo-title .required {
+    color: #ff4444;
+    margin-right: 5px;
+}
+
+.photo-size-hint {
+    font-size: 12px;
+    color: #666;
+    background: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid #e6e6e6;
+}
+
+.photo-card-content {
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap:5px;
+}
+
+/* 左侧上传区域 */
+.upload-section {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 0;
+}
+
+/* 右侧示例区域 */
+.example-section {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 0;
+}
+
+.upload-area {
+    border: 2px dashed #4EAAEF;
+    border-radius: 8px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.upload-area:hover {
+    border-color: #2c7cd6;
+    background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
+    transform: translateY(-2px);
+}
+
+.upload-area:active {
+    transform: translateY(0);
+}
+
+.upload-area.uploading {
+    border-color: #ffc107;
+    background: linear-gradient(135deg, #fff9e6 0%, #fffbf0 100%);
+    cursor: not-allowed;
+}
+
+.upload-area.uploading .upload-icon {
+    animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.upload-icon {
+    font-size: 56px;
+    margin-bottom: 15px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.upload-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: #666;
+}
+
+.preview-area {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+}
+
+.preview-image-container {
+    position: relative;
+    display: inline-block;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    height: 100%;
+    max-height: 160px;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    object-fit: cover;
+    object-position: center;
+}
+
+.preview-image:hover {
+    transform: scale(1.02);
+}
+
+.preview-actions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.preview-image-container:hover .preview-actions {
+    opacity: 1;
+}
+
+.action-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.delete-btn {
+    background: #ff4444;
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #cc0000;
+    transform: translateY(-2px);
+}
+
+.change-btn {
+    background: #4EAAEF;
+    color: white;
+}
+
+.change-btn:hover {
+    background: #2c7cd6;
+    transform: translateY(-2px);
+}
+
+.photo-description {
+    margin-top: 10px;
+    padding: 10px;
+    background: #fff9e6;
+    border-radius: 0 4px 4px 0;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.photo-example {
+    cursor: pointer;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: 4px;
+    border: 1px solid #e6e6e6;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.example-title {
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    padding: 3px;
+    background: #f0f0f0;
+    border-bottom: 1px solid #e6e6e6;
+}
+
+.example-label {
+    font-size: 12px;
+    color: #4EAAEF;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.example-label::before {
+    content: "📋";
+}
+
+.photo-example img {
+    width: 100%;
+    flex: 1;
+    border-radius: 0;
+    border: none;
+    transition: all 0.3s ease;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
+.photo-example:hover {
+    border-color: #4EAAEF;
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(78, 170, 239, 0.2);
+}
+
+.photo-example:hover img {
+    transform: scale(1.05);
+}
+
+/* 图片预览弹窗 */
+.image-preview-popup {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.image-preview-container {
+    position: relative;
+    width: 90vw;
+    height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-full-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.preview-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 20px;
+    color: #333;
+}
+
+.preview-close:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+/* 响应式优化 */
+@media (max-width: 480px) {
+    .photo-upload-section {
+        margin: 10px 5px 0 5px;
+    }
+
+    .photo-card-header {
+        padding: 10px 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .photo-size-hint {
+        align-self: flex-end;
+    }
+
+    
+    .upload-area {
+        padding: 15px 15px;
+        aspect-ratio: 16 / 10;
+    }
+
+    .upload-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+    }
+
+    .upload-text {
+        font-size: 14px;
+    }
+
+    .preview-area {
+        aspect-ratio: 16 / 10;
+    }
+
+    .preview-image-container {
+        max-height: 140px;
+    }
+
+    .preview-image {
+        max-height: 140px;
+    }
+
+    .photo-example {
+        aspect-ratio: 16 / 10;
+    }
+
+    .photo-example img {
+        flex: 1;
+    }
+
+    .action-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
 }

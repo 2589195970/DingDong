@@ -5,6 +5,8 @@ import com.ruoyi.common.core.page.ResponseEntity;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.AgainOrderBO;
 import com.ruoyi.common.order.bo.OrderSelectBO;
+import com.ruoyi.common.order.bo.PhotoAuditBO;
+import com.ruoyi.common.order.bo.PhotoUploadBO;
 import com.ruoyi.common.order.bo.UpdateOrderStatusBO;
 import com.ruoyi.common.order.bo.UploadOrderListExcelBO;
 import com.ruoyi.common.order.vo.OrderSelectVO;
@@ -55,13 +57,27 @@ public class OrderController {
      */
     @PostMapping("/exportOrderList")
     @ApiOperation("导出订单信息")
-    public void exportOrderList(@RequestBody OrderSelectBO orderSelectBO,HttpServletResponse response) {
+    public void exportOrderList(@RequestBody OrderSelectBO orderSelectBO, HttpServletResponse response) {
         try {
-            orderService.exportOrderList(orderSelectBO,response);
+            orderService.exportOrderList(orderSelectBO, response);
         } catch (BizException e) {
-            log.info("{}方法异常:{}", "exportOrderList", e.getMessage());
+            log.error("{}方法异常:{}", "exportOrderList", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.setContentType("application/json;charset=UTF-8");
+            try {
+                response.getWriter().write("{\"code\":500,\"msg\":\"" + e.getMessage() + "\"}");
+            } catch (Exception ex) {
+                log.error("写入错误响应失败:{}", ex.getMessage());
+            }
         } catch (Exception e) {
-            log.info("{}方法异常:{}", "exportOrderList", e.getMessage());
+            log.error("{}方法异常:{}", "exportOrderList", e.getMessage(), e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.setContentType("application/json;charset=UTF-8");
+            try {
+                response.getWriter().write("{\"code\":500,\"msg\":\"导出失败:" + e.getMessage() + "\"}");
+            } catch (Exception ex) {
+                log.error("写入错误响应失败:{}", ex.getMessage());
+            }
         }
     }
 
@@ -219,6 +235,85 @@ public class OrderController {
         } catch (Exception e) {
             log.info("{} getOrderTrend方法异常:{}", TAG, e.getMessage());
             return ResponseEntity.error("获取订单趋势数据出错,请稍候重试",null);
+        }
+    }
+
+    /**
+     * 上传订单照片
+     *
+     * @return
+     */
+    @PostMapping("/uploadOrderPhotos")
+    @ApiOperation("上传订单照片")
+    public ResponseEntity uploadOrderPhotos(@RequestBody PhotoUploadBO photoUploadBO) {
+        try {
+            orderService.uploadOrderPhotos(photoUploadBO);
+            return ResponseEntity.success();
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "uploadOrderPhotos", e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "uploadOrderPhotos", e.getMessage());
+            return ResponseEntity.error("上传照片失败,请稍候重试:"+e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 代理商提交照片审核
+     *
+     * @return
+     */
+    @PostMapping("/submitPhotoForAudit")
+    @ApiOperation("代理商提交照片审核")
+    public ResponseEntity submitPhotoForAudit(@RequestBody PhotoUploadBO photoUploadBO) {
+        try {
+            orderService.submitPhotoForAudit(photoUploadBO);
+            return ResponseEntity.success();
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "submitPhotoForAudit", e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "submitPhotoForAudit", e.getMessage());
+            return ResponseEntity.error("提交审核失败,请稍候重试:"+e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 管理员审核照片
+     *
+     * @return
+     */
+    @PostMapping("/auditOrderPhotos")
+    @ApiOperation("管理员审核照片")
+    public ResponseEntity auditOrderPhotos(@RequestBody PhotoAuditBO photoAuditBO) {
+        try {
+            orderService.auditOrderPhotos(photoAuditBO);
+            return ResponseEntity.success();
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "auditOrderPhotos", e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "auditOrderPhotos", e.getMessage());
+            return ResponseEntity.error("审核操作失败,请稍候重试:"+e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 查询订单照片状态
+     *
+     * @return
+     */
+    @GetMapping("/getOrderPhotoStatus")
+    @ApiOperation("查询订单照片状态")
+    public ResponseEntity getOrderPhotoStatus(@RequestParam(required = false, value = "orderId") Long orderId) {
+        try {
+            return ResponseEntity.success(orderService.getOrderPhotoStatus(orderId));
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "getOrderPhotoStatus", e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "getOrderPhotoStatus", e.getMessage());
+            return ResponseEntity.error("查询照片状态失败,请稍候重试:"+e.getMessage(), null);
         }
     }
 

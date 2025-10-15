@@ -21,6 +21,8 @@ import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.http.HttpClient;
 import com.ruoyi.common.order.bo.AgainOrderBO;
 import com.ruoyi.common.order.bo.OrderSelectBO;
+import com.ruoyi.common.order.bo.PhotoAuditBO;
+import com.ruoyi.common.order.bo.PhotoUploadBO;
 import com.ruoyi.common.order.bo.UpdateOrderStatusBO;
 import com.ruoyi.common.order.bo.UploadOrderListExcelBO;
 import com.ruoyi.common.order.entity.*;
@@ -140,10 +142,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 AgentCommissionJson agentCommissionJson = getShowDownstreamInfo(agentAccount, order);
                 orderSelectVO.setShowDownstreamCode(agentCommissionJson.getAgentCode());
                 orderSelectVO.setShowDownstreamName(agentCommissionJson.getAgentName());
-                //查询产品头图
+                //查询产品头图和照片配置
                 Product product = productService.getProductNotStatus(order.getProductCode());
                 if(product!=null){
                     orderSelectVO.setProductMasterMap(product.getProductMasterMap());
+                    orderSelectVO.setPhotoConfig(product.getPhotoConfig());
+                }
+                //设置照片审核状态名称
+                if(order.getPhotoStatus() != null){
+                    orderSelectVO.setPhotoStatusName(OrderEnum.PhotoAuditEnum.getPhotoAuditMessageByStatus(order.getPhotoStatus()));
                 }
                 orderSelectVOList.add(orderSelectVO);
             }
@@ -183,6 +190,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      * @throws BizException
      */
     public void exportOrderList(OrderSelectBO orderSelectBO, HttpServletResponse response) throws Exception {
+        log.info("开始导出订单，查询参数: {}", orderSelectBO);
         AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(1L, true);
 
         LambdaQueryWrapper<Order> lambdaQueryWrapper= new LambdaQueryWrapper<Order>()
@@ -204,12 +212,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 .between((orderSelectBO.getStarTime() != null && orderSelectBO.getEndTime() != null), Order::getCreateTime, orderSelectBO.getStarTime(), orderSelectBO.getEndTime())
                 .orderByDesc(Order::getCreateTime);
 
-        if(orderSelectBO.getIsNotNullOrderUpstreamId() == BaseConstant.ZERO_INT){
-            lambdaQueryWrapper.isNull(Order::getOrderUpstreamId);
-        }else if(orderSelectBO.getIsNotNullOrderUpstreamId() == BaseConstant.ONE_INT){
-            lambdaQueryWrapper.isNotNull(Order::getOrderUpstreamId);
+        if(orderSelectBO.getIsNotNullOrderUpstreamId() != null){
+            if(orderSelectBO.getIsNotNullOrderUpstreamId() == BaseConstant.ZERO_INT){
+                lambdaQueryWrapper.isNull(Order::getOrderUpstreamId);
+            }else if(orderSelectBO.getIsNotNullOrderUpstreamId() == BaseConstant.ONE_INT){
+                lambdaQueryWrapper.isNotNull(Order::getOrderUpstreamId);
+            }
         }
         List<Order> orderList = baseMapper.selectList(lambdaQueryWrapper);
+        log.info("查询到订单数量: {}", orderList.size());
         List<OrderSelectVO> orderSelectVOList = new ArrayList<>();
         if(!CollectionUtils.isEmpty(orderList)){
             for (Order order : orderList) {
@@ -223,12 +234,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 if(product!=null){
                     orderSelectVO.setProductDemand(product.getProductDemand());
                     orderSelectVO.setProductCommission(product.getProductCommission());
+                    orderSelectVO.setPhotoConfig(product.getPhotoConfig());
                 }
                 orderSelectVOList.add(orderSelectVO);
             }
         }
+        log.info("准备导出订单数量: {}", orderSelectVOList.size());
         //数据导出
         exportService.writeCsvResponse(response, orderListToCsvList(orderSelectVOList),"attachment;filename=order.csv");
+        log.info("订单导出完成");
 
     }
 
@@ -874,6 +888,233 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return dateTime.withDayOfYear(dateTime.toLocalDate().lengthOfYear())
             .withHour(23).withMinute(59).withSecond(59).withNano(999_000_000)
             .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+
+    /**
+     * 上传订单照片
+     */
+    @Override
+    public void uploadOrderPhotos(PhotoUploadBO photoUploadBO) throws BizException {
+        if (photoUploadBO.getOrderId() == null) {
+            throw new BizException("订单ID不能为空");
+        }
+
+        Order order = baseMapper.selectById(photoUploadBO.getOrderId());
+        if (order == null) {
+            throw new BizException("订单不存在");
+        }
+
+        // 检查产品是否需要照片审核
+        Product product = productService.getProduct(order.getProductCode());
+        if (product == null || product.getPhotoRequired() == null || product.getPhotoRequired() != 1) {
+            throw new BizException("该订单对应的产品不需要照片审核");
+        }
+
+        // 检查照片审核状态
+        if (order.getPhotoStatus() == null ||
+            !OrderEnum.PhotoAuditEnum.UPLOAD_PENDING.getStatus().equals(order.getPhotoStatus()) &&
+            !OrderEnum.PhotoAuditEnum.REJECTED.getStatus().equals(order.getPhotoStatus())) {
+            throw new BizException("当前订单状态不允许上传照片");
+        }
+
+        // 更新照片信息
+        Order updateOrder = new Order();
+        updateOrder.setOrderId(photoUploadBO.getOrderId());
+        updateOrder.setIdCardFrontUrl(photoUploadBO.getIdCardFrontUrl());
+        updateOrder.setIdCardBackUrl(photoUploadBO.getIdCardBackUrl());
+        updateOrder.setPersonPhotoUrl(photoUploadBO.getPersonPhotoUrl());
+        updateOrder.setCustomPhotoUrl(photoUploadBO.getCustomPhotoUrl());
+        updateOrder.setPhotoUploadTime(System.currentTimeMillis());
+        updateOrder.setUpdateTime(System.currentTimeMillis());
+
+        // 状态变更为代理商待提交
+        updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.AGENT_PENDING.getStatus());
+
+        baseMapper.updateById(updateOrder);
+
+        // 记录订单日志
+        addOrderLog(photoUploadBO.getOrderId(), "上传照片", "用户上传照片，待代理商提交审核");
+    }
+
+    /**
+     * 代理商提交照片审核
+     */
+    @Override
+    public void submitPhotoForAudit(PhotoUploadBO photoUploadBO) throws BizException {
+        if (photoUploadBO.getOrderId() == null) {
+            throw new BizException("订单ID不能为空");
+        }
+
+        Order order = baseMapper.selectById(photoUploadBO.getOrderId());
+        if (order == null) {
+            throw new BizException("订单不存在");
+        }
+
+        // 检查产品是否需要照片审核
+        Product product = productService.getProduct(order.getProductCode());
+        if (product == null || product.getPhotoRequired() == null || product.getPhotoRequired() != 1) {
+            throw new BizException("该订单对应的产品不需要照片审核");
+        }
+
+        // 检查照片审核状态
+        if (order.getPhotoStatus() == null ||
+            !OrderEnum.PhotoAuditEnum.AGENT_PENDING.getStatus().equals(order.getPhotoStatus())) {
+            throw new BizException("当前订单状态不允许提交审核");
+        }
+
+        // 检查照片是否完整
+        if (StringUtils.isEmpty(order.getIdCardFrontUrl()) ||
+            StringUtils.isEmpty(order.getIdCardBackUrl()) ||
+            StringUtils.isEmpty(order.getPersonPhotoUrl())) {
+            throw new BizException("请上传完整的照片信息（身份证正面、反面、免冠照片）");
+        }
+
+        // 更新订单状态
+        Order updateOrder = new Order();
+        updateOrder.setOrderId(photoUploadBO.getOrderId());
+        updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus());
+        updateOrder.setUpdateTime(System.currentTimeMillis());
+
+        // 如果有重新上传的照片，也要更新
+        if (StringUtils.isNotEmpty(photoUploadBO.getIdCardFrontUrl())) {
+            updateOrder.setIdCardFrontUrl(photoUploadBO.getIdCardFrontUrl());
+        }
+        if (StringUtils.isNotEmpty(photoUploadBO.getIdCardBackUrl())) {
+            updateOrder.setIdCardBackUrl(photoUploadBO.getIdCardBackUrl());
+        }
+        if (StringUtils.isNotEmpty(photoUploadBO.getPersonPhotoUrl())) {
+            updateOrder.setPersonPhotoUrl(photoUploadBO.getPersonPhotoUrl());
+        }
+        if (StringUtils.isNotEmpty(photoUploadBO.getCustomPhotoUrl())) {
+            updateOrder.setCustomPhotoUrl(photoUploadBO.getCustomPhotoUrl());
+        }
+
+        baseMapper.updateById(updateOrder);
+
+        // 记录订单日志
+        addOrderLog(photoUploadBO.getOrderId(), "提交照片审核", "代理商提交照片审核，待管理员审核");
+    }
+
+    /**
+     * 管理员审核照片
+     */
+    @Override
+    public void auditOrderPhotos(PhotoAuditBO photoAuditBO) throws BizException {
+        if (photoAuditBO.getOrderId() == null) {
+            throw new BizException("订单ID不能为空");
+        }
+
+        if (photoAuditBO.getAuditAction() == null) {
+            throw new BizException("审核操作不能为空");
+        }
+
+        Order order = baseMapper.selectById(photoAuditBO.getOrderId());
+        if (order == null) {
+            throw new BizException("订单不存在");
+        }
+
+        // 检查产品是否需要照片审核
+        Product product = productService.getProduct(order.getProductCode());
+        if (product == null || product.getPhotoRequired() == null || product.getPhotoRequired() != 1) {
+            throw new BizException("该订单对应的产品不需要照片审核");
+        }
+
+        // 检查照片审核状态
+        if (order.getPhotoStatus() == null ||
+            !OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus().equals(order.getPhotoStatus())) {
+            throw new BizException("当前订单状态不允许审核");
+        }
+
+        // 更新订单状态
+        Order updateOrder = new Order();
+        updateOrder.setOrderId(photoAuditBO.getOrderId());
+        updateOrder.setUpdateTime(System.currentTimeMillis());
+        updateOrder.setPhotoAuditTime(System.currentTimeMillis());
+        updateOrder.setPhotoAuditRemark(photoAuditBO.getAuditRemark());
+
+        if (photoAuditBO.getAuditAction() == 1) {
+            // 审核通过
+            updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.APPROVED.getStatus());
+
+            // 记录订单日志
+            addOrderLog(photoAuditBO.getOrderId(), "照片审核通过", "管理员审核通过，备注：" + photoAuditBO.getAuditRemark());
+
+            // 如果照片审核通过，可以继续订单流程（根据业务需求决定是否自动推送到上游）
+            // 这里暂时只记录日志，不自动推送
+
+        } else if (photoAuditBO.getAuditAction() == 2) {
+            // 审核拒绝
+            updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.REJECTED.getStatus());
+
+            // 记录订单日志
+            addOrderLog(photoAuditBO.getOrderId(), "照片审核拒绝", "管理员审核拒绝，备注：" + photoAuditBO.getAuditRemark());
+        } else {
+            throw new BizException("无效的审核操作");
+        }
+
+        baseMapper.updateById(updateOrder);
+    }
+
+    /**
+     * 查询订单照片状态
+     */
+    @Override
+    public OrderSelectVO getOrderPhotoStatus(Long orderId) throws BizException {
+        if (orderId == null) {
+            throw new BizException("订单ID不能为空");
+        }
+
+        Order order = baseMapper.selectById(orderId);
+        if (order == null) {
+            throw new BizException("订单不存在");
+        }
+
+        OrderSelectVO orderSelectVO = new OrderSelectVO();
+        BeanUtil.copyProperties(order, orderSelectVO);
+        orderSelectVO.setOrderId(order.getOrderId() + "");
+
+        // 设置照片审核状态名称
+        if (order.getPhotoStatus() != null) {
+            orderSelectVO.setPhotoStatusName(OrderEnum.PhotoAuditEnum.getPhotoAuditMessageByStatus(order.getPhotoStatus()));
+        }
+
+        // 设置产品照片配置
+        Product product = productService.getProduct(order.getProductCode());
+        if (product != null) {
+            orderSelectVO.setPhotoConfig(product.getPhotoConfig());
+        }
+
+        return orderSelectVO;
+    }
+
+    /**
+     * 添加订单日志
+     */
+    private void addOrderLog(Long orderId, String operation, String remark) {
+        try {
+            OrderLog orderLog = new OrderLog();
+            orderLog.setOrderId(orderId.toString());
+
+            // 只填充明确的信息
+            orderLog.setRequestUrl("照片审核操作"); // 简单标识操作类型
+            orderLog.setRequestBody(operation);    // 操作类型作为请求参数
+            orderLog.setRequestMsg(remark);       // 备注信息作为返回消息
+
+            // 尝试获取产品编码
+            try {
+                Order order = baseMapper.selectById(orderId);
+                if (order != null && StringUtils.isNotEmpty(order.getProductCode())) {
+                    orderLog.setProductCode(order.getProductCode());
+                }
+            } catch (Exception e) {
+                log.debug("获取订单产品编码失败，跳过: {}", e.getMessage());
+            }
+
+            orderLog.setCreateTime(System.currentTimeMillis());
+            orderLogMapper.insert(orderLog);
+        } catch (Exception e) {
+            log.error("添加订单日志失败: {}", e.getMessage(), e);
+        }
     }
 
 }

@@ -301,4 +301,70 @@ public class OrderSelectVO {
      */
     @ApiModelProperty("产品佣金")
     private Integer productCommission;
+
+    /**
+     * 身份证正面照片URL
+     */
+    @ApiModelProperty("身份证正面照片URL")
+    private String idCardFrontUrl;
+
+    /**
+     * 身份证反面照片URL
+     */
+    @ApiModelProperty("身份证反面照片URL")
+    private String idCardBackUrl;
+
+    /**
+     * 免冠照片URL
+     */
+    @ApiModelProperty("免冠照片URL")
+    private String personPhotoUrl;
+
+    /**
+     * 自定义照片URL
+     */
+    @ApiModelProperty("自定义照片URL")
+    private String customPhotoUrl;
+
+    /**
+     * 照片审核状态 0 无需审核 1 待上传照片 2 代理商待提交 3 管理员待审核 4 审核通过 5 审核拒绝
+     */
+    @ApiModelProperty("照片审核状态")
+    private Integer photoStatus;
+
+    /**
+     * 照片上传时间
+     */
+    @ApiModelProperty("照片上传时间")
+    private Long photoUploadTime;
+
+    /**
+     * 照片审核员ID
+     */
+    @ApiModelProperty("照片审核员ID")
+    private Long photoAuditUserId;
+
+    /**
+     * 照片审核时间
+     */
+    @ApiModelProperty("照片审核时间")
+    private Long photoAuditTime;
+
+    /**
+     * 照片审核备注
+     */
+    @ApiModelProperty("照片审核备注")
+    private String photoAuditRemark;
+
+    /**
+     * 照片审核状态名称
+     */
+    @ApiModelProperty("照片审核状态名称")
+    private String photoStatusName;
+
+    /**
+     * 产品照片配置 JSON格式
+     */
+    @ApiModelProperty("产品照片配置 JSON格式")
+    private String photoConfig;
 }

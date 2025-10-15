@@ -16,7 +16,6 @@ import com.ruoyi.common.order.entity.Order;
 import com.ruoyi.common.order.reuqest.APISubmitInfoRequest;
 import com.ruoyi.common.order.reuqest.OrderSubmitRequest;
 import com.ruoyi.common.order.reuqest.OrderSubmitResponse;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 

@@ -1,7 +1,6 @@
 package com.ruoyi.web.controller.system;
 
 import com.ruoyi.common.annotation.Log;
-import com.ruoyi.common.config.RuoYiConfig;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
@@ -9,10 +8,9 @@ import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.order.entity.PhotoDefaultConfig;
 import com.ruoyi.common.order.vo.PhotoDefaultConfigVO;
 import com.ruoyi.common.utils.SecurityUtils;
-import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
-import com.ruoyi.framework.config.ServerConfig;
 import com.ruoyi.system.service.IPhotoDefaultConfigService;
+import com.ruoyi.console.service.PictureService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -22,6 +20,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -36,11 +35,11 @@ import java.util.List;
 @RequestMapping("/system/photoConfig")
 public class PhotoDefaultConfigController extends BaseController
 {
-    @Autowired
+    @Resource
     private IPhotoDefaultConfigService photoDefaultConfigService;
 
-    @Autowired
-    private ServerConfig serverConfig;
+    @Resource
+    private PictureService pictureService;
 
     /**
      * 查询照片默认配置列表
@@ -195,15 +194,12 @@ public class PhotoDefaultConfigController extends BaseController
     {
         try
         {
-            // 上传文件路径
-            String filePath = RuoYiConfig.getUploadPath() + "/photoExample";
-            // 上传并返回新文件名称
-            String fileName = FileUploadUtils.upload(filePath, file);
-            String url = serverConfig.getUrl() + fileName;
+            // 使用图床上传服务
+            String url = pictureService.uploadPicture(file);
 
             AjaxResult ajax = AjaxResult.success();
             ajax.put("url", url);
-            ajax.put("fileName", fileName);
+            ajax.put("fileName", file.getOriginalFilename());
             ajax.put("originalFilename", file.getOriginalFilename());
             ajax.put("size", file.getSize());
             return ajax;
@@ -221,20 +217,13 @@ public class PhotoDefaultConfigController extends BaseController
     @PreAuthorize("@ss.hasPermi('system:photoConfig:upload')")
     @Log(title = "照片默认配置", businessType = BusinessType.DELETE)
     @DeleteMapping("/deleteExample")
-    public AjaxResult deleteExampleImage(@ApiParam("文件名") @RequestParam String fileName)
+    public AjaxResult deleteExampleImage(@ApiParam("图片URL") @RequestParam String fileName)
     {
         try
         {
-            String filePath = RuoYiConfig.getProfile() + "/upload/photoExample/" + fileName;
-            java.io.File file = new java.io.File(filePath);
-            if (file.exists() && file.delete())
-            {
-                return AjaxResult.success("删除成功");
-            }
-            else
-            {
-                return AjaxResult.error("文件不存在或删除失败");
-            }
+            // 使用图床删除服务
+            pictureService.deletePicture(fileName);
+            return AjaxResult.success("删除成功");
         }
         catch (Exception e)
         {

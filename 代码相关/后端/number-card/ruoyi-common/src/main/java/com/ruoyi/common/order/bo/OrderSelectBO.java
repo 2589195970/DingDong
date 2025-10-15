@@ -111,4 +111,10 @@ public class OrderSelectBO extends BaseBO{
      */
     @ApiModelProperty("上游单号是否为空 0 上游单号为空 1 不为空 默认不选择")
     private Integer isNotNullOrderUpstreamId;
+
+    /**
+     * 照片审核状态 0 无需审核 1 待上传照片 2 代理商待提交 3 管理员待审核 4 审核通过 5 审核拒绝
+     */
+    @ApiModelProperty("照片审核状态")
+    private Integer photoStatus;
 }

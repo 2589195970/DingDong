@@ -70,9 +70,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     @Resource
     UpstreamProductService upstreamProductService;
 
-    @Resource
-    AgentProductInitService agentProductInitService;
-
+    
     @Resource
     ProductNoticeService productNoticeService;
 
@@ -168,7 +166,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         baseMapper.insert(product);
         //生成所有子代理产品记录
         AgentAccount parentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(),true);
-        agentProductInitService.addProductPoster(parentAgentAccount,product);
+        agentProductService.addProductPoster(parentAgentAccount,product);
         //创建所有子代理的代理商产品
         for (AgentAccount agentAccount:agentAccountList){
             agentProductService.addSubAgentProduct(agentAccount,parentAgentAccount,product,product.getProductCommission());
@@ -220,7 +218,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         //创建所有子代理的代理商产品
         for (AgentAccount agentAccount:agentAccountList){
             agentProductService.addSubAgentProduct(agentAccount,parentAgentAccount,productCopy,productCopy.getProductCommission());
-            agentProductInitService.addSubAgentProductPoster(agentAccount,product);
+            agentProductService.addSubAgentProductPoster(agentAccount,product);
         }
     }
 
@@ -266,7 +264,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             agentAccountList = agentAccountService.selectChildAgentList(loginUser,BaseConstant.ZERO_INT);
             for(AgentAccount agentAccount:agentAccountList){
                 //删除代理商产品
-                agentProductInitService.deleteSubAgentProduct(agentAccount,updateProduct);
+                agentProductService.deleteSubAgentProduct(agentAccount,updateProduct);
             }
         }
         //不为空 计算差值 新增或删除产品
@@ -282,27 +280,27 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 //创建所有子代理的代理商产品
                 if(agentProductListMap.get(agentCode)==null){
                     AgentAccount agentAccount = agentAccountService.getAgentAccountByCode(agentCode,true);
-                    agentProductInitService.addSubAgentProduct(agentAccount,parentAgentAccount,updateProduct,updateProduct.getProductCommission());
-                    agentProductInitService.addSubAgentProductPoster(agentAccount,updateProduct);
+                    agentProductService.addSubAgentProduct(agentAccount,parentAgentAccount,updateProduct,updateProduct.getProductCommission());
+                    agentProductService.addSubAgentProductPoster(agentAccount,updateProduct);
                 }
             }
             //查询一遍最新新增的 代理商产品 再循环匹配需删除代理产品
             agentProductList = agentProductService.list(new LambdaQueryWrapper<AgentProduct>().eq(AgentProduct::getParentProductCode,product.getProductCode()).eq(AgentProduct::getParentAgentCode,parentAgentAccount.getAgentCode()));
             for(AgentProduct agentProduct:agentProductList){
                 if(agentProductStrMap.get(agentProduct.getAgentCode())==null){
-                    agentProductInitService.deleteSubAgentProduct(agentAccountService.getAgentAccountByCode(agentProduct.getAgentCode(),true),updateProduct);
+                    agentProductService.deleteSubAgentProduct(agentAccountService.getAgentAccountByCode(agentProduct.getAgentCode(),true),updateProduct);
                 }
             }
         }
         //主图更换需要更换下游所有海报
         if(StringUtils.isNotEmpty(updateProduct.getProductMasterMap())&&!updateProduct.getProductMasterMap().equals(product.getProductMasterMap())){
             //生成海报图
-            agentProductInitService.addProductPoster(parentAgentAccount,updateProduct);
+            agentProductService.addProductPoster(parentAgentAccount,updateProduct);
             //更新下游所有海报图
             agentAccountList = agentAccountService.selectChildAgentList(loginUser,BaseConstant.ZERO_INT);
             if(!CollectionUtils.isEmpty(agentAccountList)){
                 for (AgentAccount agentAccount:agentAccountList){
-                    agentProductInitService.addSubAgentProductPoster(agentAccount,updateProduct);
+                    agentProductService.addSubAgentProductPoster(agentAccount,updateProduct);
                 }
             }
         }
@@ -522,7 +520,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         List<AgentProduct> agentProductList = agentProductService.list(new LambdaQueryWrapper<AgentProduct>().eq(AgentProduct::getParentProductCode,product.getProductCode()).eq(AgentProduct::getParentAgentCode,parentAgentAccount.getAgentCode()));
         for (AgentProduct agentProduct:agentProductList){
             //重新计算代理商产品佣金
-            agentProductInitService.updateAgentProductCommission(product.getProductCode(),agentProduct.getAgentCode(),productUpdateStatusBO.getProductCommission());
+            agentProductService.updateAgentProductCommission(product.getProductCode(),agentProduct.getAgentCode(),productUpdateStatusBO.getProductCommission());
         }
     }
 
@@ -594,12 +592,12 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             //主图更换需要更换下游所有海报
             if(StringUtils.isNotEmpty(product.getProductMasterMap())){
                 //生成海报图
-                agentProductInitService.addProductPoster(parentAgentAccount,product);
+                agentProductService.addProductPoster(parentAgentAccount,product);
                 //更新下游所有海报图
                 List<AgentAccount> agentAccountList = agentAccountService.selectChildAgentList(loginUser,BaseConstant.ZERO_INT);
                 if(!CollectionUtils.isEmpty(agentAccountList)){
                     for (AgentAccount agentAccount:agentAccountList){
-                        agentProductInitService.addSubAgentProductPoster(agentAccount,product);
+                        agentProductService.addSubAgentProductPoster(agentAccount,product);
                     }
                 }
             }

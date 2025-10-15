@@ -30,6 +30,7 @@ import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -68,28 +69,21 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
     CommissionConfigService commissionConfigService;
 
     @Resource
-    ProductMapper productMapper;
-
-    @Resource
     WithdrawalRecordService withdrawalRecordService;
 
     @Resource(name = "configStringRedisTemplate")
     StringRedisTemplate configStringRedisTemplate;
 
-    @Resource
-    AgentProductService agentProductService;
-
-    @Resource
-    SmsService smsService;
 
     @Resource
     SysUserMapper userMapper;
 
-    @Resource
-    AgentProductInitService agentProductInitService;
-
+    
     @Resource
     ToolConfigService toolConfigService;
+
+    @Resource
+    AgentProductService agentProductService;
 
 
 
@@ -190,17 +184,17 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         //创建佣金配置记录
         commissionConfigService.addCommissionConfig(commissionConfig);
         //添加父代理商默认开放产品
-        agentProductInitService.addRegisterAccountProduct(agentAccount);
+        agentProductService.addRegisterAccountProduct(agentAccount);
         //添加代理推广海报
         ToolConfig toolConfig =toolConfigService.getToolConfig(BaseConstant.FOUR_INT);
         if(StringUtils.isNotEmpty(toolConfig.getAccessKey())){
-            agentProductInitService.addRegisterQrcodeMap(agentAccount,toolConfig.getAccessKey(),BaseConstant.ONE_INT);
+            agentProductService.addRegisterQrcodeMap(agentAccount,toolConfig.getAccessKey(),BaseConstant.ONE_INT);
         }
         if(StringUtils.isNotEmpty(toolConfig.getSecretKey())){
-            agentProductInitService.addRegisterQrcodeMap(agentAccount,toolConfig.getSecretKey(),BaseConstant.TWO_INT);
+            agentProductService.addRegisterQrcodeMap(agentAccount,toolConfig.getSecretKey(),BaseConstant.TWO_INT);
         }
         if(StringUtils.isNotEmpty(toolConfig.getBucket())){
-            agentProductInitService.addRegisterQrcodeMap(agentAccount,toolConfig.getBucket(),BaseConstant.THREE_INT);
+            agentProductService.addRegisterQrcodeMap(agentAccount,toolConfig.getBucket(),BaseConstant.THREE_INT);
         }
 
         log.info("用户注册成功结束:{}",JSONObject.toJSONString(agentAccountAddBO));

@@ -43,9 +43,7 @@ public class AgentCommissionServiceImpl extends ServiceImpl<OrderCommissionDetai
     @Resource
     CommissionConfigService commissionConfigService;
 
-    @Resource
-    AgentProductInitService agentProductInitService;
-
+    
     @Resource
     AgentProductService agentProductService;
 
@@ -99,7 +97,7 @@ public class AgentCommissionServiceImpl extends ServiceImpl<OrderCommissionDetai
         List<AgentProduct> agentProductList = agentProductService.list(new LambdaQueryWrapper<AgentProduct>().eq(AgentProduct::getAgentCode,commissionConfigOld.getAgentCode()));
         if(!CollectionUtils.isEmpty(agentProductList)){
             for(AgentProduct agentProduct:agentProductList){
-                agentProductInitService.updateAgentProductCommission(agentProduct.getParentProductCode(),agentProduct.getAgentCode(),agentProduct.getProductCommission());
+                agentProductService.updateAgentProductCommission(agentProduct.getParentProductCode(),agentProduct.getAgentCode(),agentProduct.getProductCommission());
             }
         }
     }

@@ -90,4 +90,24 @@ public class BaseSubmitOrderRequest {
      */
     private Integer orderSource;
 
+    /**
+     * 身份证正面照片URL
+     */
+    private String idCardFrontUrl;
+
+    /**
+     * 身份证反面照片URL
+     */
+    private String idCardBackUrl;
+
+    /**
+     * 免冠照片URL
+     */
+    private String personPhotoUrl;
+
+    /**
+     * 自定义照片URL
+     */
+    private String customPhotoUrl;
+
 }

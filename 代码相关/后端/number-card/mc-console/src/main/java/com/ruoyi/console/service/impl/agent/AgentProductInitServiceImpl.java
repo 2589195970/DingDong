@@ -7,6 +7,7 @@ import com.ruoyi.common.order.entity.Product;
 import com.ruoyi.console.service.AgentProductInitService;
 import com.ruoyi.console.service.AgentProductService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;

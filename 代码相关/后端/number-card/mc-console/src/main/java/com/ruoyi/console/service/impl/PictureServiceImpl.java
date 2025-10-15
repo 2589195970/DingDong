@@ -7,7 +7,6 @@ import com.ruoyi.common.utils.QiniuUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.console.service.PictureService;
 import com.ruoyi.console.service.ToolConfigService;
-//import com.sun.org.apache.regexp.internal.RE;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,7 +31,6 @@ public class PictureServiceImpl  implements PictureService {
 
     @Resource
     ToolConfigService toolConfigService;
-
 
 
     /**

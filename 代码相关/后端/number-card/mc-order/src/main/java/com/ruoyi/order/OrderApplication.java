@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @EnableWebMvc
 @EnableCaching
 @EnableConfigurationProperties
+@ComponentScan(basePackages = {"com.ruoyi.order", "com.ruoyi.common"})
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class })
 @MapperScan("com.ruoyi.order.mapper")
 public class OrderApplication

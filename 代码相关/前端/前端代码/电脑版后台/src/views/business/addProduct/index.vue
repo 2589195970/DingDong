@@ -154,9 +154,19 @@
                 <editor v-model="ruleForm.productRemark" :min-height="192" style="width: 100%; " />
             </el-form-item>
         </div>
+
+        <!-- 照片配置 -->
+        <div class="topss">
+            <div style="border-bottom: 1px solid #F2F2F2; font-weight: 700; font-size: 14px; margin: 10px;">照片配置</div>
+
+            <photo-config
+                v-model="photoConfigData"
+                @change="handlePhotoConfigChange">
+            </photo-config>
+        </div>
         <el-form-item
             style="position: fixed; bottom:-22px; background-color: #F2F2F2;padding: 10px 0;height: 50px;text-align: center;width: 100%;">
-            <el-button type="primary" @click="submitForm('ruleForm')">立即创建</el-button>
+            <el-button type="primary" @click="submitForm('ruleForm')" :loading="submitLoading">立即创建</el-button>
             <el-button @click="resetForm('ruleForm')">重置</el-button>
         </el-form-item>
     </el-form>
@@ -165,7 +175,12 @@
 <script>
     import { addProduct, selectUpstreamApiListPage, selectUpstreamProductListPage, selectChildAgentList } from "@/api/monitor/business";
     import { getToken } from "@/utils/auth";
+    import PhotoConfig from "@/components/PhotoConfig/index.vue";
+
     export default {
+        components: {
+            PhotoConfig
+        },
         data() {
             return {
                 uploadUrl: process.env.VUE_APP_BASE_API + "/picture/addPicture", // 上传的图片服务器地址
@@ -176,6 +191,7 @@
                 imageUrl1: false,
                 upstreamApiCode: [],
                 upstreamProductCode: [],
+                submitLoading: false, // 提交loading状态
                 ruleForm: {
                     isAllAgent: '1',
                     name: '',
@@ -187,7 +203,42 @@
                     upstreamProductCode: '',
                     upstreamApiCode: '',
                     resource: '1',
-                    desc: ''
+                    desc: '',
+                    photoRequired: 0, // 默认不需要上传照片
+                    photoConfig: null, // 照片配置
+                    // 接口相关字段
+                    upstreamApiId: '',
+                    upstreamApiName: '',
+                    upstreamProductId: '',
+                    upstreamProductName: '',
+                    // 基础产品字段
+                    productName: '',
+                    productCharacteristics: '',
+                    operatorType: '',
+                    productType: '',
+                    agentCodeList: [],
+                    productTyll: '',
+                    productDxll: '',
+                    productThfz: '',
+                    productYhyz: '',
+                    productYsyz: '',
+                    productScsm: '',
+                    productGsdq: '',
+                    productFafs: '',
+                    productTcjs: '',
+                    productDemand: '',
+                    balanceConfig: '',
+                    productMasterMap: '',
+                    productDetailMap: '',
+                    productRemark: '',
+                    productTemplateJson: '',
+                    productAgeMin: '',
+                    productAgeMax: ''
+                },
+                // 照片配置数据
+                photoConfigData: {
+                    photoRequired: 0,
+                    photoConfig: null
                 },
             };
         },
@@ -202,8 +253,6 @@
             })
 
         },
-
-
         methods: {
             canq(data) {
                 selectUpstreamProductListPage({ upstreamApiId: data,
@@ -213,27 +262,45 @@
                     this.upstreamProductCode = res.data.rows
                 })
             },
-            handleAvatarSuccess(res, file) {
+            handleAvatarSuccess(res) {
                 this.$set(this.ruleForm, 'productMasterMap', res.message)
 
             },
-            handleAvatarSuccess1(res, file) {
+            handleAvatarSuccess1(res) {
                 this.$set(this.ruleForm, 'productDetailMap', res.message)
             },
-
+            // 处理照片配置变更
+            handlePhotoConfigChange(newVal) {
+                // 同步到ruleForm
+                this.ruleForm.photoRequired = newVal.photoRequired;
+                this.ruleForm.photoConfig = newVal.photoConfig;
+            },
             submitForm(formName) {
 
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
+                        // 开始提交，显示loading
+                        this.submitLoading = true;
+
                         this.ruleForm.productTemplateJson = JSON.stringify({
                             bgThemeColor: this.bgThemeColor
                         })
 
-
                         if (this.ruleForm.upstreamApiId) {
                             const foundObject = this.upstreamApiCode.find(obj => obj.upstreamApiId === this.ruleForm.upstreamApiId);
                             const foundObject1 = this.upstreamProductCode.find(obj => obj.upstreamProductId === this.ruleForm.upstreamProductId);
-                            console.log(foundObject1);
+
+                            // 检查是否找到了对应的接口和产品
+                            if (!foundObject) {
+                                this.submitLoading = false;
+                                this.$message.error("请选择有效的接口");
+                                return;
+                            }
+                            if (!foundObject1) {
+                                this.submitLoading = false;
+                                this.$message.error("请选择有效的产品");
+                                return;
+                            }
 
                             this.ruleForm.upstreamProductName = foundObject1.upstreamProductName;
                             this.ruleForm.upstreamProductId = foundObject1.upstreamProductId;
@@ -245,13 +312,19 @@
                         }
 
                         if (!this.ruleForm.operatorType) {
+                            this.submitLoading = false;
                             this.$message.error("请选择运营商");
                         } else if (!this.ruleForm.productType) {
+                            this.submitLoading = false;
                             this.$message.error("请选择结算模式");
                         } else {
-                            addProduct(this.ruleForm).then((res) => {
+                            addProduct(this.ruleForm).then(() => {
+                                this.submitLoading = false;
                                 this.$modal.msgSuccess("新增成功");
                                 this.$router.push('/business/products/products')
+                            }).catch((error) => {
+                                this.submitLoading = false;
+                                console.error('添加产品失败:', error);
                             })
                         }
 
@@ -263,6 +336,13 @@
             },
             resetForm(formName) {
                 this.$refs[formName].resetFields();
+                // 重置照片配置数据
+                this.photoConfigData = {
+                    photoRequired: 0,
+                    photoConfig: null
+                };
+                this.ruleForm.photoRequired = 0;
+                this.ruleForm.photoConfig = null;
             }
         }
     }

@@ -12,7 +12,7 @@ import com.ruoyi.common.order.entity.ToolConfig;
 import com.ruoyi.common.utils.CacheUtils;
 import com.ruoyi.console.mapper.AgentAccountMapper;
 import com.ruoyi.console.mapper.ToolConfigMapper;
-import com.ruoyi.console.service.AgentProductInitService;
+import com.ruoyi.console.service.AgentProductService;
 import com.ruoyi.console.service.ToolConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -35,11 +35,12 @@ public class ToolConfigServiceImpl extends ServiceImpl<ToolConfigMapper, ToolCon
     @Resource(name = "configStringRedisTemplate")
     private StringRedisTemplate configStringRedisTemplate;
 
-    @Resource
-    AgentProductInitService agentProductInitService;
-
+    
     @Resource
     AgentAccountMapper agentAccountMapper;
+
+    @Resource
+    AgentProductService agentProductService;
 
 
     /**
@@ -116,17 +117,29 @@ public class ToolConfigServiceImpl extends ServiceImpl<ToolConfigMapper, ToolCon
         //图片有变更 重新生成海报
         if(!toolConfigOld.getAccessKey().equals(toolConfig.getAccessKey())){
             for (AgentAccount agentAccount:agentAccountList){
-                agentProductInitService.addRegisterQrcodeMap(agentAccount,toolConfig.getAccessKey(),BaseConstant.ONE_INT);
+                try {
+                    agentProductService.addRegisterQrcodeMap(agentAccount,toolConfig.getAccessKey(),BaseConstant.ONE_INT);
+                } catch (Exception e) {
+                    log.error("生成推广海报图失败: agentCode={}, url={}", agentAccount.getAgentCode(), toolConfig.getAccessKey(), e);
+                }
             }
         }
         if(!toolConfigOld.getSecretKey().equals(toolConfig.getSecretKey())){
             for (AgentAccount agentAccount:agentAccountList){
-                agentProductInitService.addRegisterQrcodeMap(agentAccount,toolConfig.getSecretKey(),BaseConstant.TWO_INT);
+                try {
+                    agentProductService.addRegisterQrcodeMap(agentAccount,toolConfig.getSecretKey(),BaseConstant.TWO_INT);
+                } catch (Exception e) {
+                    log.error("生成推广海报图失败: agentCode={}, url={}", agentAccount.getAgentCode(), toolConfig.getSecretKey(), e);
+                }
             }
         }
         if(!toolConfigOld.getBucket().equals(toolConfig.getBucket())){
             for (AgentAccount agentAccount:agentAccountList){
-                agentProductInitService.addRegisterQrcodeMap(agentAccount,toolConfig.getBucket(),BaseConstant.THREE_INT);
+                try {
+                    agentProductService.addRegisterQrcodeMap(agentAccount,toolConfig.getBucket(),BaseConstant.THREE_INT);
+                } catch (Exception e) {
+                    log.error("生成推广海报图失败: agentCode={}, url={}", agentAccount.getAgentCode(), toolConfig.getBucket(), e);
+                }
             }
         }
     }

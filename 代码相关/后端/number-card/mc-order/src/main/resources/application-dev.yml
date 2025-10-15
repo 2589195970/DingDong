@@ -20,9 +20,10 @@ spring:
   redis:
     public:
       database: 1
-      host: test.sdzdf.com
-      port: 8006
-      password: sdzdfredis20241206
+      host: r-bp1g0pv2fuzjyiucsbpd.redis.rds.aliyuncs.com
+      port: 6379
+      username: dingdongprod
+      password: tMPcy2dVByItRwaj
       timeout: 5000
     config:
       database: 2
@@ -54,9 +55,9 @@ spring:
     druid:
       # 主库数据源
       master:
-        url: jdbc:mysql://123.56.89.151:3306/numbercard?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&autoReconnect=true&failOverReadOnly=false
+        url: jdbc:mysql://rm-bp190y09aijh9pcwlqo.mysql.rds.aliyuncs.com:3306/numberCard?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai&autoReconnect=true&failOverReadOnly=false
         username: root
-        password: 94loaUawkU0SuUJV@
+        password: JCHC4g5%9YRJFeeN
       # 从库数据源
       slave:
         # 从数据源开关/默认关闭

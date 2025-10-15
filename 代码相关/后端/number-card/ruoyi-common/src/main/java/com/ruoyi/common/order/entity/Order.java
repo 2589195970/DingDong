@@ -301,6 +301,60 @@ public class Order {
     @ApiModelProperty("运营商类型")
     private Integer operatorType;
 
+    /**
+     * 身份证正面照片URL
+     */
+    @ApiModelProperty("身份证正面照片URL")
+    private String idCardFrontUrl;
+
+    /**
+     * 身份证反面照片URL
+     */
+    @ApiModelProperty("身份证反面照片URL")
+    private String idCardBackUrl;
+
+    /**
+     * 免冠照片URL
+     */
+    @ApiModelProperty("免冠照片URL")
+    private String personPhotoUrl;
+
+    /**
+     * 自定义照片URL
+     */
+    @ApiModelProperty("自定义照片URL")
+    private String customPhotoUrl;
+
+    /**
+     * 照片审核状态 0 无需审核 1 待上传照片 2 代理商待提交 3 管理员待审核 4 审核通过 5 审核拒绝
+     */
+    @ApiModelProperty("照片审核状态")
+    private Integer photoStatus;
+
+    /**
+     * 照片上传时间
+     */
+    @ApiModelProperty("照片上传时间")
+    private Long photoUploadTime;
+
+    /**
+     * 照片审核员ID
+     */
+    @ApiModelProperty("照片审核员ID")
+    private Long photoAuditUserId;
+
+    /**
+     * 照片审核时间
+     */
+    @ApiModelProperty("照片审核时间")
+    private Long photoAuditTime;
+
+    /**
+     * 照片审核备注
+     */
+    @ApiModelProperty("照片审核备注")
+    private String photoAuditRemark;
+
 
 
 
@@ -342,6 +396,24 @@ public class Order {
         //上游信息
         order.upstreamApi = upstreamApi.getUpstreamApiCode();
         order.upstreamApiName = upstreamApi.getUpstreamApiName();
+        //照片信息
+        order.idCardFrontUrl = request.getIdCardFrontUrl();
+        order.idCardBackUrl = request.getIdCardBackUrl();
+        order.personPhotoUrl = request.getPersonPhotoUrl();
+        order.customPhotoUrl = request.getCustomPhotoUrl();
+        //照片审核状态初始化 - 只有当商品需要照片审核时才设置状态
+        if (product != null && product.getPhotoRequired() != null && product.getPhotoRequired() == 1) {
+            // 根据订单来源设置不同的初始状态
+            if (order.orderSource != null && order.orderSource.equals(OrderEnum.OrderSourceEnum.IMPORT.getSourceType())) {
+                // 导入订单初始化为代理商待提交
+                order.photoStatus = OrderEnum.PhotoAuditEnum.AGENT_PENDING.getStatus();
+            } else {
+                // H5下单（信息流等）初始化为管理员待审核
+                order.photoStatus = OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus();
+            }
+        } else {
+            order.photoStatus = OrderEnum.PhotoAuditEnum.NONE.getStatus(); // 无需审核
+        }
         return order;
     }
 

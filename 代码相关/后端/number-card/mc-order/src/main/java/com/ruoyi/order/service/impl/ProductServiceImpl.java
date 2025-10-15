@@ -31,6 +31,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 
@@ -136,7 +137,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             if (product == null) {
                 throw new BizException("产品不存在:{}", productH5BO.getProductCode());
             }
-            if (product.getProductStatus() == ProductEnum.ProductStatusEnum.NO.getStatus()) {
+            if (Objects.equals(product.getProductStatus(), ProductEnum.ProductStatusEnum.NO.getStatus())) {
                 throw new BizException("产品已下架:{}", product.getProductName());
             }
             productH5VO = new ProductH5VO();

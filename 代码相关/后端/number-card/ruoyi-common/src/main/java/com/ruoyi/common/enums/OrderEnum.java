@@ -131,6 +131,43 @@ public enum OrderEnum {
 
     }
 
+    /**
+     * 照片审核状态枚举
+     */
+    public enum PhotoAuditEnum {
+        NONE(0, "无需审核"),
+        UPLOAD_PENDING(1, "待上传照片"),     // 用户待上传
+        AGENT_PENDING(2, "代理商待提交"),    // 代理商待提交审核
+        ADMIN_PENDING(3, "管理员待审核"),    // 管理员待审核
+        APPROVED(4, "审核通过"),
+        REJECTED(5, "审核拒绝");
+
+        private Integer status;
+        private String message;
+
+        PhotoAuditEnum(Integer status, String message) {
+            this.status = status;
+            this.message = message;
+        }
+
+        public static String getPhotoAuditMessageByStatus(Integer status) {
+            for (PhotoAuditEnum value : PhotoAuditEnum.values()) {
+                if (value.getStatus().equals(status)) {
+                    return value.getMessage();
+                }
+            }
+            return "未知状态";
+        }
+
+        public Integer getStatus() {
+            return status;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+    }
+
 
 
 }

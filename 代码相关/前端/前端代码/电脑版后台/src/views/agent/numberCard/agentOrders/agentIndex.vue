@@ -129,7 +129,7 @@
           <span>生产号码: {{scope.row.accNumber }}</span><br>
           <span>物流名称：{{scope.row.express }}</span><br>
           <span>物流单号：{{scope.row.trackingNumber}}</span><br>
-          <span>失败原因：{{scope.row.orderMessage }}</span><br>
+          <span>订单状态：{{scope.row.orderMessage }}</span><br>
         </template>
       </el-table-column>
       <!-- <el-table-column label="接口" align="left" prop="companySimpleName" :show-overflow-tooltip="true">

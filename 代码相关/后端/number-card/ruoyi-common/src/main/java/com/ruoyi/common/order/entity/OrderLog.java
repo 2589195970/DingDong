@@ -42,7 +42,6 @@ public class OrderLog {
     @ApiModelProperty(value = "请求参数")
     private String requestBody;
 
-
     /**
      * 请求返回
      */
@@ -60,8 +59,5 @@ public class OrderLog {
      */
     @ApiModelProperty(value = "创建时间")
     private Long createTime;
-
-
-
 
 }

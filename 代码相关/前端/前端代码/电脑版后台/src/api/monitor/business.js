@@ -426,3 +426,39 @@ export function exportSettlement(data,filename,urla) {
     downloadLoadingInstance.close();
   })
 }
+
+// 上传订单照片
+export function uploadOrderPhotos(data) {
+  return request({
+    url: "/order/uploadOrderPhotos",
+    method: "post",
+    data: data,
+  });
+}
+
+// 提交照片审核
+export function submitPhotoForAudit(data) {
+  return request({
+    url: "/order/submitPhotoForAudit",
+    method: "post",
+    data: data,
+  });
+}
+
+// 审核照片
+export function auditOrderPhotos(data) {
+  return request({
+    url: "/order/auditOrderPhotos",
+    method: "post",
+    data: data,
+  });
+}
+
+// 获取订单照片状态
+export function getOrderPhotoStatus(query) {
+  return request({
+    url: "/order/getOrderPhotoStatus",
+    method: "get",
+    params: query,
+  });
+}

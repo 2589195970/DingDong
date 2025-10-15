@@ -112,4 +112,16 @@ public class UpstreamProductVO {
     @ApiModelProperty("产品名称列表")
     private List<String> productList;
 
+    /**
+     * 是否需要上传照片 0 否 1 是
+     */
+    @ApiModelProperty("是否需要上传照片 0 否 1 是")
+    private Integer photoRequired;
+
+    /**
+     * 照片上传配置 JSON格式
+     */
+    @ApiModelProperty("照片上传配置 JSON格式")
+    private String photoConfig;
+
 }

@@ -100,4 +100,32 @@ public class OrderSubmitRequest {
      */
     @ApiModelProperty(value = "下游订单号", required = true)
     private String orderDownstreamId;
+
+
+    /**
+     * 身份证正面照片URL
+     */
+    @ApiModelProperty("身份证正面照片URL")
+    private String idCardFrontUrl;
+
+    /**
+     * 身份证反面照片URL
+     */
+    @ApiModelProperty("身份证反面照片URL")
+    private String idCardBackUrl;
+
+    /**
+     * 免冠照片URL
+     */
+    @ApiModelProperty("免冠照片URL")
+    private String personPhotoUrl;
+
+    /**
+     * 自定义照片URL
+     */
+    @ApiModelProperty("自定义照片URL")
+    private String customPhotoUrl;
+
+
+
 }

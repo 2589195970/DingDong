@@ -16,18 +16,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class QiniuUtils {
 
-    /*@Value("${qiniu.accessKey}")
-    private String accessKey;
-
-    @Value("${qiniu.secretKey}")
-    private String secretKey;
-
-    @Value("${qiniu.bucket}")
-    private String bucket;
-
-    @Value("${qiniu.hostName}")
-    private String hostName;*/
-
     public String uploadByBytes(byte[] bytes, String fileName, ToolConfig toolConfig){
         //构造一个带指定 Region 对象的配置类
         Configuration cfg = new Configuration();

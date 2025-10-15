@@ -293,6 +293,17 @@
                         <editor v-model="ruleForm.productRemark" :min-height="192" style="width: 100%;" />
                     </el-form-item>
                 </div>
+
+                <!-- 照片配置 -->
+                <div class="topss">
+                    <div style="border-bottom: 1px solid #F2F2F2; font-weight: 700; font-size: 14px; margin: 10px;">照片配置
+                    </div>
+
+                    <photo-config
+                        v-model="photoConfigData"
+                        @change="handlePhotoConfigChange">
+                    </photo-config>
+                </div>
                 <el-form-item style="width: 100%; text-align: center;">
                     <el-button type="primary" @click="submitup()">修改</el-button>
                     <el-button @click="ruleFormdialog=false">取消</el-button>
@@ -324,9 +335,14 @@
         selectUpstreamApiListPage
     } from "@/api/monitor/business";
     import { getToken } from "@/utils/auth";
+    import PhotoConfig from "@/components/PhotoConfig/index.vue";
+
     export default {
         name: "Products",
         dicts: ['sys_oper_type', 'sys_common_status'],
+        components: {
+            PhotoConfig
+        },
         data() {
             return {
                 uploadUrl: process.env.VUE_APP_BASE_API + "/picture/addPicture", // 上传的图片服务器地址
@@ -369,6 +385,11 @@
                 groupCode: [],
                 ruleForm: [],
                 searchType: [],
+                // 照片配置数据
+                photoConfigData: {
+                    photoRequired: 0,
+                    photoConfig: null
+                },
                 queryParams: {
                     pageNo: 1,
                     pageSize: 10,
@@ -458,6 +479,12 @@
                 // 清理 DOM
                 document.body.removeChild(link);
             },
+            // 处理照片配置变更
+            handlePhotoConfigChange(newVal) {
+                // 同步到ruleForm
+                this.ruleForm.photoRequired = newVal.photoRequired;
+                this.ruleForm.photoConfig = newVal.photoConfig;
+            },
             handleOpen(data){
                 window.open(data.h5Url, '_blank')
             },
@@ -489,6 +516,12 @@
 
                 this.ruleForm = data;
                 console.log(this.ruleForm.isAllAgent);
+
+                // 设置照片配置数据
+                this.photoConfigData = {
+                    photoRequired: data.photoRequired || 0,
+                    photoConfig: data.photoConfig || null
+                };
 
                 this.ruleFormdialog = true;
             },

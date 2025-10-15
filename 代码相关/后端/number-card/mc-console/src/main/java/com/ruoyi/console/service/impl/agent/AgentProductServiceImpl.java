@@ -19,6 +19,7 @@ import com.ruoyi.console.mapper.ProductMapper;
 import com.ruoyi.console.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -43,12 +44,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, AgentProduct> implements AgentProductService {
 
-
     @Resource
     ProductMapper productMapper;
-
-    @Resource(name = "configStringRedisTemplate")
-    StringRedisTemplate configStringRedisTemplate;
 
     @Resource
     AgentAccountService agentAccountService;
@@ -65,9 +62,7 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
     @Value(value = "${submit.h5}")
     private String h5url;
 
-    @Resource
-    AgentProductInitService agentProductInitService;
-
+    
     @Resource
     ToolConfigService toolConfigService;
 
@@ -225,7 +220,7 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         List<AgentAccount> childAgentAccountList = agentAccountService.list(new LambdaQueryWrapper<AgentAccount>().like(AgentAccount::getParentAgentCode,agentAccount.getAgentCode()));
         if(!CollectionUtils.isEmpty(childAgentAccountList)){
             for (AgentAccount childAgentAccount:childAgentAccountList){
-                agentProductInitService.updateAgentProductCommission(productCode,childAgentAccount.getAgentCode(),agentProduct.getDistributionProductCommission());
+                updateAgentProductCommission(productCode,childAgentAccount.getAgentCode(),agentProduct.getDistributionProductCommission());
             }
         }
     }
@@ -402,7 +397,7 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             if (!CollectionUtils.isEmpty(childAgentAccountList)) {
                 for(AgentAccount childAgentAccount:childAgentAccountList){
                     // 递归调用创建父代理商的产品信息
-                    agentProductInitService.addSubAgentProductPoster(childAgentAccount,product);
+                    addSubAgentProductPoster(childAgentAccount,product);
                 }
             }
         }

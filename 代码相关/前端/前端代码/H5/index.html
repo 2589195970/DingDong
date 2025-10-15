@@ -55,6 +55,94 @@
 						<van-field v-model="address" rows="1" label="详细地址" required
 							placeholder="如街道/小区/门牌号" @blur="loseAddress"></van-field>
 						<!-- </div> -->
+
+						<!-- 照片上传区域 -->
+						<div class="photo-upload-section" v-if="productList.photoRequired == 1">
+							<div class="photo-upload-title">
+								<span class="required-star">*</span>
+								<span>照片上传</span>
+							</div>
+							<div class="photo-upload-container">
+								<div v-for="(photoConfig, index) in photoConfigList" :key="photoConfig.photoType"
+									v-if="photoConfig.required == 1"
+									:class="['photo-upload-item', {'required': photoConfig.required == 1}]">
+
+									<!-- 照片上传卡片 -->
+									<div class="photo-card">
+										<div class="photo-card-header">
+											<div class="photo-title">
+												<span v-if="photoConfig.required == 1" class="required">*</span>
+												{{ photoConfig.title }}
+											</div>
+											<!--<div class="photo-size-hint">-->
+											<!--	{{ formatFileSize(photoConfig.maxSize) }} · {{ photoConfig.minWidth }}×{{ photoConfig.minHeight }}px起-->
+											<!--</div>-->
+										</div>
+
+										<div class="photo-card-content">
+											<!-- 左侧上传区域 -->
+											<div class="upload-section">
+												<!-- 上传区域 -->
+												<div class="upload-area" v-if="!uploadedPhotos[photoConfig.photoType]"
+													@click="triggerFileInput(photoConfig.photoType)">
+													<div class="upload-placeholder">
+														<div class="upload-icon"></div>
+														<div class="upload-text">点击上传{{ photoConfig.title }}</div>
+														<div class="upload-hint">支持 {{ photoConfig.supportedFormats }} 格式</div>
+													</div>
+													<input type="file"
+														:ref="'fileInput' + photoConfig.photoType"
+														accept="image/*"
+														style="display: none"
+														@change="handleFileSelect($event, photoConfig)">
+												</div>
+
+												<!-- 上传中状态 -->
+												<div class="upload-area uploading" v-else-if="uploadedPhotos[photoConfig.photoType].uploading">
+													<div class="upload-placeholder">
+														<div class="upload-text">正在上传{{ photoConfig.title }}...</div>
+														<div class="upload-hint">请稍候</div>
+													</div>
+												</div>
+
+												<!-- 预览区域 -->
+												<div class="preview-area" v-else>
+													<div class="preview-image-container">
+														<img :src="uploadedPhotos[photoConfig.photoType].preview"
+															:alt="photoConfig.title"
+															class="preview-image"
+															@click="previewFullImage(uploadedPhotos[photoConfig.photoType].preview)">
+														<div class="preview-actions">
+															<button class="action-btn delete-btn"
+																@click.stop="removePhoto(photoConfig.photoType)">
+																删除
+															</button>
+														</div>
+													</div>
+												</div>
+											</div>
+
+											<!-- 右侧示例图片 -->
+											<div class="example-section">
+												<div class="photo-example" v-if="photoConfig.exampleUrl"
+													@click="previewFullImage(photoConfig.exampleUrl)">
+													<img
+														:src="photoConfig.exampleUrl"
+														:alt="photoConfig.title + '示例'"
+													>
+												</div>
+											</div>
+										</div>
+
+										<!-- 照片说明 -->
+										<div class="photo-description" v-if="photoConfig.description">
+											{{ photoConfig.description }}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
 						<div>
 							<img src="./img/an.gif" class="btn-primary-img" id="btnPrimary" alt="" @click="submit" />
 							<!-- <van-button type="primary" class="btn-primary" id="btnPrimary"
@@ -88,7 +176,6 @@
 
 			<!-- 查询订单悬浮按钮 -->
 			<div class="float-order-btn" @click="goToOrderQuery">
-				<van-icon name="records" />
 				<span>查询订单</span>
 			</div>
 
@@ -120,6 +207,17 @@
 			<van-dialog v-model="protocolVisible2" title="产品信息及会员权益" confirm-button-text="我知道了">
 				<div class="dialog-content-con" v-html="protocolHtml2">
 				</div>
+			</van-dialog>
+
+			<!-- 图片预览弹窗 -->
+			<van-popup v-model="imagePreviewVisible" class="image-preview-popup" position="center">
+				<div class="image-preview-container">
+					<img :src="previewImageUrl" alt="预览图片" class="preview-full-image" />
+					<div class="preview-close" @click="imagePreviewVisible = false">
+						<van-icon name="close" />
+					</div>
+				</div>
+			</van-popup>
 		</div>
 	</div>
 </body>

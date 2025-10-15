@@ -87,6 +87,57 @@ public class FileUploadUtils
     }
 
     /**
+     * 绝对路径文件上传（支持硬编码路径）
+     *
+     * @param absoluteDir 绝对路径目录
+     * @param file 上传的文件
+     * @return 返回上传成功的文件名
+     * @throws FileSizeLimitExceededException 如果超出最大大小
+     * @throws FileNameLengthLimitExceededException 文件名太长
+     * @throws IOException 比如读写文件出错时
+     * @throws InvalidExtensionException 文件校验异常
+     */
+    public static final String uploadAbsolute(String absoluteDir, MultipartFile file)
+            throws FileSizeLimitExceededException, IOException, FileNameLengthLimitExceededException,
+            InvalidExtensionException
+    {
+        return uploadAbsolute(absoluteDir, file, MimeTypeUtils.DEFAULT_ALLOWED_EXTENSION);
+    }
+
+    /**
+     * 绝对路径文件上传（支持硬编码路径）
+     *
+     * @param absoluteDir 绝对路径目录
+     * @param file 上传的文件
+     * @param allowedExtension 上传文件类型
+     * @return 返回上传成功的文件名
+     * @throws FileSizeLimitExceededException 如果超出最大大小
+     * @throws FileNameLengthLimitExceededException 文件名太长
+     * @throws IOException 比如读写文件出错时
+     * @throws InvalidExtensionException 文件校验异常
+     */
+    public static final String uploadAbsolute(String absoluteDir, MultipartFile file, String[] allowedExtension)
+            throws FileSizeLimitExceededException, IOException, FileNameLengthLimitExceededException,
+            InvalidExtensionException
+    {
+        int fileNamelength = Objects.requireNonNull(file.getOriginalFilename()).length();
+        if (fileNamelength > FileUploadUtils.DEFAULT_FILE_NAME_LENGTH)
+        {
+            throw new FileNameLengthLimitExceededException(FileUploadUtils.DEFAULT_FILE_NAME_LENGTH);
+        }
+
+        assertAllowed(file, allowedExtension);
+
+        String fileName = extractFilename(file);
+
+        File absFile = getAbsoluteFile(absoluteDir, fileName);
+        file.transferTo(absFile);
+
+        // 对于绝对路径，直接返回文件名
+        return "/" + fileName;
+    }
+
+    /**
      * 文件上传
      *
      * @param baseDir 相对应用的基目录
