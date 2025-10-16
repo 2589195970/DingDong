@@ -6,6 +6,7 @@ import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.AgainOrderBO;
 import com.ruoyi.common.order.bo.OrderSelectBO;
+import com.ruoyi.common.order.bo.OrderUpdateBO;
 import com.ruoyi.common.order.bo.PhotoAuditBO;
 import com.ruoyi.common.order.bo.PhotoUploadBO;
 import com.ruoyi.common.order.bo.UpdateOrderStatusBO;
@@ -133,5 +134,22 @@ public interface OrderService extends IService<Order> {
      * @throws BizException 业务异常
      */
     OrderSelectVO getOrderPhotoStatus(Long orderId) throws BizException;
+
+    /**
+     * 查询订单信息
+     *
+     * @param orderId 订单ID
+     * @return 订单信息
+     * @throws BizException 业务异常
+     */
+    Order selectOrderById(Long orderId) throws BizException;
+
+    /**
+     * 更新订单信息（照片修改）
+     *
+     * @param updateBO 订单更新业务对象
+     * @throws BizException 业务异常
+     */
+    void updateOrderInfo(OrderUpdateBO updateBO) throws BizException;
 
 }

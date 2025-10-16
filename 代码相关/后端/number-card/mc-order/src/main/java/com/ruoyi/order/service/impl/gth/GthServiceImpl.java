@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -217,6 +218,12 @@ public class GthServiceImpl extends BaseServiceImpl implements GthService {
         gthSubmitOrderRequest.setMobile(getAesParameters(gthArgument.getAesKey(),gthSubmitOrderRequest.getMobile()));
         gthSubmitOrderRequest.setName(getAesParameters(gthArgument.getAesKey(),gthSubmitOrderRequest.getName()));
         gthSubmitOrderRequest.setAddress(getAesParameters(gthArgument.getAesKey(),gthSubmitOrderRequest.getAddress()));
+        if (product.getPhotoRequired() == 1) {
+            gthSubmitOrderRequest.setFace_url(order.getIdCardFrontUrl());
+            gthSubmitOrderRequest.setBack_url(order.getIdCardBackUrl());
+            gthSubmitOrderRequest.setHand_url(order.getPersonPhotoUrl());
+            gthSubmitOrderRequest.setCustom_photos_url(order.getCustomPhotoUrl());
+        }
         String msg;
         try {
             msg = gthRequest(GthConstant.BASE_URL,gthSubmitOrderRequest,order.getOrderId(),product.getProductCode());
@@ -356,6 +363,154 @@ public class GthServiceImpl extends BaseServiceImpl implements GthService {
         //商品编码
         gthArgument.setSourceSku(upstreamInfo.getUpstreamProduct().getArgument2());
         return gthArgument;
+    }
+
+    /**
+     * 获取照片上传秘钥
+     *
+     * @param order 订单信息
+     * @param gthArgument 感叹号参数
+     * @return 加密秘钥
+     * @throws Exception
+     */
+    private String getEncryptionSecret(Order order, GthArgument gthArgument) throws Exception {
+        try {
+            // 构造请求参数
+            Map<String, Object> params = new HashMap<>();
+            params.put("share_id", gthArgument.getShareId());
+            params.put("order_id", order.getOrderId());
+
+            // 生成签名：order_id=xxx&share_id=xxx + apiToken
+            String signString = "order_id=" + order.getOrderId() + "&share_id=" + gthArgument.getShareId() + gthArgument.getApiToken();
+            String sign = SecureUtil.md5(signString).toLowerCase();
+            params.put("sign", sign);
+
+            log.info("感叹号获取照片上传秘钥请求参数: {}", JSONObject.toJSONString(params));
+
+            // 发送GET请求
+            String response = httpClient.getForString(GthConstant.GET_PHOTO_SECRET_URL, params, null);
+
+            log.info("感叹号获取照片上传秘钥响应，订单{}: {}", order.getOrderId(), response);
+
+            // 解析响应
+            GthBaseResponse baseResponse = JSONUtil.toBean(response, GthBaseResponse.class);
+            if (baseResponse == null || baseResponse.getMsg() == null || !GthConstant.RESPONSE_SUCCESS.equals(baseResponse.getMsg().getCode())) {
+                String error = baseResponse != null && baseResponse.getMsg() != null ? baseResponse.getMsg().getInfo() : "接口返回异常";
+                log.error("感叹号获取照片上传秘钥失败，订单{}: {}", order.getOrderId(), error);
+                throw new BizException("感叹号获取照片上传秘钥失败: " + error);
+            }
+
+            // 解析秘钥
+            GthPhotoSecretResponse secretResponse = JSONObject.parseObject(JSONObject.toJSONString(baseResponse.getData()), GthPhotoSecretResponse.class);
+            if (secretResponse == null || StringUtils.isEmpty(secretResponse.getStr_rand())) {
+                throw new BizException("感叹号获取照片上传秘钥为空");
+            }
+
+            log.info("感叹号获取照片上传秘钥成功，订单{}: {}", order.getOrderId(), secretResponse.getStr_rand());
+            return secretResponse.getStr_rand();
+
+        } catch (Exception e) {
+            log.error("感叹号获取照片上传秘钥异常，订单{}: {}", order.getOrderId(), e.getMessage(), e);
+            throw new BizException("感叹号获取照片上传秘钥异常: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 更新订单照片信息
+     *
+     * @param order 订单信息
+     * @param product 产品信息
+     * @param upstreamApi 上游API信息
+     * @throws Exception
+     */
+    @Override
+    public void updateOrderPhotos(Order order, Product product, UpstreamApi upstreamApi) throws Exception {
+        if (product.getPhotoRequired() == null || product.getPhotoRequired() != 1) {
+            log.info("订单{} 对应产品不需要照片审核，跳过上游更新", order.getOrderId());
+            return;
+        }
+
+        // 检查是否有照片信息需要更新
+        if (StringUtils.isEmpty(order.getIdCardFrontUrl()) &&
+            StringUtils.isEmpty(order.getIdCardBackUrl()) &&
+            StringUtils.isEmpty(order.getPersonPhotoUrl()) &&
+            StringUtils.isEmpty(order.getCustomPhotoUrl())) {
+            log.info("订单{} 没有照片信息需要更新", order.getOrderId());
+            return;
+        }
+
+        try {
+            // 获取上游信息
+            UpstreamInfo upstreamInfo = upstreamApiService.getUpstreamInfo(upstreamApi.getUpstreamApiCode(), product.getUpstreamProductCode());
+            GthArgument gthArgument = getGthArgument(upstreamInfo);
+
+            // 获取照片上传加密秘钥
+            String encryptionSecret = getEncryptionSecret(order, gthArgument);
+
+            // 构造更新照片请求
+            GthUpdatePhotosRequest updateRequest = new GthUpdatePhotosRequest();
+
+            // 设置从接口获取的加密秘钥
+            updateRequest.setStr_rand(encryptionSecret);
+
+            // 设置照片URL（不需要加密，直接传递URL）
+            if (StringUtils.isNotEmpty(order.getIdCardFrontUrl())) {
+                updateRequest.setFace_url(order.getIdCardFrontUrl());
+            }
+            if (StringUtils.isNotEmpty(order.getIdCardBackUrl())) {
+                updateRequest.setBack_url(order.getIdCardBackUrl());
+            }
+            if (StringUtils.isNotEmpty(order.getPersonPhotoUrl())) {
+                updateRequest.setHand_url(order.getPersonPhotoUrl());
+            }
+            if (StringUtils.isNotEmpty(order.getCustomPhotoUrl())) {
+                updateRequest.setCustom_photos_url(order.getCustomPhotoUrl());
+            }
+
+            log.info("感叹号更新照片请求: {}", JSONObject.toJSONString(updateRequest));
+
+            // 发送请求
+            String response = gthUpdatePhotoRequest(GthConstant.UPDATE_PHOTO_URL, updateRequest, order.getOrderId(), product.getProductCode());
+
+            // 解析响应
+            GthBaseResponse baseResponse = JSONUtil.toBean(response, GthBaseResponse.class);
+            if (baseResponse == null || baseResponse.getMsg() == null || !GthConstant.RESPONSE_SUCCESS.equals(baseResponse.getMsg().getCode())) {
+                String error = baseResponse != null && baseResponse.getMsg() != null ? baseResponse.getMsg().getInfo() : "接口返回异常";
+                log.error("感叹号更新照片失败，订单{}: {}", order.getOrderId(), error);
+                throw new BizException("感叹号更新照片失败: " + error);
+            }
+
+            log.info("感叹号更新照片成功，订单{}", order.getOrderId());
+
+        } catch (Exception e) {
+            log.error("感叹号更新照片异常，订单{}: {}", order.getOrderId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 发送更新照片请求
+     *
+     * @param url 请求URL
+     * @param request 请求数据
+     * @param orderId 订单ID
+     * @param productCode 产品编码
+     * @return 响应结果
+     * @throws Exception
+     */
+    private String gthUpdatePhotoRequest(String url, GthUpdatePhotosRequest request, Long orderId, String productCode) throws Exception {
+        OrderLog orderLog = orderLogService.getOrderLog(orderId.toString(), url, JSONObject.toJSONString(request), null, productCode);
+        try {
+            String response = httpClient.postJsonForString(url, request, null);
+            orderLog.setRequestMsg(response);
+            log.info("感叹号更新照片响应，订单{}: {}", orderId, response);
+            return response;
+        } catch (Exception e) {
+            orderLog.setRequestMsg("更新照片异常: " + e.getMessage());
+            log.error("感叹号更新照片请求异常，订单{}: {}", orderId, e.getMessage(), e);
+            throw new BizException("感叹号更新照片请求异常: " + e.getMessage());
+        } finally {
+            orderLogService.saveOrderLog(orderLog);
+        }
     }
 
 }

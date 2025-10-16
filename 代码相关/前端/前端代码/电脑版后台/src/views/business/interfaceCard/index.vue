@@ -101,20 +101,41 @@
             </div>
         </el-dialog>
 
-        <el-dialog :visible.sync="openDisposition" append-to-body :fullscreen="true">
+        <el-dialog title="产品配置管理" :visible.sync="openDisposition" append-to-body :fullscreen="true">
+            <!-- 搜索表单区域 -->
+            <el-form :model="searchForm" ref="searchForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
+                <el-form-item label="产品名称" prop="upstreamProductName">
+                    <el-input
+                        v-model="searchForm.upstreamProductName"
+                        placeholder="请输入产品名称"
+                        clearable
+                        style="width: 200px"
+                        @keyup.enter.native="handleDispositionQuery"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" icon="el-icon-search" size="mini" :loading="searchLoading" @click="handleDispositionQuery">搜索</el-button>
+                    <el-button icon="el-icon-refresh" size="mini" @click="resetDispositionQuery">重置</el-button>
+                </el-form-item>
+            </el-form>
+
+            <!-- 操作按钮区域 -->
             <el-row :gutter="10" class="mb8">
                 <el-col :span="1.5">
                     <el-button type="primary" plain icon="el-icon-plus" size="mini" @click="handleAddopen('添加')"
                         v-hasPermi="['channel:channelManagement:add']">添加</el-button>
                 </el-col>
+                <!--<el-col :span="1.5">-->
+                <!--    <el-button type="info" icon="el-icon-search" size="mini" @click="showSearch = !showSearch">{{showSearch ? '隐藏搜索' : '显示搜索'}}</el-button>-->
+                <!--</el-col>-->
             </el-row>
-            <el-table ref="tables" :data="listDisposition" row-key="operatorReportId" border lazy height="650"
+            <el-table ref="tables" v-loading="dispositionLoading" :data="listDisposition" row-key="operatorReportId" border lazy height="650"
                 style="font-weight: 700;">
                 <el-table-column label="产品名称" align="center" prop="upstreamProductName" :show-overflow-tooltip="true" />
                 <el-table-column label="关联产品" align="left" prop="territoryCheckType" :show-overflow-tooltip="true">
                     <template slot-scope="scope">
                         <span v-for="item in scope.row.productList">{{item}}<br></span>
-                    
+
                     </template>
                 </el-table-column>
                 <el-table-column label="参数" align="left" prop="territoryCheckType" :show-overflow-tooltip="true">
@@ -126,8 +147,8 @@
                         <span>参数5：{{scope.row.argument5}}</span><br>
                     </template>
                 </el-table-column>
-           
-                
+
+
                 <el-table-column label="时间" align="center" prop="productMasterMap">
                     <template slot-scope="scope">
                         <p>{{formatTimestamp(scope.row.createTime)}}</p>
@@ -239,6 +260,13 @@
                 },
                 // 显示搜索条件
                 showSearch: true,
+                // 产品配置搜索表单
+                searchForm: {
+                    upstreamProductName: ''
+                },
+                // 产品配置loading状态
+                dispositionLoading: false,
+                searchLoading: false,
                 // 总条数
                 total: 100,
                 totalopen: 100,
@@ -265,6 +293,7 @@
                 opendata: {
                     pageNo: 1,
                     pageSize: 10,
+                    upstreamProductName: '',
                 },
                 upstreamApiName: [],
                 queryParams: {
@@ -293,7 +322,7 @@
                         if (res.data) {
                             this.chansm1 = res.data;
                         }
-                   
+
                     console.log(res.data);
                 });
                 this.opentianjia = true;
@@ -301,23 +330,32 @@
                 if (data == "添加") {
                 } else {
                     this.formopen = data;
-  
+
                 }
             },
 
             submitFormopen() {
+                this.dispositionLoading = true;
                 if (this.tianopen == '添加') {
                     this.formopen.upstreamApiId = this.opendata.upstreamApiId;
                     addUpstreamProduct(this.formopen).then((res) => {
                         this.$modal.msgSuccess("新增成功");
-                        this.handleClick(this.opendata);
+                        this.handleDispositionQuery();
                         this.opentianjia = false;
+                    }).catch(() => {
+                        this.$modal.msgError("新增失败");
+                    }).finally(() => {
+                        this.dispositionLoading = false;
                     })
                 } else {
                     updateUpstreamProduct(this.formopen).then((res) => {
                         this.$modal.msgSuccess("修改成功");
-                        this.handleClick(this.opendata);
+                        this.handleDispositionQuery();
                         this.opentianjia = false;
+                    }).catch(() => {
+                        this.$modal.msgError("修改失败");
+                    }).finally(() => {
+                        this.dispositionLoading = false;
                     })
                 }
             },
@@ -328,12 +366,20 @@
                     cancelButtonText: '取消',
                     type: 'warning'
                 }).then(() => {
+                    this.dispositionLoading = true;
                     deleteUpstreamProduct(data.upstreamProductId).then((res) => {
                         this.$message({
                             type: 'success',
                             message: '删除成功!'
                         });
-                        this.handleClick(this.opendata);
+                        this.handleDispositionQuery();
+                    }).catch(() => {
+                        this.$message({
+                            type: 'error',
+                            message: '删除失败!'
+                        });
+                    }).finally(() => {
+                        this.dispositionLoading = false;
                     })
                 }).catch(() => {
                     this.$message({
@@ -346,11 +392,37 @@
                 this.opendata = data;
                 this.opendata.pageNo=1;
                 this.opendata.pageSize=9999;
+                this.searchForm.upstreamProductName = '';
                 this.openDisposition = true;
-                selectUpstreamProductListPage(this.opendata).then((res) => {
+                this.loadDispositionData();
+            },
+            // 加载产品配置数据
+            loadDispositionData() {
+                this.dispositionLoading = true;
+                const queryParams = {
+                    ...this.opendata,
+                    upstreamProductName: this.searchForm.upstreamProductName
+                };
+                return selectUpstreamProductListPage(queryParams).then((res) => {
                     this.listDisposition = res.data.rows;
                     this.totalopen = res.data.totalRows
+                }).finally(() => {
+                    this.dispositionLoading = false;
                 })
+            },
+            // 产品配置搜索
+            handleDispositionQuery() {
+                this.searchLoading = true;
+                this.opendata.pageNo = 1;
+                this.loadDispositionData().finally(() => {
+                    this.searchLoading = false;
+                });
+            },
+            // 重置产品配置搜索
+            resetDispositionQuery() {
+                this.searchForm.upstreamProductName = '';
+                this.opendata.pageNo = 1;
+                this.loadDispositionData();
             },
             handleDelete(data) {
                 this.$confirm('确认要删除吗？', '删除', {

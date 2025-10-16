@@ -737,21 +737,16 @@ footer a {
 
 .photo-card {
     border: 1px solid #e6e6e6;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
-    background: #fafafa;
-    transition: all 0.3s ease;
-}
-
-.photo-card:hover {
-    border-color: #4EAAEF;
-    box-shadow: 0 2px 8px rgba(78, 170, 239, 0.1);
+    background: #fff;
+    margin-bottom: 10px;
 }
 
 .photo-card-header {
-    padding: 12px 15px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-bottom: 1px solid #e6e6e6;
+    padding: 10px 15px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -807,12 +802,11 @@ footer a {
 
 .upload-area {
     border: 2px dashed #4EAAEF;
-    border-radius: 8px;
-    padding: 30px 20px;
+    border-radius: 10px;
+    padding: 20px 15px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s ease;
-    background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+    background: #f8f9fa;
     width: 100%;
     aspect-ratio: 16 / 10;
     display: flex;
@@ -820,19 +814,9 @@ footer a {
     align-items: center;
 }
 
-.upload-area:hover {
-    border-color: #2c7cd6;
-    background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
-    transform: translateY(-2px);
-}
-
-.upload-area:active {
-    transform: translateY(0);
-}
-
 .upload-area.uploading {
     border-color: #ffc107;
-    background: linear-gradient(135deg, #fff9e6 0%, #fffbf0 100%);
+    background: #fff9e6;
     cursor: not-allowed;
 }
 
@@ -854,15 +838,8 @@ footer a {
 }
 
 .upload-icon {
-    font-size: 56px;
-    margin-bottom: 15px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+    font-size: 40px;
+    margin-bottom: 10px;
 }
 
 .upload-text {
@@ -889,9 +866,9 @@ footer a {
 .preview-image-container {
     position: relative;
     display: inline-block;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e6e6e6;
     width: 100%;
     height: 100%;
     max-height: 160px;
@@ -900,15 +877,10 @@ footer a {
 .preview-image {
     width: 100%;
     height: 100%;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    transition: transform 0.3s ease;
     object-fit: cover;
     object-position: center;
-}
-
-.preview-image:hover {
-    transform: scale(1.02);
 }
 
 .preview-actions {
@@ -918,21 +890,14 @@ footer a {
     transform: translate(-50%, -50%);
     display: flex;
     gap: 10px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.preview-image-container:hover .preview-actions {
-    opacity: 1;
 }
 
 .action-btn {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: none;
-    border-radius: 20px;
+    border-radius: 15px;
     font-size: 12px;
     cursor: pointer;
-    transition: all 0.3s ease;
     font-weight: 500;
 }
 
@@ -941,19 +906,9 @@ footer a {
     color: white;
 }
 
-.delete-btn:hover {
-    background: #cc0000;
-    transform: translateY(-2px);
-}
-
 .change-btn {
     background: #4EAAEF;
     color: white;
-}
-
-.change-btn:hover {
-    background: #2c7cd6;
-    transform: translateY(-2px);
 }
 
 .photo-description {
@@ -971,10 +926,9 @@ footer a {
     width: 100%;
     aspect-ratio: 16 / 10;
     overflow: hidden;
-    border-radius: 4px;
+    border-radius: 10px;
     border: 1px solid #e6e6e6;
     background: #f8f9fa;
-    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
 }
@@ -1006,20 +960,9 @@ footer a {
     flex: 1;
     border-radius: 0;
     border: none;
-    transition: all 0.3s ease;
     display: block;
     object-fit: cover;
     object-position: center;
-}
-
-.photo-example:hover {
-    border-color: #4EAAEF;
-    transform: scale(1.02);
-    box-shadow: 0 2px 8px rgba(78, 170, 239, 0.2);
-}
-
-.photo-example:hover img {
-    transform: scale(1.05);
 }
 
 /* 图片预览弹窗 */
@@ -1055,14 +998,8 @@ footer a {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
     font-size: 20px;
     color: #333;
-}
-
-.preview-close:hover {
-    background: white;
-    transform: scale(1.1);
 }
 
 /* 响应式优化 */
@@ -1121,4 +1058,97 @@ footer a {
         padding: 6px 10px;
         font-size: 11px;
     }
+}
+
+/* 编辑模式样式 */
+.edit-header {
+    background: var(--bgThemeColor);
+    color: #333;
+    padding: 15px 20px;
+    text-align: center;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.edit-header h3 {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #0C0C0C;
+}
+
+.edit-header p {
+    font-size: 14px;
+    margin: 3px 0;
+    color: #666;
+}
+
+.edit-header p:first-of-type {
+    font-weight: 600;
+    font-size: 15px;
+    color: #333;
+}
+
+/* 订单信息显示区域 */
+.order-info-section {
+    margin: 15px 10px 0 10px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.info-title {
+    padding: 12px 15px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #0C0C0C;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+}
+
+.info-item {
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+    min-width: 80px;
+    margin-right: 10px;
+}
+
+.info-value {
+    font-size: 14px;
+    color: #333;
+    flex: 1;
+    word-break: break-all;
+}
+
+/* 返回按钮容器 */
+.back-btn-container {
+    margin: 20px 10px;
+    text-align: center;
+}
+
+.back-btn {
+    background-color: red;
+    border: 1px solid red;
+    color: #fff;
+    padding: 12px 30px;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
 }

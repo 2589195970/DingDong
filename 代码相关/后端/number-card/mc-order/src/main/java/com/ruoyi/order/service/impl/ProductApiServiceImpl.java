@@ -70,4 +70,28 @@ public class ProductApiServiceImpl extends ServiceImpl<UpstreamProductMapper, Up
         return order;
     }
 
+    /**
+     * 获取产品信息
+     *
+     * @param productCode 产品编码
+     * @return 产品信息
+     * @throws Exception
+     */
+    @Override
+    public Product getProduct(String productCode) throws Exception {
+        return productService.getProduct(productCode);
+    }
+
+    /**
+     * 获取上游API信息
+     *
+     * @param upstreamApiCode 上游API编码
+     * @return 上游API信息
+     * @throws Exception
+     */
+    @Override
+    public UpstreamApi getUpstreamApi(String upstreamApiCode) throws Exception {
+        return upstreamApiService.getUpstreamApi(upstreamApiCode);
+    }
+
 }

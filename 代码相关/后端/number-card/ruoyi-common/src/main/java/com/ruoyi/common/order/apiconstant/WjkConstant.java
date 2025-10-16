@@ -25,6 +25,11 @@ public class WjkConstant {
      */
     public static final String SUBMIT_URL = "/partner/submitOrder";
 
+    /**
+     * 更新照片
+     */
+    public static final String UPDATE_PHOTO_URL = "/partner/updatePhotos";
+
 
 
 

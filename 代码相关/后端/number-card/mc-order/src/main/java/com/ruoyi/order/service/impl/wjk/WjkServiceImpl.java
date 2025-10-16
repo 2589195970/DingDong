@@ -248,4 +248,108 @@ public class WjkServiceImpl extends BaseServiceImpl implements WjkService {
         return wjkArgument;
     }
 
+    /**
+     * 更新订单照片信息
+     *
+     * @param order 订单信息
+     * @param product 产品信息
+     * @param upstreamApi 上游API信息
+     * @throws Exception
+     */
+    @Override
+    public void updateOrderPhotos(Order order, Product product, UpstreamApi upstreamApi) throws Exception {
+        if (product.getPhotoRequired() == null || product.getPhotoRequired() != 1) {
+            log.info("挖金客订单{} 对应产品不需要照片审核，跳过上游更新", order.getOrderId());
+            return;
+        }
+
+        // 检查是否有照片信息需要更新
+        if (StringUtils.isEmpty(order.getIdCardFrontUrl()) &&
+            StringUtils.isEmpty(order.getIdCardBackUrl()) &&
+            StringUtils.isEmpty(order.getPersonPhotoUrl()) &&
+            StringUtils.isEmpty(order.getCustomPhotoUrl())) {
+            log.info("挖金客订单{} 没有照片信息需要更新", order.getOrderId());
+            return;
+        }
+
+        try {
+            // 获取上游信息
+            UpstreamInfo upstreamInfo = upstreamApiService.getUpstreamInfo(upstreamApi.getUpstreamApiCode(), product.getUpstreamProductCode());
+            WjkArgument wjkArgument = getWjkArgument(upstreamInfo);
+
+            // 构造更新照片请求
+            WjkUpdatePhotosRequest updateRequest = new WjkUpdatePhotosRequest();
+            updateRequest.setOrderNo(order.getOrderId().toString());
+
+            // 设置照片URL
+            if (StringUtils.isNotEmpty(order.getIdCardFrontUrl())) {
+                updateRequest.setIdCardFrontUrl(order.getIdCardFrontUrl());
+            }
+            if (StringUtils.isNotEmpty(order.getIdCardBackUrl())) {
+                updateRequest.setIdCardBackUrl(order.getIdCardBackUrl());
+            }
+            if (StringUtils.isNotEmpty(order.getPersonPhotoUrl())) {
+                updateRequest.setPersonPhotoUrl(order.getPersonPhotoUrl());
+            }
+            if (StringUtils.isNotEmpty(order.getCustomPhotoUrl())) {
+                updateRequest.setCustomPhotoUrl(order.getCustomPhotoUrl());
+            }
+
+            log.info("挖金客更新照片请求: {}", JSONObject.toJSONString(updateRequest));
+
+            // 发送请求
+            String response = wjkUpdatePhotoRequest(WjkConstant.BASE_URL, WjkConstant.UPDATE_PHOTO_URL, updateRequest, wjkArgument, order.getOrderId(), product.getProductCode());
+
+            // 解析响应
+            WjkBaseResponse baseResponse = JSONUtil.toBean(response, WjkBaseResponse.class);
+            if (baseResponse == null || !WjkConstant.RESPONSE_SUCCESS.equals(baseResponse.getCode())) {
+                String error = baseResponse != null ? baseResponse.getDesc() : "接口返回异常";
+                log.error("挖金客更新照片失败，订单{}: {}", order.getOrderId(), error);
+                throw new BizException("挖金客更新照片失败: " + error);
+            }
+
+            log.info("挖金客更新照片成功，订单{}", order.getOrderId());
+
+        } catch (Exception e) {
+            log.error("挖金客更新照片异常，订单{}: {}", order.getOrderId(), e.getMessage(), e);
+            // 不抛出异常，避免影响本地数据库更新
+            // 可以考虑记录失败状态或加入重试机制
+        }
+    }
+
+    /**
+     * 发送更新照片请求
+     *
+     * @param base 基础URL
+     * @param url 接口路径
+     * @param request 请求数据
+     * @param wjkArgument 挖金客参数
+     * @param orderId 订单ID
+     * @param productCode 产品编码
+     * @return 响应结果
+     * @throws Exception
+     */
+    private String wjkUpdatePhotoRequest(String base, String url, WjkUpdatePhotosRequest request, WjkArgument wjkArgument, Long orderId, String productCode) throws Exception {
+        // 设置挖金客通用参数
+        request.setSerial(UUID.fastUUID().toString().replaceAll("-", "").substring(0,15));
+        request.setPartnerId(wjkArgument.getPartnerId());
+        request.setProductId(wjkArgument.getProductId());
+        request.setTimestamp(System.currentTimeMillis());
+        request.setSign(SignUtils.getSign(wjkArgument.getAppKey(), request));
+
+        OrderLog orderLog = orderLogService.getOrderLog(orderId.toString(), base + url, JSONObject.toJSONString(request), null, productCode);
+        try {
+            String response = httpClient.postJsonForString(base + url, request, null);
+            orderLog.setRequestMsg(response);
+            log.info("挖金客更新照片响应，订单{}: {}", orderId, response);
+            return response;
+        } catch (Exception e) {
+            orderLog.setRequestMsg("更新照片异常: " + e.getMessage());
+            log.error("挖金客更新照片请求异常，订单{}: {}", orderId, e.getMessage(), e);
+            throw new BizException("挖金客更新照片请求异常: " + e.getMessage());
+        } finally {
+            orderLogService.saveOrderLog(orderLog);
+        }
+    }
+
 }

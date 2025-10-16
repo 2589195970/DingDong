@@ -67,6 +67,18 @@ public class GthSubmitOrderRequest extends GthBaseRequest{
     @ApiModelProperty(value = "详购买号码", required = true)
     private String pretty_number;
 
+    @ApiModelProperty(value = "份证人相面url地址(文件,url地址二选一)", required = false)
+    private String face_url;
+
+    @ApiModelProperty(value = "身份证背面url地址", required = false)
+    private String back_url;
+
+    @ApiModelProperty(value = "人像面url地址", required = false)
+    private String hand_url;
+
+    @ApiModelProperty(value = "自定义照片URL地址（学生证）", required = false)
+    private String custom_photos_url;
+
     /**
      * share_id、sku、source_id 3个字段，根据字段名key=val 格式进行&连接，追加api_token之后， md5加密（加密结果32位小写） 。注意：三个字段的顺序不能变。
      * 原串例：share_id=123&sku=321&source_id=123321jW5DoNjzP7NXb1nvf4ZKGb4bH0fWbbiwokzoyo8QX7cmSuy4l6

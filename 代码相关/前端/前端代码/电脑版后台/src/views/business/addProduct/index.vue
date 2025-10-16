@@ -23,10 +23,9 @@
                 <el-select v-model="ruleForm.productType" placeholder="请选择结算模式">
                     <el-option label="日结秒返" value="0"></el-option>
                     <el-option label="月结产品" value="1"></el-option>
-                    <el-option label="长期产品" value="2"></el-option>
-                    <el-option label="其它" value="3"></el-option>
-                    <el-option label="组合返佣" value="4"></el-option>
-
+                    <!--<el-option label="长期产品" value="2"></el-option>-->
+                    <!--<el-option label="其它" value="3"></el-option>-->
+                    <!--<el-option label="组合返佣" value="4"></el-option>-->
                 </el-select>
             </el-form-item>
             <br>
@@ -57,24 +56,24 @@
             </el-form-item>
             <el-form-item label="通话分钟" prop="name">
                 <el-input placeholder="请输入内容" v-model="ruleForm.productThfz" :min="1">
-                    <template slot="append">分</template>
+                    <template slot="append">分钟</template>
                 </el-input>
                 <!-- <el-input v-model="ruleForm.productThfz"></el-input> -->
 
             </el-form-item>
             <br>
-            <el-form-item label="优惠月租" prop="delivery">
-                <el-input placeholder="请输入内容" v-model="ruleForm.productYhyz" :min="1">
-                    <template slot="append">元</template>
-                </el-input>
-                <!-- <el-input-number v-model="ruleForm.productYhyz" controls-position="right" :min="1"></el-input-number> -->
-            </el-form-item>
-            <el-form-item label="原始月租" prop="delivery">
-                <el-input placeholder="请输入内容" v-model="ruleForm.productYsyz" :min="1">
-                    <template slot="append">元</template>
-                </el-input>
-                <!-- <el-input-number v-model="ruleForm.productYsyz" controls-position="right" :min="1"></el-input-number> -->
-            </el-form-item>
+            <!--<el-form-item label="优惠月租" prop="delivery">-->
+            <!--    <el-input placeholder="请输入内容" v-model="ruleForm.productYhyz" :min="1">-->
+            <!--        <template slot="append">元</template>-->
+            <!--    </el-input>-->
+            <!--    &lt;!&ndash; <el-input-number v-model="ruleForm.productYhyz" controls-position="right" :min="1"></el-input-number> &ndash;&gt;-->
+            <!--</el-form-item>-->
+            <!--<el-form-item label="原始月租" prop="delivery">-->
+            <!--    <el-input placeholder="请输入内容" v-model="ruleForm.productYsyz" :min="1">-->
+            <!--        <template slot="append">元</template>-->
+            <!--    </el-input>-->
+            <!--    &lt;!&ndash; <el-input-number v-model="ruleForm.productYsyz" controls-position="right" :min="1"></el-input-number> &ndash;&gt;-->
+            <!--</el-form-item>-->
             <br>
             <el-form-item label="首充说明" prop="name">
                 <el-input v-model="ruleForm.productScsm"></el-input>
@@ -86,9 +85,9 @@
                 <el-input v-model="ruleForm.productFafs"></el-input>
             </el-form-item>
             <br>
-            <el-form-item label="套餐介绍" prop="name">
-                <el-input v-model="ruleForm.productTcjs"></el-input>
-            </el-form-item>
+            <!--<el-form-item label="套餐介绍" prop="name">-->
+            <!--    <el-input v-model="ruleForm.productTcjs"></el-input>-->
+            <!--</el-form-item>-->
             <el-form-item label="推广要求" prop="name">
                 <el-input v-model="ruleForm.productDemand"></el-input>
             </el-form-item>
@@ -106,7 +105,7 @@
                 </el-select>
             </el-form-item>
             <el-form-item label="选择产品" prop="region">
-                <el-select v-model="ruleForm.upstreamProductId" placeholder="请选择产品">
+                <el-select v-model="ruleForm.upstreamProductId" placeholder="请选择产品" filterable>
                     <el-option v-for="dict in upstreamProductCode" :key="dict.upstreamProductId"
                         :label="dict.upstreamProductName" :value="dict.upstreamProductId" />
                 </el-select>

@@ -123,8 +123,6 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         return PageResultFactory.createPageResult(productSelectVOPage);
     }
 
-
-
     /**
      * 新增产品
      * @return
@@ -136,7 +134,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         BeanUtil.copyProperties(productAddAndUpdateBO,product);
         //生成产品编码 8位数
         product.setProductCode(RandomUtil.randomString(BaseConstant.EIGHT_INT));
-        product.setProductStatus(ProductEnum.ProductStatusEnum.NO.getStatus());
+        product.setProductStatus(ProductEnum.ProductStatusEnum.YES.getStatus());
         //排序默认0
         product.setProductSort(BaseConstant.ZERO_INT);
         product.setProductCommission(BaseConstant.ZERO_INT);
@@ -396,12 +394,17 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
         // 更新当前代理商自己的产品状态
         updateCurrentAgentProduct(product, productUpdateStatusBO.getProductStatus(), currentAgentAccount.getAgentCode());
-
-        // 只有下架操作才影响下游代理商
-        if(productUpdateStatusBO.getProductStatus() == 0) {
+        if (loginUser.getUser().isAdmin()) {
             // 递归下架所有下游代理商的产品
-            updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode());
+            updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode(), productUpdateStatusBO.getProductStatus());
+        }else{
+            // 只有下架操作才影响下游代理商
+            if(productUpdateStatusBO.getProductStatus() == 0) {
+                // 递归下架所有下游代理商的产品
+                updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode(),productUpdateStatusBO.getProductStatus());
+            }
         }
+
     }
 
     /**
@@ -469,30 +472,28 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
      * 递归下架所有下游代理商的产品
      * @param productCode 产品编码
      * @param parentAgentCode 父代理商编码
-     * TODO: 确认是下游代理商的当前产品还是父级产品为当前产品的也受影响
      */
-    private void updateDownstreamAgentProducts(String productCode, String parentAgentCode) {
-        // 更新当前层级的下游代理商产品状态为下架
+    private void updateDownstreamAgentProducts(String productCode, String parentAgentCode,Integer productStatus) {
+        // 更新当前层级的下游代理商产品状态
         AgentProduct agentProduct = new AgentProduct();
-        agentProduct.setProductStatus(0); // 下架状态
+        agentProduct.setProductStatus(productStatus);
         agentProduct.setUpdateTime(System.currentTimeMillis());
-        
-        agentProductService.update(agentProduct, 
+
+        agentProductService.update(agentProduct,
             new LambdaQueryWrapper<AgentProduct>()
                 .eq(AgentProduct::getParentProductCode, productCode)
                 .eq(AgentProduct::getParentAgentCode, parentAgentCode) // 当前层级的父代理商
-                .eq(AgentProduct::getProductStatus, 1) // 只更新当前上架的产品
         );
-        
+
         // 查询当前层级的下游代理商
         List<AgentAccount> downstreamAgents = agentAccountService.list(
             new LambdaQueryWrapper<AgentAccount>()
                 .eq(AgentAccount::getParentAgentCode, parentAgentCode)
         );
-        
+
         // 递归处理每个下游代理商的下游代理商
         for (AgentAccount downstreamAgent : downstreamAgents) {
-            updateDownstreamAgentProducts(productCode, downstreamAgent.getAgentCode());
+            updateDownstreamAgentProducts(productCode, downstreamAgent.getAgentCode(),productStatus);
         }
     }
 

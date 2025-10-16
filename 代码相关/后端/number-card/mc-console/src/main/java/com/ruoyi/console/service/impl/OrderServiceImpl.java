@@ -21,6 +21,7 @@ import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.http.HttpClient;
 import com.ruoyi.common.order.bo.AgainOrderBO;
 import com.ruoyi.common.order.bo.OrderSelectBO;
+import com.ruoyi.common.order.bo.OrderUpdateBO;
 import com.ruoyi.common.order.bo.PhotoAuditBO;
 import com.ruoyi.common.order.bo.PhotoUploadBO;
 import com.ruoyi.common.order.bo.UpdateOrderStatusBO;
@@ -94,6 +95,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Resource
     AgentAccountMapper agentAccountMapper;
 
+  
     /**
      * 订单查询
      *
@@ -1115,6 +1117,116 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         } catch (Exception e) {
             log.error("添加订单日志失败: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * 查询订单信息（用于照片修改）
+     *
+     * @param orderId 订单ID
+     * @return 订单信息
+     * @throws BizException 业务异常
+     */
+    @Override
+    public Order selectOrderById(Long orderId) throws BizException {
+        if (orderId == null) {
+            throw new BizException("订单ID不能为空");
+        }
+
+        Order order = baseMapper.selectById(orderId);
+        if (order == null) {
+            throw new BizException("订单不存在");
+        }
+
+        return order;
+    }
+
+    /**
+     * 更新订单信息（照片修改）
+     *
+     * @param updateBO 订单更新业务对象
+     * @throws BizException 业务异常
+     */
+    @Override
+    public void updateOrderInfo(OrderUpdateBO updateBO) throws BizException {
+        if (updateBO == null || updateBO.getOrderId() == null) {
+            throw new BizException("订单ID不能为空");
+        }
+
+        Order order = baseMapper.selectById(updateBO.getOrderId());
+        if (order == null) {
+            throw new BizException("订单不存在");
+        }
+
+        // 验证订单状态（只有特定状态才能修改照片）
+        if (order.getPhotoStatus() == null || order.getPhotoStatus() == 0) {
+            throw new BizException("该订单不支持照片修改");
+        }
+
+        // 检查产品是否需要照片审核
+        Product product = productService.getProduct(order.getProductCode());
+        if (product == null || product.getPhotoRequired() == null || product.getPhotoRequired() != 1) {
+            throw new BizException("该订单对应的产品不需要照片审核");
+        }
+
+        // 更新照片信息
+        order.setIdCardFrontUrl(updateBO.getIdCardFrontUrl());
+        order.setIdCardBackUrl(updateBO.getIdCardBackUrl());
+        order.setPersonPhotoUrl(updateBO.getPersonPhotoUrl());
+        order.setCustomPhotoUrl(updateBO.getCustomPhotoUrl());
+
+        // 更新地址信息（可选）
+        if (StringUtils.isNotBlank(updateBO.getCardAddress())) {
+            order.setCardAddress(updateBO.getCardAddress());
+        }
+        if (StringUtils.isNotBlank(updateBO.getProvinceCode())) {
+            order.setProvinceCode(updateBO.getProvinceCode());
+        }
+        if (StringUtils.isNotBlank(updateBO.getProvinceName())) {
+            order.setProvinceName(updateBO.getProvinceName());
+        }
+        if (StringUtils.isNotBlank(updateBO.getCityCode())) {
+            order.setCityCode(updateBO.getCityCode());
+        }
+        if (StringUtils.isNotBlank(updateBO.getCityName())) {
+            order.setCityName(updateBO.getCityName());
+        }
+        if (StringUtils.isNotBlank(updateBO.getCountyCode())) {
+            order.setCountyCode(updateBO.getCountyCode());
+        }
+        if (StringUtils.isNotBlank(updateBO.getCountyName())) {
+            order.setCountyName(updateBO.getCountyName());
+        }
+
+        // 自动状态流转：照片修改完成 -> 管理员待审核
+        order.setPhotoStatus(OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus());
+        order.setPhotoUploadTime(System.currentTimeMillis());
+        order.setUpdateTime(System.currentTimeMillis());
+
+        // 记录操作日志
+        addOrderLog(order.getOrderId(), "用户修改照片", "通过H5页面修改订单照片");
+
+        baseMapper.updateById(order);
+
+        // 调用上游API更新照片信息
+        try {
+            updateOrderPhotosToUpstream(order);
+        } catch (Exception e) {
+            log.error("调用上游API更新照片失败，订单ID: {}, 错误: {}", updateBO.getOrderId(), e.getMessage(), e);
+            // 不抛出异常，避免影响本地数据库更新
+        }
+    }
+
+    /**
+     * 调用上游API更新照片信息
+     * 注意：此方法暂时禁用，因为需要跨服务调用mc-order模块
+     *
+     * @param order 订单信息
+     * @throws Exception
+     */
+    private void updateOrderPhotosToUpstream(Order order) throws Exception {
+        log.warn("订单{} 的上游照片更新功能暂时禁用，需要通过HTTP API调用mc-order服务", order.getOrderId());
+        // TODO: 通过HTTP API调用mc-order服务的照片更新功能
+        // 目前只记录日志，不执行上游更新
     }
 
 }

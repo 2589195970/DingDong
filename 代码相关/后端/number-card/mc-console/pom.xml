@@ -73,7 +73,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
+  
         <dependency>
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-system</artifactId>

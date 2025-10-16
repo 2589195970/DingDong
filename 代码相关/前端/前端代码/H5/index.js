@@ -126,8 +126,9 @@ new Vue({
       photoConfigList: [],
       uploadedPhotos: {},
       imagePreviewVisible: false,
-      previewImageUrl: ''
+      previewImageUrl: '',
 
+  
     };
   },
   computed: {
@@ -145,18 +146,20 @@ new Vue({
   },
 
   created() {
-    axios.post(baseUrl + '/product/h5Info', {
-      productCode: getQueryString('productCode')
-    }).then(res => {
-      this.productList = res.data;
-      this.productList.productTemplateJson = JSON.parse(this.productList.productTemplateJson);
-      document.body.style.setProperty('--bgThemeColor', this.productList.productTemplateJson.bgThemeColor);
+    // 检测是否为编辑模式，如果是则跳转到编辑页面
+    const mode = getQueryString('mode');
+    const orderId = getQueryString('orderId');
 
-      // 解析照片配置
-      if (this.productList.photoRequired == 1 && this.productList.photoConfig) {
-        this.photoConfigList = JSON.parse(this.productList.photoConfig);
-      }
-    })
+    if (mode === 'edit' && orderId) {
+      // 跳转到编辑页面
+      const productCode = getQueryString('productCode');
+      this.goToEditPage(orderId, productCode);
+      return;
+    }
+
+    // 加载产品信息
+    this.loadProductInfo();
+
     // 从浏览器本地获取用户信息
     this.name = sessionStorage.getItem('name')
     this.phone = sessionStorage.getItem('phone')
@@ -226,6 +229,23 @@ new Vue({
     this.fillData();
   },
   methods: {
+    // 加载产品信息
+    loadProductInfo() {
+      axios.post(baseUrl + '/product/h5Info', {
+        productCode: getQueryString('productCode')
+      }).then(res => {
+        this.productList = res.data;
+        this.productList.productTemplateJson = JSON.parse(this.productList.productTemplateJson);
+        document.body.style.setProperty('--bgThemeColor', this.productList.productTemplateJson.bgThemeColor);
+
+        // 解析照片配置
+        if (this.productList.photoRequired == 1 && this.productList.photoConfig) {
+          this.photoConfigList = JSON.parse(this.productList.photoConfig);
+        }
+      })
+    },
+
+  
     // 格式化文件大小
     formatFileSize(bytes) {
       if (bytes === 0) return '0 B';
@@ -507,6 +527,12 @@ new Vue({
       window.location.href = aggregationPageUrl;
     },
 
+    // 跳转到编辑页面
+    goToEditPage(orderId, productCode) {
+      const editUrl = `edit.html?orderId=${orderId}&productCode=${productCode}&agentCode=${getQueryString('agentCode')}`;
+      window.location.href = editUrl;
+    },
+
     chooseDivNone() {
       this.chooseDiv = false;
       this.time = 120;
@@ -608,32 +634,26 @@ new Vue({
       // if (tijiao) {
       const postData = {
 
-        // 姓名
+        // 基本信息
         cardName: this.name,
-        //  地址省
         provinceCode: this.regionDetail[0].code,
         provinceName: this.regionDetail[0].name,
-        // 地址市
         cityCode: this.regionDetail[1].code,
         cityName: this.regionDetail[1].name,
-        //  地址区
         countyCode: this.regionDetail[2].code,
         countyName: this.regionDetail[2].name,
         cardAddress: this.address.replace(/\n/g, ''),
-        // 身份证
         cardId: this.idCardNo,
-        // 手机号
         productCode: this.productList.productCode,
-
         agentCode: getQueryString('agentCode'),
         cardPhone: this.phone,
         jsonParam: JSON.stringify({
           ...getUrlParamObj(),
           link: encodeURIComponent(window.location.href),
         })
-
       };
 
+  
       // 添加照片URL数据
       if (this.productList.photoRequired == 1) {
         console.log('=== 开始处理照片数据提交 ===');
@@ -697,7 +717,7 @@ new Vue({
           forbidClick: true,
         });
 
-        // 使用普通JSON格式提交
+        // 发送请求
         axios.post(baseUrl + '/order/submitInfo', postData, {
           showLoading: false
         }).then(res => {
@@ -705,6 +725,8 @@ new Vue({
           if (res.code !== 200) {
             return;
           }
+
+          // 新增订单原有逻辑
           this.successModalVisible = true;
         }).catch(error => {
           vant.Toast.clear();
@@ -712,18 +734,14 @@ new Vue({
           vant.Toast('提交失败，请重试');
         });
       } else {
-        // 原有的提交逻辑（无照片）
+        // 无照片的提交逻辑
         axios.post(baseUrl + '/order/submitInfo', postData).then(res => {
           if (res.code !== 200) {
             return;
           }
+
+          // 新增订单原有逻辑
           this.successModalVisible = true;
-          // js2();
-          // setTimeout(() => {
-          //   if (res.data && res.data.href) {
-          //     window.location.href = res.data.href;
-          //   }
-          // }, 1000);
         })
 
         // 保存用户信息到sessionStorage

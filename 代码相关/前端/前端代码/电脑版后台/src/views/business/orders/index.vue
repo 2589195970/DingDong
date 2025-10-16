@@ -178,7 +178,8 @@
                     <template v-if="scope.row.photoStatus !== undefined && scope.row.photoStatus !== null && scope.row.photoStatus !== 0">
                       <div  v-if="scope.row.photoStatus === 1 || scope.row.photoStatus === 5">
                         <el-button @click="handlePhotoUpload(scope.row)" type="text" size="small"
-                                   style="color: #409EFF">上传照片</el-button><br>
+                                   style="color: #409EFF">上传照片</el-button>
+                        <el-button @click="handleCopyEditLink(scope.row)" type="text" size="small">复制证件上传链接</el-button><br>
                       </div>
                       <div v-if="scope.row.photoStatus === 2">
                         <el-button @click="handleSubmitPhoto(scope.row)" type="text" size="small"
@@ -523,6 +524,7 @@
         submitPhotoForAudit,
         auditOrderPhotos,
         getOrderPhotoStatus,
+        getH5Config,
     } from "@/api/monitor/business";
     import { getToken } from "@/utils/auth";
     export default {
@@ -749,6 +751,10 @@
                     currentField: "",
                     onSuccessCallback: null
                 },
+
+                // H5页面配置缓存
+                h5PageConfigCache: null,
+                h5ConfigPromise: null,
 
             };
         },
@@ -1264,6 +1270,73 @@
                     this.$message.error('上传图片大小不能超过 2MB!');
                 }
                 return (isJPG || isPNG) && isLt2M;
+            },
+
+            // 复制编辑链接
+            handleCopyEditLink(row) {
+                // 获取H5页面配置信息
+                this.getH5PageConfig().then(h5Config => {
+                    const productCode = row.productCode || '';
+                    const orderId = row.orderId;
+
+                    // 使用后端配置的h5BaseUrl作为基础域名
+                    const baseUrl = h5Config.h5BaseUrl;
+                    const h5Path = '/index.html'; // H5页面路径
+
+                    // 构建完整的编辑链接
+                    const editLink = `${baseUrl}${h5Path}?productCode=${productCode}&mode=edit&orderId=${orderId}`;
+
+                    // 创建临时文本区域来复制到剪贴板
+                    const textArea = document.createElement('textarea');
+                    textArea.value = editLink;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+
+                    try {
+                        const successful = document.execCommand('copy');
+                        if (successful) {
+                            this.$message.success('编辑链接已复制到剪贴板！');
+                        } else {
+                            this.$message.error('复制失败，请手动复制：' + editLink);
+                        }
+                    } catch (err) {
+                        this.$message.error('复制失败，请手动复制：' + editLink);
+                    }
+
+                    document.body.removeChild(textArea);
+                }).catch(error => {
+                    console.error('获取H5配置失败:', error);
+                    this.$message.error('获取H5页面配置失败，无法生成编辑链接');
+                });
+            },
+
+            // 获取H5页面配置信息（带缓存机制）
+            getH5PageConfig() {
+                // 如果已缓存，直接返回缓存的配置
+                if (this.h5PageConfigCache) {
+                    return Promise.resolve(this.h5PageConfigCache);
+                }
+
+                // 如果正在请求中，返回相同的Promise
+                if (this.h5ConfigPromise) {
+                    return this.h5ConfigPromise;
+                }
+
+                // 发起请求并缓存结果
+                this.h5ConfigPromise = getH5Config().then(res => {
+                    if (res && res.data) {
+                        this.h5PageConfigCache = res.data;
+                        return res.data;
+                    } else {
+                        throw new Error('获取配置信息失败');
+                    }
+                }).catch(error => {
+                    console.error('获取H5页面配置失败:', error);
+                    this.h5ConfigPromise = null; // 重置Promise以便重试
+                    throw error;
+                });
+
+                return this.h5ConfigPromise;
             },
 
         },

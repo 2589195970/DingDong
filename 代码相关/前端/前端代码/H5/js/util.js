@@ -1,5 +1,5 @@
 // let baseUrl = 'https://api.dingdonghaoka.com/api';
-let baseUrl = 'http://127.0.0.1:8081/';
+let baseUrl = 'http://127.0.0.1:8081';
 function getQueryString(name) {
   var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)","i");
   var r = window.location.search.substr(1).match(reg);
@@ -188,12 +188,12 @@ function getAggregationPageUrl() {
   if (window.location.host.includes('h5.dingdonghaoka.com')) {
     // 生产环境：h5.dingdonghaoka.com 跳转到 shop.dingdonghaoka.com/聚合页/
     // 添加URL参数，让聚合页直接进入订单查询模式
-    return 'https://shop.dingdonghaoka.com/聚合页/index.html?mode=order-query';
+    return 'https://shop.dingdonghaoka.com/index.html?mode=order-query';
   } else if (window.location.host.includes('localhost')) {
     // 本地开发环境
     return '../聚合页/index.html?mode=order-query';
   } else {
     // 其他环境或测试环境，根据实际情况配置
-    return 'https://shop.dingdonghaoka.com/聚合页/index.html?mode=order-query';
+    return 'https://shop.dingdonghaoka.com/index.html?mode=order-query';
   }
 }

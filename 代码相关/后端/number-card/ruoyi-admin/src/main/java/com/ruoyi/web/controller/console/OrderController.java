@@ -3,21 +3,19 @@ package com.ruoyi.web.controller.console;
 import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.core.page.ResponseEntity;
 import com.ruoyi.common.exception.BizException;
-import com.ruoyi.common.order.bo.AgainOrderBO;
-import com.ruoyi.common.order.bo.OrderSelectBO;
-import com.ruoyi.common.order.bo.PhotoAuditBO;
-import com.ruoyi.common.order.bo.PhotoUploadBO;
-import com.ruoyi.common.order.bo.UpdateOrderStatusBO;
-import com.ruoyi.common.order.bo.UploadOrderListExcelBO;
+import com.ruoyi.common.order.bo.*;
+import com.ruoyi.common.order.entity.Order;
 import com.ruoyi.common.order.vo.OrderSelectVO;
 import com.ruoyi.console.service.OrderService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +28,9 @@ public class OrderController {
 
     @Resource
     OrderService orderService;
+
+    @Value("${submit.h5}")
+    private String h5BaseUrl;
 
     /**
      * 分页查询订单
@@ -314,6 +315,88 @@ public class OrderController {
         } catch (Exception e) {
             log.info("{}方法异常:{}", "getOrderPhotoStatus", e.getMessage());
             return ResponseEntity.error("查询照片状态失败,请稍候重试:"+e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 查询订单信息（用于照片修改）
+     *
+     * @return
+     */
+    @GetMapping("/getOrderInfo")
+    @ApiOperation("查询订单信息")
+    public ResponseEntity getOrderInfo(@RequestParam(required = false, value = "orderId") Long orderId) {
+        try {
+            Order order = orderService.selectOrderById(orderId);
+            if (order == null) {
+                return ResponseEntity.error("订单不存在", null);
+            }
+
+            // 转换为前端需要的格式
+            Map<String, Object> orderInfo = new HashMap<>();
+            orderInfo.put("orderId", order.getOrderId());
+            orderInfo.put("cardName", order.getCardName());
+            orderInfo.put("cardPhone", order.getCardPhone());
+            orderInfo.put("cardId", order.getCardId());
+            orderInfo.put("cardAddress", order.getCardAddress());
+            orderInfo.put("provinceCode", order.getProvinceCode());
+            orderInfo.put("provinceName", order.getProvinceName());
+            orderInfo.put("cityCode", order.getCityCode());
+            orderInfo.put("cityName", order.getCityName());
+            orderInfo.put("countyCode", order.getCountyCode());
+            orderInfo.put("countyName", order.getCountyName());
+
+            // 照片URL
+            orderInfo.put("idCardFrontUrl", order.getIdCardFrontUrl());
+            orderInfo.put("idCardBackUrl", order.getIdCardBackUrl());
+            orderInfo.put("personPhotoUrl", order.getPersonPhotoUrl());
+            orderInfo.put("customPhotoUrl", order.getCustomPhotoUrl());
+
+            return ResponseEntity.success(orderInfo);
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "getOrderInfo", e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "getOrderInfo", e.getMessage());
+            return ResponseEntity.error("查询失败,请稍候重试:" + e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 更新订单信息（照片修改专用）
+     *
+     * @return
+     */
+    @PostMapping("/updateOrderInfo")
+    @ApiOperation("更新订单信息")
+    public ResponseEntity updateOrderInfo(@RequestBody OrderUpdateBO updateBO) {
+        try {
+            orderService.updateOrderInfo(updateBO);
+            return ResponseEntity.success();
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "updateOrderInfo", e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "updateOrderInfo", e.getMessage());
+            return ResponseEntity.error("更新失败,请稍候重试:" + e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 获取H5页面基础URL配置
+     *
+     * @return
+     */
+    @GetMapping("/getH5Config")
+    @ApiOperation("获取H5页面基础URL配置")
+    public ResponseEntity<Map<String, Object>> getH5Config() {
+        try {
+            Map<String, Object> config = new HashMap<>();
+            config.put("h5BaseUrl", h5BaseUrl);
+            return ResponseEntity.success(config);
+        } catch (Exception e) {
+            log.error("{} getH5Config方法异常:{}", TAG, e.getMessage(), e);
+            return ResponseEntity.error("获取H5配置失败,请稍候重试", null);
         }
     }
 

@@ -8,6 +8,7 @@ import com.ruoyi.common.order.entity.Order;
 import com.ruoyi.common.order.reuqest.OrderSubmitRequest;
 import com.ruoyi.common.order.reuqest.OrderSubmitResponse;
 import com.ruoyi.common.order.vo.OrderListVO;
+import com.ruoyi.order.bo.OrderUpdateBO;
 
 import java.util.List;
 
@@ -35,4 +36,20 @@ public interface OrderService extends IService<Order> {
       * @throws BizException
       */
      List<OrderListVO> selectOrderList(OrderListBO orderListBO) throws Exception;
+
+     /**
+      * 查询订单信息（用于照片修改）
+      * @param orderId 订单ID
+      * @return 订单信息
+      * @throws BizException 业务异常
+      */
+     Order selectOrderById(Long orderId) throws BizException;
+
+     /**
+      * 更新订单信息（照片修改专用）
+      * @param updateBO 订单更新业务对象
+      * @throws BizException 业务异常
+      */
+     void updateOrderInfo(OrderUpdateBO updateBO) throws BizException;
+
 }

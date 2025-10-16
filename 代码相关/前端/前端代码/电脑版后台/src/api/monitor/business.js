@@ -462,3 +462,11 @@ export function getOrderPhotoStatus(query) {
     params: query,
   });
 }
+
+// 获取H5页面基础URL配置
+export function getH5Config() {
+  return request({
+    url: "/order/getH5Config",
+    method: "get",
+  });
+}

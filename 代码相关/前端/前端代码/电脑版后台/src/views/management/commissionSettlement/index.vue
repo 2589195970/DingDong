@@ -23,7 +23,7 @@
         </el-form>
         <el-table ref="tables" v-loading="loading" :data="list" row-key="operatorReportId" border lazy height="550"
             :row-class-name="tableRowClassName" id="dingp">
-            <el-table-column label="ID" align="center" prop="orderCommissionId" />
+            <el-table-column label="订单id" align="center" prop="orderId" />
             <el-table-column label="代理商" align="center" prop="showDownstreamName" :show-overflow-tooltip="true" />
             <el-table-column label="关联信息" align="label" prop="phone" :show-overflow-tooltip="true">
                 <template slot-scope="scope">
@@ -396,12 +396,12 @@
             },
             tableRowClassName({ row, rowIndex }) {
                 if (row.contactExpireTime) {
-                    var begindate = new Date(Date.parse(this.changeTime(row.contactExpireTime))); //将开始时间由字符串格式转换为日期格式       
-                    begindate = new Date(Date.parse(begindate)); //将开始时间由字符串格式转换为日期格式       
-                    var myDate = new Date(); //此处将服务器当前日期作为结束日期，也可为其他任意时间 
-                    var startDate = begindate.getTime(); //将开始日期转换成毫秒 
-                    var endDate = myDate.getTime(); //将结束日期转换成毫秒  
-                    var day = parseInt((startDate - endDate) / 1000 / 3600 / 24); //结束日期减去开始日期后转换成天数    
+                    var begindate = new Date(Date.parse(this.changeTime(row.contactExpireTime))); //将开始时间由字符串格式转换为日期格式
+                    begindate = new Date(Date.parse(begindate)); //将开始时间由字符串格式转换为日期格式
+                    var myDate = new Date(); //此处将服务器当前日期作为结束日期，也可为其他任意时间
+                    var startDate = begindate.getTime(); //将开始日期转换成毫秒
+                    var endDate = myDate.getTime(); //将结束日期转换成毫秒
+                    var day = parseInt((startDate - endDate) / 1000 / 3600 / 24); //结束日期减去开始日期后转换成天数
                     console.log('day', day); //day 457
                     if (day < 0) {
                         return 'warning-row';

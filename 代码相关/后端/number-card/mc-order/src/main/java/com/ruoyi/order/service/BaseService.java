@@ -65,6 +65,16 @@ public interface BaseService {
      */
     void callback(BaseNotifyRequest notifyRequest) throws Exception;
 
+    /**
+     * 更新订单照片信息
+     *
+     * @param order 订单信息
+     * @param product 产品信息
+     * @param upstreamApi 上游API信息
+     * @throws Exception
+     */
+    void updateOrderPhotos(Order order, Product product, UpstreamApi upstreamApi) throws Exception;
+
 
 
 }

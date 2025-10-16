@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-cn">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+		content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>订单照片修改 - 叮咚号卡</title>
+	<link rel="stylesheet" href="./css/vant@2.9.min.css" />
+	<link rel="stylesheet" href="./css/from.css">
+	<script src="./js/vue.js"></script>
+	<script src="./js/vant.js"></script>
+	<link rel="stylesheet" href="./index.css">
+</head>
+
+<body>
+	<div id="app">
+		<div id="p-con">
+			<!-- 编辑模式标题 -->
+			<div class="edit-header">
+				<h3>订单照片修改</h3>
+				<p>订单ID: {{ orderInfo ? orderInfo.orderId : editOrderId }}</p>
+				<p>产品: {{ productList.productName }}</p>
+				<p>收件人: {{ name }}</p>
+			</div>
+
+			<div class="form-con">
+				<div class="form">
+					<van-form class="van-form" style="width: calc(100% - 0.7rem);border-radius: 10px;">
+						<!-- 订单信息显示区域 -->
+						<!--<div class="order-info-section">-->
+						<!--	<div class="info-title">订单信息</div>-->
+						<!--	<div class="info-item">-->
+						<!--		<span class="info-label">订单ID：</span>-->
+						<!--		<span class="info-value">{{ editOrderId }}</span>-->
+						<!--	</div>-->
+						<!--	<div class="info-item">-->
+						<!--		<span class="info-label">收件人：</span>-->
+						<!--		<span class="info-value">{{ name }}</span>-->
+						<!--	</div>-->
+						<!--	<div class="info-item">-->
+						<!--		<span class="info-label">联系方式：</span>-->
+						<!--		<span class="info-value">{{ phone }}</span>-->
+						<!--	</div>-->
+						<!--	<div class="info-item">-->
+						<!--		<span class="info-label">身份证：</span>-->
+						<!--		<span class="info-value">{{ idCardNo }}</span>-->
+						<!--	</div>-->
+						<!--	<div class="info-item">-->
+						<!--		<span class="info-label">配送地区：</span>-->
+						<!--		<span class="info-value">{{ region }}</span>-->
+						<!--	</div>-->
+						<!--	<div class="info-item">-->
+						<!--		<span class="info-label">详细地址：</span>-->
+						<!--		<span class="info-value">{{ address }}</span>-->
+						<!--	</div>-->
+						<!--</div>-->
+
+						<!-- 照片上传区域 -->
+						<div class="photo-upload-section" v-if="productList.photoRequired == 1">
+                            <div class="photo-upload-container">
+                                <div v-for="(photoConfig, index) in photoConfigList" :key="photoConfig.photoType"
+                                     v-if="photoConfig.required == 1"
+                                     :class="['photo-upload-item', {'required': photoConfig.required == 1}]">
+
+                                    <!-- 照片上传卡片 -->
+                                    <div class="photo-card">
+                                        <div class="photo-card-header">
+                                            <div class="photo-title">
+                                                <span v-if="photoConfig.required == 1" class="required">*</span>
+                                                {{ photoConfig.title }}
+                                            </div>
+                                        </div>
+
+                                        <div class="photo-card-content">
+                                            <!-- 左侧上传区域 -->
+                                            <div class="upload-section">
+                                                <!-- 上传区域 -->
+                                                <div class="upload-area" v-if="!uploadedPhotos[photoConfig.photoType]"
+                                                     @click="triggerFileInput(photoConfig.photoType)">
+                                                    <div class="upload-placeholder">
+                                                        <div class="upload-icon"></div>
+                                                        <div class="upload-text">点击上传{{ photoConfig.title }}</div>
+                                                        <div class="upload-hint">支持 {{ photoConfig.supportedFormats }} 格式</div>
+                                                    </div>
+                                                    <input type="file"
+                                                           :ref="'fileInput' + photoConfig.photoType"
+                                                           accept="image/*"
+                                                           style="display: none"
+                                                           @change="handleFileSelect($event, photoConfig)">
+                                                </div>
+
+                                                <!-- 上传中状态 -->
+                                                <div class="upload-area uploading" v-else-if="uploadedPhotos[photoConfig.photoType].uploading">
+                                                    <div class="upload-placeholder">
+                                                        <div class="upload-text">正在上传{{ photoConfig.title }}...</div>
+                                                        <div class="upload-hint">请稍候</div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 预览区域 -->
+                                                <div class="preview-area" v-else>
+                                                    <div class="preview-image-container">
+                                                        <img :src="uploadedPhotos[photoConfig.photoType].preview"
+                                                             :alt="photoConfig.title"
+                                                             class="preview-image"
+                                                             @click="previewFullImage(uploadedPhotos[photoConfig.photoType].preview)">
+                                                        <div class="preview-actions">
+                                                            <button class="action-btn delete-btn"
+                                                                    @click.stop="removePhoto(photoConfig.photoType)">
+                                                                删除
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 右侧示例图片 -->
+                                            <div class="example-section">
+                                                <div class="photo-example" v-if="photoConfig.exampleUrl"
+                                                     @click="previewFullImage(photoConfig.exampleUrl)">
+                                                    <img
+                                                            :src="photoConfig.exampleUrl"
+                                                            :alt="photoConfig.title + '示例'"
+                                                    >
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 照片说明 -->
+                                        <div class="photo-description" v-if="photoConfig.description">
+                                            {{ photoConfig.description }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+						</div>
+					</van-form>
+				</div>
+			</div>
+
+			<!-- 返回按钮 -->
+			<div class="back-btn-container">
+				<button class="back-btn" @click="submit" >提交</button>
+			</div>
+
+			<!-- 图片预览弹窗 -->
+			<van-popup v-model="imagePreviewVisible" class="image-preview-popup" position="center">
+				<div class="image-preview-container">
+					<img :src="previewImageUrl" alt="预览图片" class="preview-full-image" />
+					<div class="preview-close" @click="imagePreviewVisible = false">
+						<van-icon name="close" />
+					</div>
+				</div>
+			</van-popup>
+
+			<!-- 提交成功弹窗 -->
+			<van-popup v-model="successModalVisible" class="success-popup" :close-on-click-overlay="false"
+				:overlay-style="{ backgroundColor: 'rgba(0,0,0,.5)' }">
+				<div class="success-modal-con">
+					<div class="success-modal" style="padding: 25px">
+						<p class="tip2">照片已更新，订单状态已变更为待审核，请保持电话畅通！</p>
+					</div>
+					<van-icon class="icon" name="close" @click="successModalVisible=false" />
+				</div>
+			</van-popup>
+		</div>
+	</div>
+</body>
+<script src="./js/axios.js"></script>
+<script src="./js/util.js"></script>
+<script src="./js/area.js"></script>
+<script type="text/javascript" src="./edit.js"></script>
+
+</html>

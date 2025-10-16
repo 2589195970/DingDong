@@ -5,12 +5,16 @@ import com.ruoyi.order.service.order.OrderService;
 import com.ruoyi.common.core.page.ResponseEntity;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.reuqest.OrderSubmitRequest;
+import com.ruoyi.common.order.entity.Order;
+import com.ruoyi.order.bo.OrderUpdateBO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 订单处理相关接口
@@ -46,5 +50,68 @@ public class OrderController {
         }
     }
 
+    /**
+     * 查询订单信息（用于照片修改）
+     *
+     * @return
+     */
+    @GetMapping("/getOrderInfo")
+    @ApiOperation("查询订单信息")
+    public ResponseEntity getOrderInfo(@RequestParam(required = false, value = "orderId") Long orderId) {
+        try {
+            Order order = orderService.selectOrderById(orderId);
+            if (order == null) {
+                return ResponseEntity.error("订单不存在", null);
+            }
+
+            // 转换为前端需要的格式
+            Map<String, Object> orderInfo = new HashMap<>();
+            orderInfo.put("orderId", order.getOrderId());
+            orderInfo.put("cardName", order.getCardName());
+            orderInfo.put("cardPhone", order.getCardPhone());
+            orderInfo.put("cardId", order.getCardId());
+            orderInfo.put("cardAddress", order.getCardAddress());
+            orderInfo.put("provinceCode", order.getProvinceCode());
+            orderInfo.put("provinceName", order.getProvinceName());
+            orderInfo.put("cityCode", order.getCityCode());
+            orderInfo.put("cityName", order.getCityName());
+            orderInfo.put("countyCode", order.getCountyCode());
+            orderInfo.put("countyName", order.getCountyName());
+
+            // 照片URL
+            orderInfo.put("idCardFrontUrl", order.getIdCardFrontUrl());
+            orderInfo.put("idCardBackUrl", order.getIdCardBackUrl());
+            orderInfo.put("personPhotoUrl", order.getPersonPhotoUrl());
+            orderInfo.put("customPhotoUrl", order.getCustomPhotoUrl());
+
+            return ResponseEntity.success(orderInfo);
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "getOrderInfo", e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "getOrderInfo", e.getMessage());
+            return ResponseEntity.error("查询失败,请稍候重试:" + e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 更新订单信息（照片修改专用）
+     *
+     * @return
+     */
+    @PostMapping("/updateOrderInfo")
+    @ApiOperation("更新订单信息")
+    public ResponseEntity updateOrderInfo(@RequestBody OrderUpdateBO updateBO) {
+        try {
+            orderService.updateOrderInfo(updateBO);
+            return ResponseEntity.success();
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "updateOrderInfo", e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "updateOrderInfo", e.getMessage());
+            return ResponseEntity.error("更新失败,请稍候重试:" + e.getMessage(), null);
+        }
+    }
 
 }
