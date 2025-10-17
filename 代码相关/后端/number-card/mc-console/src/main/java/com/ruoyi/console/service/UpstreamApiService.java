@@ -8,6 +8,7 @@ import com.ruoyi.common.order.bo.UpstreamApiAddAndUpdateBO;
 import com.ruoyi.common.order.bo.UpstreamApiSelectBO;
 import com.ruoyi.common.order.entity.UpstreamApi;
 import com.ruoyi.common.order.entity.UpstreamExplain;
+import com.ruoyi.common.order.entity.UpstreamInfo;
 import com.ruoyi.common.order.vo.UpstreamApiTypeVO;
 
 import java.util.List;
@@ -68,5 +69,22 @@ public interface UpstreamApiService extends IService<UpstreamApi> {
      * @return
      */
       UpstreamExplain selectUpstreamExplain(String upstreamApiType, Integer explainType);
+
+    /**
+     * 根据上游API和产品代码获取上游信息
+     * @param upstreamApiCode 上游API代码
+     * @param upstreamProductCode 上游产品代码
+     * @return 上游信息
+     * @throws BizException
+     */
+    UpstreamInfo getUpstreamInfo(String upstreamApiCode, String upstreamProductCode) throws BizException;
+
+    /**
+     * 获取上游API信息
+     * @param upstreamApiCode 上游API编码
+     * @return 上游API信息
+     * @throws Exception
+     */
+    UpstreamApi getUpstreamApi(String upstreamApiCode) throws Exception;
 
 }

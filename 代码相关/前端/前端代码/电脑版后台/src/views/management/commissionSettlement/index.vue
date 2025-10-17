@@ -83,7 +83,7 @@
         </el-table>
         <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
             @pagination="getList" />
-        <el-dialog :visible.sync="cambiare" width="550px" append-to-body :show-close="false">
+        <el-dialog :visible.sync="cambiare" width="550px" append-to-body>
             <el-form ref="cambiareform" v-model="cambiareform" label-width="100px">
                 <el-form-item prop="businessType">
                     <el-select v-model="cambiareform.orderCommissionStatus" placeholder="订单状态" clearable filterable
@@ -129,7 +129,7 @@
             </el-form>
             <div slot="footer" class="dialog-footer">
                 <el-button type="primary" @click="submitFileForm1">确 定</el-button>
-                <el-button @click="open = false">取 消</el-button>
+                <el-button @click="upload.open = false">取 消</el-button>
             </div>
 
         </el-dialog>

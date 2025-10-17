@@ -304,6 +304,18 @@
                         @change="handlePhotoConfigChange">
                     </photo-config>
                 </div>
+
+                <!-- 审核配置 -->
+                <div class="topss">
+                    <div style="border-bottom: 1px solid #F2F2F2; font-weight: 700; font-size: 14px; margin: 10px;">审核配置
+                    </div>
+                    <el-form-item label="是否需要审核" prop="sfxysh">
+                        <el-radio-group v-model="ruleForm.sfxysh">
+                            <el-radio :label="0">否</el-radio>
+                            <el-radio :label="1">是</el-radio>
+                        </el-radio-group>
+                    </el-form-item>
+                </div>
                 <el-form-item style="width: 100%; text-align: center;">
                     <el-button type="primary" @click="submitup()">修改</el-button>
                     <el-button @click="ruleFormdialog=false">取消</el-button>
@@ -515,6 +527,10 @@
                 })
 
                 this.ruleForm = data;
+                // 确保 sfxysh 字段有默认值
+                if (this.ruleForm.sfxysh === undefined || this.ruleForm.sfxysh === null) {
+                    this.ruleForm.sfxysh = 0;
+                }
                 console.log(this.ruleForm.isAllAgent);
 
                 // 设置照片配置数据

@@ -130,5 +130,27 @@ okhttp:
   resetConnection: true
   maxHostConnection: 20
 
+# 上游照片上传配置
+upstream:
+  photo:
+    # 全局开关
+    enabled: true
+    # 供应商配置
+    providers:
+      # 感叹号供应商配置
+      gth:
+        enabled: true
+        base-url: https://api.gth-example.com
+        share-id: your_share_id_here
+        api-key: your_api_key_here
+        # 可选的超时配置（毫秒）
+        timeout: 30000
+      # 可扩展其他供应商
+      # supplier2:
+      #   enabled: false
+      #   base-url: https://api.supplier2.com
+      #   app-id: your_app_id
+      #   app-secret: your_app_secret
+
 
 

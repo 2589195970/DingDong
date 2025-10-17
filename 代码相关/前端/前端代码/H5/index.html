@@ -22,142 +22,196 @@
 			<div style="position: relative;">
 				<img class="full-img" :src="productList.productMasterMap" alt="" />
 			</div>
+			<!-- 步骤导航 -->
+			<div class="step-indicator" v-if="productList.photoRequired == 1">
+				<div class="step-item" :class="{'step-active': currentStep === 1, 'step-inactive': currentStep !== 1}">
+					<span class="step-number">1</span>
+					<span class="step-text">填写基础信息</span>
+				</div>
+				<span style="color: #ccc; margin: 0 15px;">→</span>
+				<div class="step-item" :class="{'step-active': currentStep === 2, 'step-inactive': currentStep !== 2}">
+					<span class="step-number">2</span>
+					<span class="step-text">上传照片</span>
+				</div>
+			</div>
+
 			<div class="form-con">
 				<div class="form">
 					<van-form class="van-form" style="width: calc(100% - 0.7rem);border-radius: 10px;">
-						<div class="chais1">
-							<img class="chais" v-show="xiaos"
-								src="https://staticcdn.xwtec.cn/static/taobaoH5/common/images/landing/cmcc/styles/lbjt19jrtt/chai1.gif"
-								alt="">
-						</div>
-						<van-field @blur="loseName" @focus='focusName' v-model="name" label="姓名"
-							placeholder="请输入收件人姓名(已加密)" required clearable></van-field>
-						<div class="regname" v-if='xiaos1'>&nbsp;&nbsp;&nbsp;&nbsp;*姓名<span>未填写</span>，请填写办理人的姓名
-						</div>
-						<van-field v-model="phone" type="number" label="联系方式" placeholder="请输入收件人电话，并保持畅通" required
-							clearable :maxlength="11" @blur="lose"></van-field>
-						<div class="regname" v-if='xiaos2'>
-							&nbsp;&nbsp;&nbsp;&nbsp;*收货号码<span>未填写</span>，请填写办理人常用号码作为收货号码</div>
-						<van-field v-model="idCardNo" label="身份证" placeholder="未满18周岁请勿下单(已加密)" required clearable
-							:maxlength="18"></van-field>
+						<!-- 需要照片上传时的分步显示 -->
+						<template v-if="productList.photoRequired == 1">
+							<!-- 第一步：基础信息 -->
+							<div v-show="currentStep === 1">
+								<div class="chais1">
+									<img class="chais" v-show="xiaos"
+										src="https://staticcdn.xwtec.cn/static/taobaoH5/common/images/landing/cmcc/styles/lbjt19jrtt/chai1.gif"
+										alt="">
+								</div>
+								<van-field @blur="loseName" @focus='focusName' v-model="name" label="姓名"
+									placeholder="请输入收件人姓名(已加密)" required clearable></van-field>
+								<div class="regname" v-if='xiaos1'>&nbsp;&nbsp;&nbsp;&nbsp;*姓名<span>未填写</span>，请填写办理人的姓名
+								</div>
+								<van-field v-model="phone" type="number" label="联系方式" placeholder="请输入收件人电话，并保持畅通" required
+									clearable :maxlength="11" @blur="lose"></van-field>
+								<div class="regname" v-if='xiaos2'>
+									&nbsp;&nbsp;&nbsp;&nbsp;*收货号码<span>未填写</span>，请填写办理人常用号码作为收货号码</div>
+								<van-field v-model="idCardNo" label="身份证" placeholder="未满18周岁请勿下单(已加密)" required clearable
+									:maxlength="18"></van-field>
 
-						<van-field v-model="region" label="配送地区" placeholder="请选择所在地区" required
-							@click="areaVisible=true">
-							<template #right-icon>
-								<van-icon name="arrow" />
-							</template>
-						</van-field>
+								<van-field v-model="region" label="配送地区" placeholder="请选择所在地区" required
+									@click="areaVisible=true">
+									<template #right-icon>
+										<van-icon name="arrow" />
+									</template>
+								</van-field>
 
+								<van-field v-model="address" rows="1" label="详细地址" required
+									placeholder="如街道/小区/门牌号" @blur="loseAddress"></van-field>
 
-						<!-- <div class="diz1"
-							style="border-radius: 20px; width: calc(100% - 0.5rem); margin: 0 auto; display: flex; flex-wrap: wrap; background-color: #fff ">
-							<p class="regname1"><i class="red" style="font-size: 16px;">*</i> <i
-									style="padding: 10px;">详细地址 </i><i class="red">（本人可收货详细地址，精确到门牌号）</i></p> -->
-						<van-field v-model="address" rows="1" label="详细地址" required
-							placeholder="如街道/小区/门牌号" @blur="loseAddress"></van-field>
-						<!-- </div> -->
-
-						<!-- 照片上传区域 -->
-						<div class="photo-upload-section" v-if="productList.photoRequired == 1">
-							<div class="photo-upload-title">
-								<span class="required-star">*</span>
-								<span>照片上传</span>
+								<div style="text-align: center; margin: 15px 0;">
+									<img src="./img/an.gif" class="btn-primary-img" id="btnNextStep" alt="" @click="nextStep" />
+								</div>
 							</div>
-							<div class="photo-upload-container">
-								<div v-for="(photoConfig, index) in photoConfigList" :key="photoConfig.photoType"
-									v-if="photoConfig.required == 1"
-									:class="['photo-upload-item', {'required': photoConfig.required == 1}]">
 
-									<!-- 照片上传卡片 -->
-									<div class="photo-card">
-										<div class="photo-card-header">
-											<div class="photo-title">
-												<span v-if="photoConfig.required == 1" class="required">*</span>
-												{{ photoConfig.title }}
-											</div>
-											<!--<div class="photo-size-hint">-->
-											<!--	{{ formatFileSize(photoConfig.maxSize) }} · {{ photoConfig.minWidth }}×{{ photoConfig.minHeight }}px起-->
-											<!--</div>-->
-										</div>
+							<!-- 第二步：照片上传 -->
+							<div v-show="currentStep === 2">
+								<!-- 照片上传区域 -->
+								<div class="photo-upload-section">
+									<div class="photo-upload-container">
+										<div v-for="(photoConfig, index) in photoConfigList" :key="photoConfig.photoType"
+											v-if="photoConfig.required == 1"
+											:class="['photo-upload-item', {'required': photoConfig.required == 1}]">
 
-										<div class="photo-card-content">
-											<!-- 左侧上传区域 -->
-											<div class="upload-section">
-												<!-- 上传区域 -->
-												<div class="upload-area" v-if="!uploadedPhotos[photoConfig.photoType]"
-													@click="triggerFileInput(photoConfig.photoType)">
-													<div class="upload-placeholder">
-														<div class="upload-icon"></div>
-														<div class="upload-text">点击上传{{ photoConfig.title }}</div>
-														<div class="upload-hint">支持 {{ photoConfig.supportedFormats }} 格式</div>
-													</div>
-													<input type="file"
-														:ref="'fileInput' + photoConfig.photoType"
-														accept="image/*"
-														style="display: none"
-														@change="handleFileSelect($event, photoConfig)">
-												</div>
-
-												<!-- 上传中状态 -->
-												<div class="upload-area uploading" v-else-if="uploadedPhotos[photoConfig.photoType].uploading">
-													<div class="upload-placeholder">
-														<div class="upload-text">正在上传{{ photoConfig.title }}...</div>
-														<div class="upload-hint">请稍候</div>
+											<!-- 照片上传卡片 -->
+											<div class="photo-card">
+												<div class="photo-card-header">
+													<div class="photo-title">
+														<span v-if="photoConfig.required == 1" class="required">*</span>
+														{{ photoConfig.title }}
 													</div>
 												</div>
 
-												<!-- 预览区域 -->
-												<div class="preview-area" v-else>
-													<div class="preview-image-container">
-														<img :src="uploadedPhotos[photoConfig.photoType].preview"
-															:alt="photoConfig.title"
-															class="preview-image"
-															@click="previewFullImage(uploadedPhotos[photoConfig.photoType].preview)">
-														<div class="preview-actions">
-															<button class="action-btn delete-btn"
-																@click.stop="removePhoto(photoConfig.photoType)">
-																删除
-															</button>
+												<div class="photo-card-content">
+													<!-- 左侧上传区域 -->
+													<div class="upload-section">
+														<!-- 上传区域 -->
+														<div class="upload-area" v-if="!uploadedPhotos[photoConfig.photoType]"
+															@click="triggerFileInput(photoConfig.photoType)">
+															<div class="upload-placeholder">
+																<div class="upload-icon"></div>
+																<div class="upload-text">点击上传{{ photoConfig.title }}</div>
+																<div class="upload-hint">支持 {{ photoConfig.supportedFormats }} 格式</div>
+															</div>
+															<input type="file"
+																:ref="'fileInput' + photoConfig.photoType"
+																accept="image/*"
+																style="display: none"
+																@change="handleFileSelect($event, photoConfig)">
+														</div>
+
+														<!-- 上传中状态 -->
+														<div class="upload-area uploading" v-else-if="uploadedPhotos[photoConfig.photoType].uploading">
+															<div class="upload-placeholder">
+																<div class="upload-text">正在上传{{ photoConfig.title }}...</div>
+																<div class="upload-hint">请稍候</div>
+															</div>
+														</div>
+
+														<!-- 预览区域 -->
+														<div class="preview-area" v-else>
+															<div class="preview-image-container">
+																<img :src="uploadedPhotos[photoConfig.photoType].preview"
+																	:alt="photoConfig.title"
+																	class="preview-image"
+																	@click="previewFullImage(uploadedPhotos[photoConfig.photoType].preview)">
+																<div class="preview-actions">
+																	<button class="action-btn delete-btn"
+																		@click.stop="removePhoto(photoConfig.photoType)">
+																		删除
+																	</button>
+																</div>
+															</div>
+														</div>
+													</div>
+
+													<!-- 右侧示例图片 -->
+													<div class="example-section">
+														<div class="photo-example" v-if="photoConfig.exampleUrl"
+															@click="previewFullImage(photoConfig.exampleUrl)">
+															<img
+																:src="photoConfig.exampleUrl"
+																:alt="photoConfig.title + '示例'"
+															>
 														</div>
 													</div>
 												</div>
-											</div>
 
-											<!-- 右侧示例图片 -->
-											<div class="example-section">
-												<div class="photo-example" v-if="photoConfig.exampleUrl"
-													@click="previewFullImage(photoConfig.exampleUrl)">
-													<img
-														:src="photoConfig.exampleUrl"
-														:alt="photoConfig.title + '示例'"
-													>
+												<!-- 照片说明 -->
+												<div class="photo-description" v-if="photoConfig.description">
+													{{ photoConfig.description }}
 												</div>
 											</div>
 										</div>
-
-										<!-- 照片说明 -->
-										<div class="photo-description" v-if="photoConfig.description">
-											{{ photoConfig.description }}
-										</div>
 									</div>
 								</div>
+
+								<div style="text-align: center; margin: 15px 0;">
+									<a @click="prevStep" style="color: #4EAAEF; font-size: 14px; margin-right: 20px;">返回上一步</a>
+									<img src="./img/an.gif" class="btn-primary-img" id="btnSubmit" alt="" @click="submit" />
+								</div>
 							</div>
-						</div>
 
-						<div>
-							<img src="./img/an.gif" class="btn-primary-img" id="btnPrimary" alt="" @click="submit" />
-							<!-- <van-button type="primary" class="btn-primary" id="btnPrimary"
-								@click="submit">立即提交</van-button> -->
-						</div>
+							<p class="protocol" v-show="currentStep === 2">
+								<van-checkbox v-model="protocolChecked" checked-color="#4EAAEF"
+									class="checkbox"></van-checkbox>
+								<span>我已阅读</span>
+								<a @click="protocolVisible1=true">《入网协议》</a>
+								<span>和</span>
+								<a @click="protocolVisible2=true">《信息收集公告》</a>
+							</p>
+						</template>
 
-						<p class="protocol">
-							<van-checkbox v-model="protocolChecked" checked-color="#4EAAEF"
-								class="checkbox"></van-checkbox>
-							<span>我已阅读</span>
-							<a @click="protocolVisible1=true">《入网协议》</a>
-							<span>和</span>
-							<a @click="protocolVisible2=true">《信息收集公告》</a>
-						</p>
+						<!-- 不需要照片上传时的单步显示 -->
+						<template v-else>
+							<div class="chais1">
+								<img class="chais" v-show="xiaos"
+									src="https://staticcdn.xwtec.cn/static/taobaoH5/common/images/landing/cmcc/styles/lbjt19jrtt/chai1.gif"
+									alt="">
+							</div>
+							<van-field @blur="loseName" @focus='focusName' v-model="name" label="姓名"
+								placeholder="请输入收件人姓名(已加密)" required clearable></van-field>
+							<div class="regname" v-if='xiaos1'>&nbsp;&nbsp;&nbsp;&nbsp;*姓名<span>未填写</span>，请填写办理人的姓名
+							</div>
+							<van-field v-model="phone" type="number" label="联系方式" placeholder="请输入收件人电话，并保持畅通" required
+								clearable :maxlength="11" @blur="lose"></van-field>
+							<div class="regname" v-if='xiaos2'>
+								&nbsp;&nbsp;&nbsp;&nbsp;*收货号码<span>未填写</span>，请填写办理人常用号码作为收货号码</div>
+							<van-field v-model="idCardNo" label="身份证" placeholder="未满18周岁请勿下单(已加密)" required clearable
+								:maxlength="18"></van-field>
+
+							<van-field v-model="region" label="配送地区" placeholder="请选择所在地区" required
+								@click="areaVisible=true">
+								<template #right-icon>
+									<van-icon name="arrow" />
+								</template>
+							</van-field>
+
+							<van-field v-model="address" rows="1" label="详细地址" required
+								placeholder="如街道/小区/门牌号" @blur="loseAddress"></van-field>
+
+							<div>
+								<img src="./img/an.gif" class="btn-primary-img" id="btnPrimary" alt="" @click="submit" />
+							</div>
+
+							<p class="protocol">
+								<van-checkbox v-model="protocolChecked" checked-color="#4EAAEF"
+									class="checkbox"></van-checkbox>
+								<span>我已阅读</span>
+								<a @click="protocolVisible1=true">《入网协议》</a>
+								<span>和</span>
+								<a @click="protocolVisible2=true">《信息收集公告》</a>
+							</p>
+						</template>
 					</van-form>
 				</div>
 			</div>

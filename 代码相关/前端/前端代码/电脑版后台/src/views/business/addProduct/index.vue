@@ -163,6 +163,20 @@
                 @change="handlePhotoConfigChange">
             </photo-config>
         </div>
+
+        <!-- 审核配置 -->
+        <div class="topss">
+            <div style="border-bottom: 1px solid #F2F2F2; font-weight: 700; font-size: 14px; margin: 10px;">审核配置</div>
+            <el-form-item label="是否需要审核" prop="sfxysh">
+                <el-radio-group v-model="ruleForm.sfxysh">
+                    <el-radio :label="0">否</el-radio>
+                    <el-radio :label="1">是</el-radio>
+                </el-radio-group>
+            </el-form-item>
+        </div>
+        <div class="topss">
+
+        </div>
         <el-form-item
             style="position: fixed; bottom:-22px; background-color: #F2F2F2;padding: 10px 0;height: 50px;text-align: center;width: 100%;">
             <el-button type="primary" @click="submitForm('ruleForm')" :loading="submitLoading">立即创建</el-button>
@@ -205,6 +219,7 @@
                     desc: '',
                     photoRequired: 0, // 默认不需要上传照片
                     photoConfig: null, // 照片配置
+                    sfxysh: 0, // 默认不需要审核
                     // 接口相关字段
                     upstreamApiId: '',
                     upstreamApiName: '',
@@ -342,6 +357,7 @@
                 };
                 this.ruleForm.photoRequired = 0;
                 this.ruleForm.photoConfig = null;
+                this.ruleForm.sfxysh = 0;
             }
         }
     }

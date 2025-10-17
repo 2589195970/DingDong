@@ -119,6 +119,12 @@ public class UpstreamProductVO {
     private Integer photoRequired;
 
     /**
+     * 是否需要审核 0 否 1 是
+     */
+    @ApiModelProperty("是否需要审核 0 否 1 是")
+    private Integer sfxysh;
+
+    /**
      * 照片上传配置 JSON格式
      */
     @ApiModelProperty("照片上传配置 JSON格式")

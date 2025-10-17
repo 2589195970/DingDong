@@ -3,6 +3,7 @@ package com.ruoyi.web.controller.system;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -22,7 +23,9 @@ import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.common.utils.html.EscapeUtil;
 import com.ruoyi.system.domain.SysNotice;
+import com.ruoyi.system.domain.vo.SysNoticeVO;
 import com.ruoyi.system.service.ISysNoticeService;
 
 import javax.annotation.Resource;
@@ -47,7 +50,29 @@ public class SysNoticeController extends BaseController
     {
         startPage();
         List<SysNotice> list = noticeService.selectNoticeList(notice);
-        return getDataTable(list);
+
+        // 转换为VO并生成纯文本概述
+        List<SysNoticeVO> voList = list.stream().map(entity -> {
+            SysNoticeVO vo = new SysNoticeVO();
+            // 复制基础属性
+            vo.setNoticeId(entity.getNoticeId());
+            vo.setNoticeTitle(entity.getNoticeTitle());
+            vo.setNoticeType(entity.getNoticeType());
+            vo.setNoticeContent(entity.getNoticeContent());
+            vo.setStatus(entity.getStatus());
+            vo.setCreateBy(entity.getCreateBy());
+            vo.setCreateTime(entity.getCreateTime());
+            vo.setUpdateBy(entity.getUpdateBy());
+            vo.setUpdateTime(entity.getUpdateTime());
+            vo.setRemark(entity.getRemark());
+
+            // 生成纯文本概述（限制150字符）
+            vo.setContentSummary(EscapeUtil.extractTextSummary(entity.getNoticeContent(), 150));
+
+            return vo;
+        }).collect(Collectors.toList());
+
+        return getDataTable(voList);
     }
 
     /**
@@ -121,6 +146,28 @@ public class SysNoticeController extends BaseController
         }
 
         List<SysNotice> list = noticeService.selectNoticeListByUserScope(notice, params);
-        return getDataTable(list);
+
+        // 转换为VO并生成纯文本概述
+        List<SysNoticeVO> voList = list.stream().map(entity -> {
+            SysNoticeVO vo = new SysNoticeVO();
+            // 复制基础属性
+            vo.setNoticeId(entity.getNoticeId());
+            vo.setNoticeTitle(entity.getNoticeTitle());
+            vo.setNoticeType(entity.getNoticeType());
+            vo.setNoticeContent(entity.getNoticeContent());
+            vo.setStatus(entity.getStatus());
+            vo.setCreateBy(entity.getCreateBy());
+            vo.setCreateTime(entity.getCreateTime());
+            vo.setUpdateBy(entity.getUpdateBy());
+            vo.setUpdateTime(entity.getUpdateTime());
+            vo.setRemark(entity.getRemark());
+
+            // 生成纯文本概述（限制150字符）
+            vo.setContentSummary(EscapeUtil.extractTextSummary(entity.getNoticeContent(), 150));
+
+            return vo;
+        }).collect(Collectors.toList());
+
+        return getDataTable(voList);
     }
 }

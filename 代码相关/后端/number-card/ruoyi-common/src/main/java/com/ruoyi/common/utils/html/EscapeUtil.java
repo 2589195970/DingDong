@@ -52,13 +52,250 @@ public class EscapeUtil
 
     /**
      * 清除所有HTML标签，但是不删除标签内的内容
-     * 
+     *
      * @param content 文本
      * @return 清除标签后的文本
      */
     public static String clean(String content)
     {
         return new HTMLFilter().filter(content);
+    }
+
+    /**
+     * 提取HTML内容的纯文本概述
+     * 清除所有HTML标签并格式化文本，适合用于列表展示的概述信息
+     *
+     * @param htmlContent HTML内容
+     * @param maxLength 概述最大长度，超过则截断并添加"..."
+     * @return 纯文本概述
+     */
+    public static String extractTextSummary(String htmlContent, int maxLength)
+    {
+        if (StringUtils.isEmpty(htmlContent))
+        {
+            return StringUtils.EMPTY;
+        }
+
+        // 优化：先尝试快速智能解析，避免HTMLFilter的性能开销
+        String smartSummary = extractFastSmartSummary(htmlContent);
+        if (StringUtils.isNotEmpty(smartSummary))
+        {
+            return limitLength(smartSummary, maxLength);
+        }
+
+        // 降级处理：快速移除HTML标签（避免HTMLFilter）
+        String textOnly = htmlContent.replaceAll("<[^>]+>", "");
+
+        // 解码HTML实体和清理空白
+        textOnly = unescapeHtmlEntities(textOnly).replaceAll("\\s+", " ").trim();
+
+        return limitLength(textOnly, maxLength);
+    }
+
+    /**
+     * 提取HTML内容的纯文本概述（默认长度100）
+     *
+     * @param htmlContent HTML内容
+     * @return 纯文本概述
+     */
+    public static String extractTextSummary(String htmlContent)
+    {
+        return extractTextSummary(htmlContent, 100);
+    }
+
+    /**
+     * 快速智能解析 - 高性能版本
+     *
+     * @param htmlContent 原始HTML内容
+     * @return 结构化的文本概述
+     */
+    private static String extractFastSmartSummary(String htmlContent)
+    {
+        if (StringUtils.isEmpty(htmlContent))
+        {
+            return "";
+        }
+
+        // 快速检测：如果包含产品通知标识，进行快速解析
+        if (htmlContent.contains("product-title") || htmlContent.contains("status-badge"))
+        {
+            return extractProductInfoFast(htmlContent);
+        }
+
+        return "";
+    }
+
+    /**
+     * 快速产品信息提取 - 单次遍历，高性能
+     */
+    private static String extractProductInfoFast(String htmlContent)
+    {
+        StringBuilder title = new StringBuilder();
+        StringBuilder status = new StringBuilder();
+        StringBuilder code = new StringBuilder();
+        StringBuilder time = new StringBuilder();
+
+        // 使用单次扫描和简单的字符串匹配，避免复杂正则
+        String[] lines = htmlContent.split("(?=<)|(?<=>)");
+
+        for (String line : lines)
+        {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+
+            // 快速标题检测
+            if (title.length() == 0 && line.contains("product-title"))
+            {
+                int start = line.indexOf('>') + 1;
+                int end = line.indexOf('<', start);
+                if (start > 0 && end > start)
+                {
+                    title.append(line.substring(start, end).trim());
+                }
+            }
+            // 快速状态检测
+            else if (status.length() == 0 && line.contains("status-badge"))
+            {
+                int start = line.indexOf('>') + 1;
+                int end = line.indexOf('<', start);
+                if (start > 0 && end > start)
+                {
+                    status.append(line.substring(start, end).trim());
+                }
+            }
+            // 快速编码检测
+            else if (code.length() == 0 && line.contains("产品编码"))
+            {
+                int colonIndex = line.indexOf('：');
+                if (colonIndex == -1) colonIndex = line.indexOf(':');
+                if (colonIndex != -1)
+                {
+                    String afterColon = line.substring(colonIndex + 1).trim();
+                    int tagIndex = afterColon.indexOf('<');
+                    if (tagIndex != -1)
+                    {
+                        code.append(afterColon.substring(0, tagIndex).trim());
+                    }
+                    else
+                    {
+                        code.append(afterColon);
+                    }
+                }
+            }
+            // 快速时间检测
+            else if (time.length() == 0 && line.contains("操作时间"))
+            {
+                int colonIndex = line.indexOf('：');
+                if (colonIndex == -1) colonIndex = line.indexOf(':');
+                if (colonIndex != -1)
+                {
+                    String afterColon = line.substring(colonIndex + 1).trim();
+                    int tagIndex = afterColon.indexOf('<');
+                    if (tagIndex != -1)
+                    {
+                        time.append(afterColon.substring(0, tagIndex).trim());
+                    }
+                    else
+                    {
+                        time.append(afterColon);
+                    }
+                }
+            }
+
+            // 性能优化：如果已经提取到所有信息，提前退出
+            if (title.length() > 0 && status.length() > 0 &&
+                code.length() > 0 && time.length() > 0)
+            {
+                break;
+            }
+        }
+
+        // 如果什么都没提取到，返回空
+        if (title.length() == 0 && status.length() == 0 &&
+            code.length() == 0 && time.length() == 0)
+        {
+            return "";
+        }
+
+        // 快速构建结果
+        StringBuilder result = new StringBuilder();
+
+        if (title.length() > 0)
+        {
+            result.append(title);
+        }
+
+        if (status.length() > 0)
+        {
+            if (result.length() > 0) result.append("：");
+            result.append(status);
+        }
+
+        if (code.length() > 0)
+        {
+            if (result.length() > 0) result.append(" ");
+            result.append("(编码：").append(code).append(")");
+        }
+
+        if (time.length() > 0)
+        {
+            if (result.length() > 0) result.append(" - ");
+            result.append(time);
+        }
+
+        return result.toString();
+    }
+
+    
+    
+    /**
+     * 限制文本长度
+     *
+     * @param text 原始文本
+     * @param maxLength 最大长度
+     * @return 限制后的文本
+     */
+    private static String limitLength(String text, int maxLength)
+    {
+        if (maxLength <= 0 || StringUtils.isEmpty(text))
+        {
+            return text;
+        }
+
+        if (text.length() <= maxLength)
+        {
+            return text;
+        }
+
+        return text.substring(0, maxLength) + "...";
+    }
+
+    /**
+     * 解码HTML实体字符
+     *
+     * @param content 包含HTML实体的内容
+     * @return 解码后的内容
+     */
+    private static String unescapeHtmlEntities(String content)
+    {
+        if (StringUtils.isEmpty(content))
+        {
+            return content;
+        }
+
+        // 解码常见的HTML实体
+        content = content.replace("&nbsp;", " ");
+        content = content.replace("&lt;", "<");
+        content = content.replace("&gt;", ">");
+        content = content.replace("&amp;", "&");
+        content = content.replace("&quot;", "\"");
+        content = content.replace("&#39;", "'");
+        content = content.replace("&#x27;", "'");
+        content = content.replace("&#x2F;", "/");
+        content = content.replace("&#x3D;", "=");
+        content = content.replace("&#x60;", "`");
+
+        return content;
     }
 
     /**

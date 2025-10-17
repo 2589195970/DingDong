@@ -541,8 +541,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
         Product product;
         String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_API, productCode);
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StrUtil.isBlankIfStr(json)) {
+        // String json = configStringRedisTemplate.opsForValue().get(cacheKey);
+        // if (StrUtil.isBlankIfStr(json)) {
             product = baseMapper.selectOne(new LambdaQueryWrapper<Product>().eq(Product::getProductCode, productCode));
             if (product == null) {
                 throw new BizException("产品不存在:{}", productCode);
@@ -551,9 +551,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 throw new BizException("产品已下架:{}", productCode);
             }
             configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(product), 10, TimeUnit.MINUTES);
-        } else {
-            product = JSONObject.parseObject(json, Product.class);
-        }
+        // } else {
+        //     product = JSONObject.parseObject(json, Product.class);
+        // }
         return product;
     }
 
@@ -571,14 +571,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         Product product = null;
         String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_API_NOT_STATUS, productCode);
         String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StrUtil.isBlankIfStr(json)) {
+        // if (StrUtil.isBlankIfStr(json)) {
             product = baseMapper.selectOne(new LambdaQueryWrapper<Product>().eq(Product::getProductCode, productCode));
             if(product != null){
                 configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(product), 10, TimeUnit.MINUTES);
             }
-        } else {
-            product = JSONObject.parseObject(json, Product.class);
-        }
+        // } else {
+        //     product = JSONObject.parseObject(json, Product.class);
+        // }
         return product;
     }
 

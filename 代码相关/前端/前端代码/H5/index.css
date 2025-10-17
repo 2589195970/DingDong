@@ -1152,3 +1152,51 @@ footer a {
     font-weight: 500;
     cursor: pointer;
 }
+
+/* 步骤导航样式 */
+.step-indicator {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    font-family: "微软雅黑", sans-serif;
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-number {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background: #4EAAEF;
+    color: white;
+    border-radius: 50%;
+    line-height: 24px;
+    text-align: center;
+    margin-right: 8px;
+    font-size: 14px;
+    font-weight: normal;
+}
+
+.step-inactive .step-number {
+    background: #ccc;
+}
+
+.step-text {
+    font-weight: normal;
+    color: #666;
+}
+
+.step-active .step-text {
+    color: #333;
+    font-weight: bold;
+}

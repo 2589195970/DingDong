@@ -62,7 +62,7 @@ public class OrderCommissionImportServiceImpl  implements OrderCommissionImportS
         //判断是否存在佣金记录
         List<OrderCommission>  orderCommissionList = orderCommissionMapper.selectList(new LambdaQueryWrapper<OrderCommission>().in(OrderCommission::getOrderId,orderList));
         if(!CollectionUtils.isEmpty(orderCommissionList)){
-            String orderIdsString = orderCommissionList.stream().map(OrderCommission::getOrderId).map(String::valueOf).collect(Collectors.joining(","));
+            String orderIdsString = orderCommissionList.stream().map(OrderCommission::getOrderId).map(String::valueOf).collect(Collectors.joining(",</br>"));
             throw new BizException("{} 已存在佣金记录",orderIdsString);
         }
         //异步生成订单佣金记录

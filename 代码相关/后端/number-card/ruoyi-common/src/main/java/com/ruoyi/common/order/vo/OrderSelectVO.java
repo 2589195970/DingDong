@@ -333,6 +333,19 @@ public class OrderSelectVO {
     private Integer photoStatus;
 
     /**
+     * 是否必传照片
+     */
+    @ApiModelProperty("是否必传照片")
+    private Integer photoRequired;
+
+    /**
+     * 是否需要审核 0 否 1 是
+     */
+    @ApiModelProperty("是否需要审核 0 否 1 是")
+    private Integer sfxysh;
+
+
+    /**
      * 照片上传时间
      */
     @ApiModelProperty("照片上传时间")

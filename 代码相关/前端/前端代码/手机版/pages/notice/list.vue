@@ -25,7 +25,7 @@
               <view class="notice-time">{{ formatTime(notice.createTime) }}</view>
             </view>
             <view class="notice-content">
-              {{ getNoticePreview(notice.noticeContent) }}
+              {{ getNoticePreview(notice.contentSummary) }}
             </view>
             <view class="notice-footer">
               <view class="notice-status" :class="getStatusClass(notice.status)">

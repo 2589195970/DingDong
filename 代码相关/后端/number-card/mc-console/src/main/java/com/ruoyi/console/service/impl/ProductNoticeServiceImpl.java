@@ -118,7 +118,6 @@ public class ProductNoticeServiceImpl implements ProductNoticeService {
 
         return String.format(
             "<div class='product-notice' style='padding: 12px; border: 1px solid #d9d9d9; border-radius: 8px; margin: 8px 0; background: #fafafa; max-width: 100%%; box-sizing: border-box;'>" +
-
             // 响应式样式定义
             "<style>" +
             ".product-notice { " +

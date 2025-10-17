@@ -128,7 +128,10 @@ new Vue({
       imagePreviewVisible: false,
       previewImageUrl: '',
 
-  
+      // 步骤控制
+      currentStep: 1,
+
+
     };
   },
   computed: {
@@ -467,6 +470,68 @@ new Vue({
       return true;
     },
 
+    // 下一步
+    nextStep() {
+      // 验证第一步的基本信息
+      if (!this.validateBasicInfo()) {
+        return;
+      }
+
+      this.currentStep = 2;
+      // 滚动到顶部
+      document.scrollingElement.scrollTop = 0;
+    },
+
+    // 上一步
+    prevStep() {
+      this.currentStep = 1;
+      // 滚动到顶部
+      document.scrollingElement.scrollTop = 0;
+    },
+
+    // 验证基本信息
+    validateBasicInfo() {
+      var reg = /[^\u4e00-\u9fa5]/g;
+      var str = this.name;
+      if (reg.test(str)) {
+        vant.Toast('请输入中文姓名')
+        return false;
+      }
+      if (!this.name) {
+        vant.Toast('请输入您的姓名');
+        return false;
+      }
+      if (this.name.length > 20) {
+        vant.Toast('姓名应小于20字');
+        return false;
+      }
+      if (!this.phone) {
+        vant.Toast('请输入收货手机号码');
+        return false;
+      }
+      if (!checkPhone(this.phone)) {
+        vant.Toast('请输入正确的收货手机号码');
+        return false;
+      }
+      if (!this.idCardNo) {
+        vant.Toast('请输入身份证号码');
+        return false;
+      }
+      if (!checkID(this.idCardNo)) {
+        vant.Toast('请输入正确的身份证号码');
+        return false;
+      }
+      if (!this.region) {
+        vant.Toast('请选择配送地区');
+        return false;
+      }
+      if (this.address.length < 7) {
+        vant.Toast('详细地址不能小于7个字符');
+        return false;
+      }
+      return true;
+    },
+
     // 初始化示例图片16:10比例显示
     initExampleImages() {
 
@@ -550,54 +615,26 @@ new Vue({
 
 
     submit() {
-      var reg = /[^\u4e00-\u9fa5]/g;
-      var str = this.name;
-      if (reg.test(str)) {
-        vant.Toast('请输入中文姓名')
+      // 如果需要照片上传，确保在第二步才能提交
+      if (this.productList.photoRequired == 1 && this.currentStep !== 2) {
+        vant.Toast('请先完成基础信息填写');
         return;
       }
-      if (!this.name) {
-        vant.Toast('请输入您的姓名');
-        return;
+
+      // 如果不需要照片上传，验证基本信息
+      if (this.productList.photoRequired != 1) {
+        if (!this.validateBasicInfo()) {
+          return;
+        }
       }
-      if (this.name.length > 20) {
-        vant.Toast('姓名应小于20字');
-        return;
-      }
-      if (!this.phone) {
-        vant.Toast('请输入收货手机号码');
-        return;
-      }
-      if (!checkPhone(this.phone)) {
-        vant.Toast('请输入正确的收货手机号码');
-        return;
-      }
-      if (this.address.length < 7) {
-        vant.Toast('详细地址不能小于7个字符');
-        return;
-      }
-      if (!this.idCardNo) {
-        vant.Toast('请输入身份证号码');
-        return;
-      }
-      if (!checkID(this.idCardNo)) {
-        vant.Toast('请输入正确的身份证号码');
-        return;
-      }
-      if (!this.region) {
-        vant.Toast('请选择配送地区');
-        return;
-      }
+
+      // 验证用户协议
       if (!this.protocolChecked) {
         vant.Toast('请阅读并同意用户协议');
         return;
       }
-      if (!this.name) {
-        vant.Toast('请输入您的姓名');
-        return;
-      }
 
-      // 验证照片上传
+      // 验证照片上传（如果需要）
       if (!this.validatePhotos()) {
         return;
       }

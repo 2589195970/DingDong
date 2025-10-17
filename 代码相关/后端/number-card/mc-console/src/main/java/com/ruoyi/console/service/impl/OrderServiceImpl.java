@@ -35,6 +35,8 @@ import com.ruoyi.console.mapper.AgentAccountMapper;
 import com.ruoyi.console.mapper.OrderLogMapper;
 import com.ruoyi.console.mapper.OrderMapper;
 import com.ruoyi.console.service.*;
+import com.ruoyi.console.service.BaseService;
+import com.ruoyi.console.utils.SpringContextUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -93,8 +95,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     NumberStatusService numberStatusService;
 
     @Resource
+    UpstreamApiService upstreamApiService;
+
+    @Resource
     AgentAccountMapper agentAccountMapper;
 
+  
   
     /**
      * 订单查询
@@ -149,6 +155,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 if(product!=null){
                     orderSelectVO.setProductMasterMap(product.getProductMasterMap());
                     orderSelectVO.setPhotoConfig(product.getPhotoConfig());
+                    orderSelectVO.setPhotoRequired(product.getPhotoRequired());
+                    orderSelectVO.setPhotoRequired(product.getPhotoRequired());
+                    orderSelectVO.setSfxysh(product.getSfxysh());
                 }
                 //设置照片审核状态名称
                 if(order.getPhotoStatus() != null){
@@ -908,16 +917,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         // 检查产品是否需要照片审核
         Product product = productService.getProduct(order.getProductCode());
-        if (product == null || product.getPhotoRequired() == null || product.getPhotoRequired() != 1) {
-            throw new BizException("该订单对应的产品不需要照片审核");
-        }
-
-        // 检查照片审核状态
-        if (order.getPhotoStatus() == null ||
-            !OrderEnum.PhotoAuditEnum.UPLOAD_PENDING.getStatus().equals(order.getPhotoStatus()) &&
-            !OrderEnum.PhotoAuditEnum.REJECTED.getStatus().equals(order.getPhotoStatus())) {
-            throw new BizException("当前订单状态不允许上传照片");
-        }
 
         // 更新照片信息
         Order updateOrder = new Order();
@@ -928,11 +927,28 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         updateOrder.setCustomPhotoUrl(photoUploadBO.getCustomPhotoUrl());
         updateOrder.setPhotoUploadTime(System.currentTimeMillis());
         updateOrder.setUpdateTime(System.currentTimeMillis());
-
-        // 状态变更为代理商待提交
-        updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.AGENT_PENDING.getStatus());
-
+        if(product.getSfxysh() == 1){
+            // 状态变更为代理商待提交
+            updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.AGENT_PENDING.getStatus());
+        }else {
+            updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.APPROVED.getStatus());
+        }
         baseMapper.updateById(updateOrder);
+
+        // 新增：调用上游照片上传功能（上传照片自动通过场景）
+        try {
+            Order updatedOrder = baseMapper.selectById(photoUploadBO.getOrderId());
+            if (updatedOrder != null && product.getSfxysh() != 1) {
+                // 检查是否需要上传照片到上游（仅在自动通过时上传）
+                if (product.getPhotoRequired() != null && product.getPhotoRequired() == 1) {
+                    log.info("订单{} 照片上传自动通过，开始上传到上游API", updatedOrder.getOrderId());
+                    updateOrderPhotosToUpstream(updatedOrder, product);
+                }
+            }
+        } catch (Exception e) {
+            log.error("调用上游照片上传功能失败，订单ID: {}, 错误: {}", photoUploadBO.getOrderId(), e.getMessage(), e);
+            // 不抛出异常，避免影响本地数据库更新
+        }
 
         // 记录订单日志
         addOrderLog(photoUploadBO.getOrderId(), "上传照片", "用户上传照片，待代理商提交审核");
@@ -974,7 +990,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         // 更新订单状态
         Order updateOrder = new Order();
         updateOrder.setOrderId(photoUploadBO.getOrderId());
-        updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus());
+        if(product.getSfxysh() == 1){
+            // 状态变更为代理商待提交
+            updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus());
+        }else {
+            updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.APPROVED.getStatus());
+        }
         updateOrder.setUpdateTime(System.currentTimeMillis());
 
         // 如果有重新上传的照片，也要更新
@@ -992,6 +1013,21 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
 
         baseMapper.updateById(updateOrder);
+
+        // 新增：调用上游照片上传功能（代理商提交自动通过场景）
+        try {
+            Order updatedOrder = baseMapper.selectById(photoUploadBO.getOrderId());
+            if (updatedOrder != null && product.getSfxysh() != 1) {
+                // 检查是否需要上传照片到上游（仅在自动通过时上传）
+                if (product.getPhotoRequired() != null && product.getPhotoRequired() == 1) {
+                    log.info("订单{} 代理商提交自动通过，开始上传到上游API", updatedOrder.getOrderId());
+                    updateOrderPhotosToUpstream(updatedOrder, product);
+                }
+            }
+        } catch (Exception e) {
+            log.error("调用上游照片上传功能失败，订单ID: {}, 错误: {}", photoUploadBO.getOrderId(), e.getMessage(), e);
+            // 不抛出异常，避免影响本地数据库更新
+        }
 
         // 记录订单日志
         addOrderLog(photoUploadBO.getOrderId(), "提交照片审核", "代理商提交照片审核，待管理员审核");
@@ -1041,9 +1077,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             // 记录订单日志
             addOrderLog(photoAuditBO.getOrderId(), "照片审核通过", "管理员审核通过，备注：" + photoAuditBO.getAuditRemark());
 
-            // 如果照片审核通过，可以继续订单流程（根据业务需求决定是否自动推送到上游）
-            // 这里暂时只记录日志，不自动推送
-
         } else if (photoAuditBO.getAuditAction() == 2) {
             // 审核拒绝
             updateOrder.setPhotoStatus(OrderEnum.PhotoAuditEnum.REJECTED.getStatus());
@@ -1055,6 +1088,23 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
 
         baseMapper.updateById(updateOrder);
+
+        // 新增：调用上游照片上传功能（管理员审核通过场景）
+        if (photoAuditBO.getAuditAction() == 1) {
+            try {
+                Order updatedOrder = baseMapper.selectById(photoAuditBO.getOrderId());
+                if (updatedOrder != null) {
+                    // 检查是否需要上传照片到上游
+                    if (product.getPhotoRequired() != null && product.getPhotoRequired() == 1) {
+                        log.info("订单{} 管理员审核通过，开始上传到上游API", updatedOrder.getOrderId());
+                        updateOrderPhotosToUpstream(updatedOrder, product);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("调用上游照片上传功能失败，订单ID: {}, 错误: {}", photoAuditBO.getOrderId(), e.getMessage(), e);
+                // 不抛出异常，避免影响本地数据库更新
+            }
+        }
     }
 
     /**
@@ -1209,7 +1259,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
         // 调用上游API更新照片信息
         try {
-            updateOrderPhotosToUpstream(order);
+            updateOrderPhotosToUpstream(order, product);
         } catch (Exception e) {
             log.error("调用上游API更新照片失败，订单ID: {}, 错误: {}", updateBO.getOrderId(), e.getMessage(), e);
             // 不抛出异常，避免影响本地数据库更新
@@ -1218,15 +1268,37 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     /**
      * 调用上游API更新照片信息
-     * 注意：此方法暂时禁用，因为需要跨服务调用mc-order模块
+     * 按照真实mc-order架构实现
      *
      * @param order 订单信息
+     * @param product 产品信息
      * @throws Exception
      */
-    private void updateOrderPhotosToUpstream(Order order) throws Exception {
-        log.warn("订单{} 的上游照片更新功能暂时禁用，需要通过HTTP API调用mc-order服务", order.getOrderId());
-        // TODO: 通过HTTP API调用mc-order服务的照片更新功能
-        // 目前只记录日志，不执行上游更新
+    private void updateOrderPhotosToUpstream(Order order, Product product) throws Exception {
+        try {
+            log.info("开始为订单{}执行上游照片更新，上游API: {}", order.getOrderId(), order.getUpstreamApi());
+
+            // 1. 获取上游API信息
+            UpstreamApi upstreamApi = upstreamApiService.getUpstreamApi(order.getUpstreamApi());
+            if (upstreamApi == null) {
+                log.warn("订单{} 对应的上游API不存在，跳过上游更新", order.getOrderId());
+                return;
+            }
+
+            // 2. 获取具体的BaseService实现
+            BaseService baseService = SpringContextUtil.getBean(upstreamApi.getInterfaceClassName());
+            if (baseService != null) {
+                log.info("找到BaseService实现: {}，开始更新照片", upstreamApi.getInterfaceClassName());
+                baseService.updateOrderPhotos(order, product, upstreamApi);
+                log.info("订单{} 上游照片更新完成", order.getOrderId());
+            } else {
+                log.warn("订单{} 对应的上游API实现类不存在，跳过上游更新", order.getOrderId());
+            }
+
+        } catch (Exception e) {
+            log.error("订单{} 上游照片更新异常: {}", order.getOrderId(), e.getMessage(), e);
+            throw e;
+        }
     }
 
 }

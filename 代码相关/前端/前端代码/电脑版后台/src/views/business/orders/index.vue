@@ -168,37 +168,39 @@
                     <span>订单状态：{{scope.row.upstreamOrderStatusMessage}}</span><br>
                 </template>
             </el-table-column>
-            <el-table-column align="center" label="操作" width="150" class-name="small-padding fixed-width">
+            <el-table-column align="center" label="订单操作" width="150" class-name="small-padding fixed-width">
                 <template slot-scope="scope">
                     <el-button @click="handleCommission(scope.row)" type="text" size="small"
                         v-hasPermi="['channel:channelManagement:edit']">重新下单</el-button><br>
                     <el-button @click="selectOrderBalanceClick(scope.row)" type="text" size="small"
                         v-hasPermi="['channel:channelManagement:edit']">查询余额</el-button><br>
-                    <!-- 照片审核相关按钮 - 只有需要照片审核的订单才显示 -->
-                    <template v-if="scope.row.photoStatus !== undefined && scope.row.photoStatus !== null && scope.row.photoStatus !== 0">
-                      <div  v-if="scope.row.photoStatus === 1 || scope.row.photoStatus === 5">
-                        <el-button @click="handlePhotoUpload(scope.row)" type="text" size="small"
-                                   style="color: #409EFF">上传照片</el-button>
-                        <el-button @click="handleCopyEditLink(scope.row)" type="text" size="small">复制证件上传链接</el-button><br>
-                      </div>
-                      <div v-if="scope.row.photoStatus === 2">
-                        <el-button @click="handleSubmitPhoto(scope.row)" type="text" size="small"
-                                   style="color: #E6A23C">提交审核</el-button><br>
-                      </div>
-                      <div v-if="scope.row.photoStatus === 3">
-                        <el-button @click="handlePhotoAudit(scope.row)" type="text" size="small"
-                                   style="color: #F56C6C">审核照片</el-button><br>
-                      </div>
-                        <!--<el-button @click="handleViewPhotos(scope.row)" type="text" size="small"-->
-                        <!--    v-if="scope.row.photoStatus >= 2"-->
-                        <!--    style="color: #67C23A">查看照片</el-button><br>-->
-                    </template>
                     <el-button @click="registroOP(scope.row)" type="text" size="small"
                         v-hasPermi="['channel:channelManagement:remove']">日志</el-button><br>
                     <el-button @click="handleDelete(scope.row)" type="text" size="small"
                         v-hasPermi="['channel:channelManagement:remove']">更改状态</el-button>
                 </template>
             </el-table-column>
+          <el-table-column align="center" label="照片操作" width="150" class-name="small-padding fixed-width">
+            <template slot-scope="scope">
+              <template v-if="scope.row.photoRequired !== undefined && scope.row.photoRequired !== null && scope.row.photoRequired == 1">
+                <div>
+                  <el-button @click="handlePhotoUpload(scope.row)" type="text" size="small"
+                             style="color: #409EFF">上传照片</el-button>
+                  <el-button @click="handleCopyEditLink(scope.row)" type="text" size="small">复制证件上传链接</el-button><br>
+                </div>
+                <div v-if="scope.row.sfxysh == 1">
+                  <div v-if="scope.row.photoStatus === 2">
+                    <el-button @click="handleSubmitPhoto(scope.row)" type="text" size="small"
+                               style="color: #E6A23C">提交审核</el-button><br>
+                  </div>
+                  <div v-if="scope.row.photoStatus === 3">
+                    <el-button @click="handlePhotoAudit(scope.row)" type="text" size="small"
+                               style="color: #F56C6C">审核照片</el-button><br>
+                  </div>
+                </div>
+              </template>
+            </template>
+          </el-table-column>
         </el-table>
         <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNo" :limit.sync="queryParams.pageSize"
             @pagination="getList" />

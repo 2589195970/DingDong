@@ -171,6 +171,9 @@ public class GthServiceImpl extends BaseServiceImpl implements GthService {
             JSONObject jsonObject = org.springframework.util.StringUtils.hasLength(order.getJsonParam()) ? JSONObject.parseObject(order.getJsonParam()) : new JSONObject();
             jsonObject.put("GthSubmitOrderResponse", JSONObject.toJSONString(apiSubmitOrder));
             order.setJsonParam(jsonObject.toJSONString());
+            if (product.getSfxysh() == 0) {
+                order.setPhotoStatus(0);
+            }
             orderService.updateById(order);
             return order;
         } catch (Exception e) {
@@ -218,7 +221,8 @@ public class GthServiceImpl extends BaseServiceImpl implements GthService {
         gthSubmitOrderRequest.setMobile(getAesParameters(gthArgument.getAesKey(),gthSubmitOrderRequest.getMobile()));
         gthSubmitOrderRequest.setName(getAesParameters(gthArgument.getAesKey(),gthSubmitOrderRequest.getName()));
         gthSubmitOrderRequest.setAddress(getAesParameters(gthArgument.getAesKey(),gthSubmitOrderRequest.getAddress()));
-        if (product.getPhotoRequired() == 1) {
+        // 必传且不需要审核,则直接跟随订单提交
+        if (product.getPhotoRequired() == 1 && product.getSfxysh() == 0) {
             gthSubmitOrderRequest.setFace_url(order.getIdCardFrontUrl());
             gthSubmitOrderRequest.setBack_url(order.getIdCardBackUrl());
             gthSubmitOrderRequest.setHand_url(order.getPersonPhotoUrl());

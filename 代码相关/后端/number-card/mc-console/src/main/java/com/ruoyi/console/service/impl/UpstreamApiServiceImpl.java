@@ -16,12 +16,15 @@ import com.ruoyi.common.order.bo.UpstreamApiAddAndUpdateBO;
 import com.ruoyi.common.order.bo.UpstreamApiSelectBO;
 import com.ruoyi.common.order.entity.UpstreamApi;
 import com.ruoyi.common.order.entity.UpstreamExplain;
+import com.ruoyi.common.order.entity.UpstreamInfo;
+import com.ruoyi.common.order.entity.UpstreamProduct;
 import com.ruoyi.common.order.vo.UpstreamApiTypeVO;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.console.mapper.UpstreamApiMapper;
 import com.ruoyi.console.mapper.UpstreamExplainMapper;
 import com.ruoyi.console.service.UpstreamApiService;
-import com.ruoyi.framework.web.domain.server.Sys;
+import com.ruoyi.console.service.UpstreamProductService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -33,11 +36,15 @@ import java.util.List;
  * @Author 陈思伟
  * @Date 2024/12/19 17:13
  */
+@Slf4j
 @Service
 public class UpstreamApiServiceImpl extends ServiceImpl<UpstreamApiMapper, UpstreamApi> implements UpstreamApiService {
 
     @Resource
     UpstreamExplainMapper upstreamExplainMapper;
+
+    @Resource
+    UpstreamProductService upstreamProductService;
 
     /**
      * 分页查询上游接口列表
@@ -158,5 +165,75 @@ public class UpstreamApiServiceImpl extends ServiceImpl<UpstreamApiMapper, Upstr
      */
     public UpstreamExplain selectUpstreamExplain(String upstreamApiType,Integer explainType){
         return upstreamExplainMapper.selectOne(new LambdaQueryWrapper<UpstreamExplain>().eq(UpstreamExplain::getExplainType,explainType).eq(UpstreamExplain::getUpstreamApiType,upstreamApiType));
+    }
+
+    /**
+     * 根据上游API和条件获取上游产品信息
+     * @param upstreamApiCode 上游API代码
+     * @param upstreamProductCode 上游产品代码
+     * @return 上游信息
+     * @throws BizException
+     */
+    @Override
+    public UpstreamInfo getUpstreamInfo(String upstreamApiCode, String upstreamProductCode) throws BizException {
+        if (StringUtils.isEmpty(upstreamApiCode) || StringUtils.isEmpty(upstreamProductCode)) {
+            throw new BizException("上游APICODE或上游产品CODE不存在");
+        }
+
+        UpstreamInfo upstreamInfo = null;
+
+        try {
+            // 获取上游API信息
+            UpstreamApi upstreamApi = this.getOne(new LambdaQueryWrapper<UpstreamApi>()
+                .eq(UpstreamApi::getUpstreamApiCode, upstreamApiCode));
+            if (upstreamApi == null) {
+                throw new BizException("上游API不存在: " + upstreamApiCode);
+            }
+
+            // 获取上游产品信息
+            UpstreamProduct upstreamProduct = upstreamProductService.getOne(new LambdaQueryWrapper<UpstreamProduct>()
+                .eq(UpstreamProduct::getUpstreamApiCode, upstreamApiCode)
+                .eq(UpstreamProduct::getUpstreamProductCode, upstreamProductCode));
+
+            if (upstreamProduct == null) {
+                throw new BizException("上游产品CODE不存在: " + upstreamProductCode);
+            }
+
+            upstreamInfo = new UpstreamInfo();
+            upstreamInfo.setUpstreamApi(upstreamApi);
+            upstreamInfo.setUpstreamProduct(upstreamProduct);
+
+            return upstreamInfo;
+        } catch (Exception e) {
+            log.error("获取上游信息异常，upstreamApiCode: {}, upstreamProductCode: {}", upstreamApiCode, upstreamProductCode, e);
+            throw new BizException("获取上游信息失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取上游API信息
+     * @param upstreamApiCode 上游API编码
+     * @return 上游API信息
+     * @throws Exception
+     */
+    @Override
+    public UpstreamApi getUpstreamApi(String upstreamApiCode) throws Exception {
+        if (StringUtils.isEmpty(upstreamApiCode)) {
+            throw new Exception("上游API编码不能为空");
+        }
+
+        try {
+            UpstreamApi upstreamApi = this.getOne(new LambdaQueryWrapper<UpstreamApi>()
+                .eq(UpstreamApi::getUpstreamApiCode, upstreamApiCode));
+
+            if (upstreamApi == null) {
+                throw new Exception("上游API不存在: " + upstreamApiCode);
+            }
+
+            return upstreamApi;
+        } catch (Exception e) {
+            log.error("获取上游API异常，upstreamApiCode: {}", upstreamApiCode, e);
+            throw new Exception("获取上游API失败: " + e.getMessage());
+        }
     }
 }
