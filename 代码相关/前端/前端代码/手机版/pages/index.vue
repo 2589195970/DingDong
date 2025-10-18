@@ -210,7 +210,7 @@
           <view class="dt-item-dot"></view>
           <view class="notice-content">
             <view class="notice-title">{{ notice.noticeTitle }}</view>
-            <view class="notice-summary">{{ notice.noticeContent ? notice.noticeContent.replace(/<[^>]*>/g, '').substring(0, 50) + '...' : '' }}</view>
+            <view class="notice-summary">{{ notice.contentSummary ? notice.contentSummary.replace(/<[^>]*>/g, '').substring(0, 50) + '...' : '' }}</view>
           </view>
         </view>
       </view>

@@ -152,4 +152,14 @@ public interface OrderService extends IService<Order> {
      */
     void updateOrderInfo(OrderUpdateBO updateBO) throws BizException;
 
+    /**
+     * 分页查询待审核照片订单
+     * 查询条件：产品 photo_required = 1 且 sfxysh = 1，订单 photo_status = 3
+     *
+     * @param orderSelectBO 查询条件
+     * @return 分页结果
+     * @throws BizException 业务异常
+     */
+    PageResult<OrderSelectVO> selectPhotoAuditOrders(OrderSelectBO orderSelectBO) throws BizException;
+
 }

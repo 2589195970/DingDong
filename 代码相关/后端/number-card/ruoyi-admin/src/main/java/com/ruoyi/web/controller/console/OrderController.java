@@ -400,4 +400,24 @@ public class OrderController {
         }
     }
 
+    /**
+     * 分页查询待审核照片订单
+     * 查询条件：产品 photo_required = 1 且 sfxysh = 1，订单 photo_status = 3
+     *
+     * @return
+     */
+    @PostMapping("/selectPhotoAuditOrders")
+    @ApiOperation("分页查询待审核照片订单")
+    public ResponseEntity<PageResult<OrderSelectVO>> selectPhotoAuditOrders(@RequestBody OrderSelectBO orderSelectBO) {
+        try {
+            return ResponseEntity.success(orderService.selectPhotoAuditOrders(orderSelectBO));
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "selectPhotoAuditOrders", e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "selectPhotoAuditOrders", e.getMessage());
+            return ResponseEntity.error("出错了,请稍候重试:"+e.getMessage(), null);
+        }
+    }
+
 }

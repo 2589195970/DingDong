@@ -470,3 +470,12 @@ export function getH5Config() {
     method: "get",
   });
 }
+
+// 分页查询待审核照片订单
+export function selectPhotoAuditOrders(data) {
+  return request({
+    url: "/order/selectPhotoAuditOrders",
+    method: "post",
+    data: data,
+  });
+}

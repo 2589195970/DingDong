@@ -1301,4 +1301,94 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
     }
 
+    /**
+     * 分页查询待审核照片订单
+     * 查询条件：产品 photo_required = 1 且 sfxysh = 1，订单 photo_status = 3
+     *
+     * @param orderSelectBO 查询条件
+     * @return 分页结果
+     * @throws BizException 业务异常
+     */
+    @Override
+    public PageResult<OrderSelectVO> selectPhotoAuditOrders(OrderSelectBO orderSelectBO) throws BizException {
+        AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(1L, true);
+
+        // 读取分页
+        Page page = new Page(orderSelectBO.getPageNo(), orderSelectBO.getPageSize());
+
+        // 构建查询条件
+        LambdaQueryWrapper<Order> lambdaQueryWrapper = new LambdaQueryWrapper<Order>()
+                // 核心筛选条件：订单照片状态为管理员待审核 (photo_status = 3)
+                .eq(Order::getPhotoStatus, OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus())
+                // 支持现有的所有查询条件
+                .eq(StringUtils.isNotEmpty(orderSelectBO.getOrderId()), Order::getOrderId, orderSelectBO.getOrderId())
+                .eq(StringUtils.isNotEmpty(orderSelectBO.getOrderUpstreamId()), Order::getOrderUpstreamId, orderSelectBO.getOrderUpstreamId())
+                .eq(StringUtils.isNotEmpty(orderSelectBO.getOrderDownstreamId()), Order::getOrderDownstreamId, orderSelectBO.getOrderDownstreamId())
+                .like(StringUtils.isNotEmpty(orderSelectBO.getCardName()), Order::getCardName, orderSelectBO.getCardName())
+                .eq(StringUtils.isNotEmpty(orderSelectBO.getCardPhone()), Order::getCardPhone, orderSelectBO.getCardPhone())
+                .eq(StringUtils.isNotEmpty(orderSelectBO.getCardId()), Order::getCardId, orderSelectBO.getCardId())
+                .eq(orderSelectBO.getOrderStatus() != null, Order::getOrderStatus, orderSelectBO.getOrderStatus())
+                .eq(StringUtils.isNotEmpty(orderSelectBO.getUpstreamApi()), Order::getUpstreamApi, orderSelectBO.getUpstreamApi())
+                .eq(orderSelectBO.getIsRecharged() != null, Order::getIsRecharged, orderSelectBO.getIsRecharged())
+                .eq(StringUtils.isNotEmpty(orderSelectBO.getAccNumber()), Order::getCardPhone, orderSelectBO.getAccNumber())
+                .eq(orderSelectBO.getOrderSource() != null, Order::getOrderSource, orderSelectBO.getOrderSource())
+                .eq(orderSelectBO.getOrderCommissionStatus() != null, Order::getOrderCommissionStatus, orderSelectBO.getOrderCommissionStatus())
+                // 此处查的是账号下归属代理的订单 所以只要归属中出现就要查出来
+                .like(StringUtils.isNotEmpty(orderSelectBO.getDownstreamCode()), Order::getDownstreamFatherList, orderSelectBO.getDownstreamCode())
+                // 查询时间范围
+                .between((orderSelectBO.getStarTime() != null && orderSelectBO.getEndTime() != null), Order::getCreateTime, orderSelectBO.getStarTime(), orderSelectBO.getEndTime())
+                .orderByDesc(Order::getCreateTime);
+
+        // 处理上游订单号是否为空的筛选条件
+        if (orderSelectBO.getIsNotNullOrderUpstreamId() != null) {
+            if (BaseConstant.ZERO_INT == orderSelectBO.getIsNotNullOrderUpstreamId()) {
+                lambdaQueryWrapper.isNull(Order::getOrderUpstreamId);
+            } else if (BaseConstant.ONE_INT == orderSelectBO.getIsNotNullOrderUpstreamId()) {
+                lambdaQueryWrapper.isNotNull(Order::getOrderUpstreamId);
+            }
+        }
+
+        // 执行分页查询
+        Page<Order> orderPage = baseMapper.selectPage(page, lambdaQueryWrapper);
+        Page<OrderSelectVO> orderSelectVOPage = new Page<>();
+        BeanUtil.copyProperties(orderPage, orderSelectVOPage);
+
+        if (!CollectionUtils.isEmpty(orderPage.getRecords())) {
+            List<OrderSelectVO> orderSelectVOList = new ArrayList<>();
+
+            for (Order order : orderPage.getRecords()) {
+                // 检查产品是否符合条件：photo_required = 1 且 sfxysh = 1
+                Product product = productService.getProductNotStatus(order.getProductCode());
+                if (product != null && product.getPhotoRequired() != null && product.getPhotoRequired() == 1
+                    && product.getSfxysh() != null && product.getSfxysh() == 1) {
+
+                    OrderSelectVO orderSelectVO = new OrderSelectVO();
+                    BeanUtil.copyProperties(order, orderSelectVO);
+                    orderSelectVO.setOrderId(order.getOrderId() + "");
+
+                    // 获取代理信息
+                    AgentCommissionJson agentCommissionJson = getShowDownstreamInfo(agentAccount, order);
+                    orderSelectVO.setShowDownstreamCode(agentCommissionJson.getAgentCode());
+                    orderSelectVO.setShowDownstreamName(agentCommissionJson.getAgentName());
+
+                    // 设置产品信息
+                    orderSelectVO.setProductMasterMap(product.getProductMasterMap());
+                    orderSelectVO.setPhotoConfig(product.getPhotoConfig());
+                    orderSelectVO.setPhotoRequired(product.getPhotoRequired());
+                    orderSelectVO.setSfxysh(product.getSfxysh());
+
+                    // 设置照片审核状态名称
+                    if (order.getPhotoStatus() != null) {
+                        orderSelectVO.setPhotoStatusName(OrderEnum.PhotoAuditEnum.getPhotoAuditMessageByStatus(order.getPhotoStatus()));
+                    }
+
+                    orderSelectVOList.add(orderSelectVO);
+                }
+            }
+            orderSelectVOPage.setRecords(orderSelectVOList);
+        }
+
+        return PageResultFactory.createPageResult(orderSelectVOPage);
+    }
+
 }

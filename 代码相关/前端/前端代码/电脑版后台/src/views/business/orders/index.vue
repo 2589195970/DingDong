@@ -184,8 +184,9 @@
             <template slot-scope="scope">
               <template v-if="scope.row.photoRequired !== undefined && scope.row.photoRequired !== null && scope.row.photoRequired == 1">
                 <div>
-                  <el-button @click="handlePhotoUpload(scope.row)" type="text" size="small"
-                             style="color: #409EFF">上传照片</el-button>
+                  <el-button v-if="hasAnyPhotos(scope.row)" @click="handleViewPhotos(scope.row)" type="text" size="small"
+                             >查看照片</el-button>
+                  <el-button @click="handlePhotoUpload(scope.row)" type="text" size="small">上传照片</el-button>
                   <el-button @click="handleCopyEditLink(scope.row)" type="text" size="small">复制证件上传链接</el-button><br>
                 </div>
                 <div v-if="scope.row.sfxysh == 1">
@@ -415,28 +416,44 @@
         </el-dialog>
 
         <!-- 照片审核弹窗 -->
-        <el-dialog :title="photoAudit.title" :visible.sync="photoAudit.open" width="960px" append-to-body>
+        <el-dialog :title="photoAudit.title" :visible.sync="photoAudit.open" width="1024px" append-to-body>
             <el-form ref="photoAuditForm" :model="photoAudit.form" :rules="photoAudit.rules" label-width="120px">
                 <el-form-item label="订单信息">
                     <el-input v-model="photoAudit.orderInfo" disabled></el-input>
                 </el-form-item>
                 <el-form-item label="照片预览">
-                    <div style="display: flex; gap: 25px; flex-wrap: wrap;">
-                        <div v-if="shouldShowPhotoField(photoAudit.currentRow, 'idCardFrontUrl') && photoAudit.form.idCardFrontUrl">
-                            <div style="text-align: center; margin-bottom: 5px;">{{getPhotoFieldTitle('idCardFrontUrl')}}</div>
-                            <el-image :src="photoAudit.form.idCardFrontUrl" style="width: 160px; height: 100px;" :preview-src-list="[photoAudit.form.idCardFrontUrl]"></el-image>
+                    <div class="photo-view-container">
+                        <div v-if="shouldShowPhotoField(photoAudit.currentRow, 'idCardFrontUrl') && photoAudit.form.idCardFrontUrl" class="photo-item">
+                            <div class="photo-image-wrapper">
+                                <el-image :src="photoAudit.form.idCardFrontUrl" class="photo-image-audit" :preview-src-list="[photoAudit.form.idCardFrontUrl]"></el-image>
+                            </div>
+                            <div class="photo-info-card">
+                                <div class="photo-title">{{getPhotoFieldTitle('idCardFrontUrl')}}</div>
+                            </div>
                         </div>
-                        <div v-if="shouldShowPhotoField(photoAudit.currentRow, 'idCardBackUrl') && photoAudit.form.idCardBackUrl">
-                            <div style="text-align: center; margin-bottom: 5px;">{{getPhotoFieldTitle('idCardBackUrl')}}</div>
-                            <el-image :src="photoAudit.form.idCardBackUrl" style="width: 160px; height: 100px;" :preview-src-list="[photoAudit.form.idCardBackUrl]"></el-image>
+                        <div v-if="shouldShowPhotoField(photoAudit.currentRow, 'idCardBackUrl') && photoAudit.form.idCardBackUrl" class="photo-item">
+                            <div class="photo-image-wrapper">
+                                <el-image :src="photoAudit.form.idCardBackUrl" class="photo-image-audit" :preview-src-list="[photoAudit.form.idCardBackUrl]"></el-image>
+                            </div>
+                            <div class="photo-info-card">
+                                <div class="photo-title">{{getPhotoFieldTitle('idCardBackUrl')}}</div>
+                            </div>
                         </div>
-                        <div v-if="shouldShowPhotoField(photoAudit.currentRow, 'personPhotoUrl') && photoAudit.form.personPhotoUrl">
-                            <div style="text-align: center; margin-bottom: 5px;">{{getPhotoFieldTitle('personPhotoUrl')}}</div>
-                            <el-image :src="photoAudit.form.personPhotoUrl" style="width: 160px; height: 100px;" :preview-src-list="[photoAudit.form.personPhotoUrl]"></el-image>
+                        <div v-if="shouldShowPhotoField(photoAudit.currentRow, 'personPhotoUrl') && photoAudit.form.personPhotoUrl" class="photo-item">
+                            <div class="photo-image-wrapper">
+                                <el-image :src="photoAudit.form.personPhotoUrl" class="photo-image-audit" :preview-src-list="[photoAudit.form.personPhotoUrl]"></el-image>
+                            </div>
+                            <div class="photo-info-card">
+                                <div class="photo-title">{{getPhotoFieldTitle('personPhotoUrl')}}</div>
+                            </div>
                         </div>
-                        <div v-if="shouldShowPhotoField(photoAudit.currentRow, 'customPhotoUrl') && photoAudit.form.customPhotoUrl">
-                            <div style="text-align: center; margin-bottom: 5px;">{{getPhotoFieldTitle('customPhotoUrl')}}</div>
-                            <el-image :src="photoAudit.form.customPhotoUrl" style="width: 160px; height: 100px;" :preview-src-list="[photoAudit.form.customPhotoUrl]"></el-image>
+                        <div v-if="shouldShowPhotoField(photoAudit.currentRow, 'customPhotoUrl') && photoAudit.form.customPhotoUrl" class="photo-item">
+                            <div class="photo-image-wrapper">
+                                <el-image :src="photoAudit.form.customPhotoUrl" class="photo-image-audit" :preview-src-list="[photoAudit.form.customPhotoUrl]"></el-image>
+                            </div>
+                            <div class="photo-info-card">
+                                <div class="photo-title">{{getPhotoFieldTitle('customPhotoUrl')}}</div>
+                            </div>
                         </div>
                     </div>
                 </el-form-item>
@@ -457,41 +474,51 @@
         </el-dialog>
 
         <!-- 照片查看弹窗 -->
-        <el-dialog :title="photoView.title" :visible.sync="photoView.open" width="700px" append-to-body>
-            <div style="text-align: center; margin-bottom: 20px;">
+        <el-dialog :title="photoView.title" :visible.sync="photoView.open" width="1024px" append-to-body>
+            <div class="photo-view-header">
                 <strong>{{photoView.orderInfo}}</strong>
             </div>
-            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
-                <div v-if="photoView.data.idCardFrontUrl && shouldShowPhotoField(photoView.data, 'idCardFrontUrl')">
-                    <div style="text-align: center; margin-bottom: 10px;">
-                        <strong>{{getPhotoFieldTitle('idCardFrontUrl')}}</strong>
-                        <div v-if="photoView.data.photoAuditTime" style="font-size: 12px; color: #666;">
-                            审核时间：{{formatTimestamp(photoView.data.photoAuditTime)}}
-                        </div>
+            <div class="photo-view-container">
+                <div v-if="photoView.data.idCardFrontUrl && shouldShowPhotoField(photoView.data, 'idCardFrontUrl')" class="photo-item">
+                    <div class="photo-image-wrapper">
+                        <el-image :src="photoView.data.idCardFrontUrl" class="photo-image" :preview-src-list="getPhotoPreviewList()"></el-image>
                     </div>
-                    <el-image :src="photoView.data.idCardFrontUrl" style="width: 160px; height: 100px;" :preview-src-list="getPhotoPreviewList()"></el-image>
+                    <div class="photo-info-card">
+                        <div class="photo-title">{{getPhotoFieldTitle('idCardFrontUrl')}}</div>
+                    </div>
                 </div>
-                <div v-if="photoView.data.idCardBackUrl && shouldShowPhotoField(photoView.data, 'idCardBackUrl')">
-                    <div style="text-align: center; margin-bottom: 10px;">
-                        <strong>{{getPhotoFieldTitle('idCardBackUrl')}}</strong>
+                <div v-if="photoView.data.idCardBackUrl && shouldShowPhotoField(photoView.data, 'idCardBackUrl')" class="photo-item">
+                    <div class="photo-image-wrapper">
+                        <el-image :src="photoView.data.idCardBackUrl" class="photo-image" :preview-src-list="getPhotoPreviewList()"></el-image>
                     </div>
-                    <el-image :src="photoView.data.idCardBackUrl" style="width: 160px; height: 100px;" :preview-src-list="getPhotoPreviewList()"></el-image>
+                    <div class="photo-info-card">
+                        <div class="photo-title">{{getPhotoFieldTitle('idCardBackUrl')}}</div>
+                    </div>
                 </div>
-                <div v-if="photoView.data.personPhotoUrl && shouldShowPhotoField(photoView.data, 'personPhotoUrl')">
-                    <div style="text-align: center; margin-bottom: 10px;">
-                        <strong>{{getPhotoFieldTitle('personPhotoUrl')}}</strong>
+                <div v-if="photoView.data.personPhotoUrl && shouldShowPhotoField(photoView.data, 'personPhotoUrl')" class="photo-item">
+                    <div class="photo-image-wrapper">
+                        <el-image :src="photoView.data.personPhotoUrl" class="photo-image" :preview-src-list="getPhotoPreviewList()"></el-image>
                     </div>
-                    <el-image :src="photoView.data.personPhotoUrl" style="width: 160px; height: 100px;" :preview-src-list="getPhotoPreviewList()"></el-image>
+                    <div class="photo-info-card">
+                        <div class="photo-title">{{getPhotoFieldTitle('personPhotoUrl')}}</div>
+                    </div>
                 </div>
-                <div v-if="photoView.data.customPhotoUrl && shouldShowPhotoField(photoView.data, 'customPhotoUrl')">
-                    <div style="text-align: center; margin-bottom: 10px;">
-                        <strong>{{getPhotoFieldTitle('customPhotoUrl')}}</strong>
+                <div v-if="photoView.data.customPhotoUrl && shouldShowPhotoField(photoView.data, 'customPhotoUrl')" class="photo-item">
+                    <div class="photo-image-wrapper">
+                        <el-image :src="photoView.data.customPhotoUrl" class="photo-image" :preview-src-list="getPhotoPreviewList()"></el-image>
                     </div>
-                    <el-image :src="photoView.data.customPhotoUrl" style="width: 160px; height: 100px;" :preview-src-list="getPhotoPreviewList()"></el-image>
+                    <div class="photo-info-card">
+                        <div class="photo-title">{{getPhotoFieldTitle('customPhotoUrl')}}</div>
+                    </div>
                 </div>
             </div>
-            <div v-if="photoView.data.photoAuditRemark" style="margin-top: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">
+            <div v-if="photoView.data.photoStatus == 4 || photoView.data.photoStatus == 5" class="photo-audit-remark">
+              <div class="remark-content">
                 <strong>审核备注：</strong>{{photoView.data.photoAuditRemark}}
+              </div>
+              <div v-if="photoView.data.photoAuditTime" class="photo-audit-time">
+                审核时间：{{formatTimestamp(photoView.data.photoAuditTime)}}
+              </div>
             </div>
         </el-dialog>
 
@@ -1198,6 +1225,11 @@
                 return photos;
             },
 
+            // 检查是否有任何照片
+            hasAnyPhotos(row) {
+                return !!(row.idCardFrontUrl || row.idCardBackUrl || row.personPhotoUrl || row.customPhotoUrl);
+            },
+
             // 提交照片上传
             submitPhotoUpload() {
                 this.$refs.photoUploadForm.validate((valid) => {
@@ -1360,5 +1392,90 @@
 
     .el-table .success-row2 {
         color: #409EFF;
+    }
+
+    /* 照片查看弹窗样式 */
+    .photo-view-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+    }
+
+    .photo-view-header strong {
+        font-size: 16px;
+        color: #303133;
+    }
+
+    .photo-view-container {
+        display: flex;
+        gap: 50px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+
+    .photo-item {
+        text-align: center;
+    }
+
+    .photo-image-wrapper {
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+    }
+
+    .photo-image {
+        width: 240px;
+        height: 150px;
+        border-radius: 0;
+        box-shadow: none;
+        display: block;
+    }
+
+    .photo-image-audit {
+        width: 240px;
+        height: 150px;
+        border-radius: 0;
+        box-shadow: none;
+        display: block;
+    }
+
+    .photo-info-card {
+        padding: 12px;
+        background-color: #fff;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .photo-title {
+        font-size: 16px;
+        color: #303133;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+
+    .photo-audit-time {
+        font-size: 13px;
+        color: #909399;
+        margin-top: 3px;
+    }
+
+    .photo-audit-remark {
+        margin-top: 25px;
+        padding: 18px;
+        background-color: #f5f7fa;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .remark-content {
+        font-size: 14px;
+        color: #606266;
+        line-height: 1.6;
+    }
+
+    .remark-content strong {
+        color: #303133;
+        font-size: 15px;
     }
 </style>
