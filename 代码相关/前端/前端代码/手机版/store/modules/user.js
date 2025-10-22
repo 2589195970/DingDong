@@ -6,6 +6,13 @@ import { login, logout, getInfo,loginPhone } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import defAva from '@/static/images/profile.jpg'
 
+const defaultVipInfo = () => ({
+  vipLevel: 0,
+  vipLevelName: '',
+  vipLevelIcon: '',
+  hasVipRecord: false
+})
+
 const baseUrl = config.baseUrl
 
 const user = {
@@ -15,6 +22,7 @@ const user = {
     avatar: storage.get(constant.avatar),
     roles: storage.get(constant.roles),
     permissions: storage.get(constant.permissions),
+    vipInfo: storage.get(constant.vipInfo) || defaultVipInfo(),
     agentAccount: storage.get(constant.agentAccount) || {
       agentAccountId: null,
       agentCode: '',
@@ -54,6 +62,14 @@ const user = {
     SET_PERMISSIONS: (state, permissions) => {
       state.permissions = permissions
       storage.set(constant.permissions, permissions)
+    },
+    SET_VIP_INFO: (state, vipInfo) => {
+      const info = {
+        ...defaultVipInfo(),
+        ...(vipInfo || {})
+      }
+      state.vipInfo = info
+      storage.set(constant.vipInfo, info)
     },
     SET_AGENT_ACCOUNT: (state, agentAccount) => {
       state.agentAccount = agentAccount
@@ -111,6 +127,7 @@ const user = {
           }
           commit('SET_NAME', username)
           commit('SET_AVATAR', avatar)
+          commit('SET_VIP_INFO', res.vipInfo)
 
           // 处理代理商信息
           if (res.agentAccount) {
@@ -149,6 +166,7 @@ const user = {
             auditTime: '',
             createTime: null
           })
+          commit('SET_VIP_INFO', defaultVipInfo())
           removeToken()
           storage.clean()
           resolve()

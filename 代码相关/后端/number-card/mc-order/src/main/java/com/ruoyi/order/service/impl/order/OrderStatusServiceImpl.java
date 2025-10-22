@@ -2,18 +2,34 @@ package com.ruoyi.order.service.impl.order;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ruoyi.common.constant.BaseConstant;
 import com.ruoyi.common.enums.OrderEnum;
 import com.ruoyi.common.enums.ProductEnum;
+import com.ruoyi.common.order.entity.AgentAccount;
+import com.ruoyi.common.order.entity.AgentCommissionJson;
 import com.ruoyi.common.order.entity.Order;
+import com.ruoyi.common.vip.entity.VipConfig;
+import com.ruoyi.common.vip.entity.VipUpgradeLog;
+import com.ruoyi.common.vip.entity.VipUser;
+import com.ruoyi.order.mapper.AgentAccountMapper;
 import com.ruoyi.order.mapper.OrderMapper;
+import com.ruoyi.order.mapper.VipConfigMapper;
+import com.ruoyi.order.mapper.VipUpgradeLogMapper;
+import com.ruoyi.order.mapper.VipUserMapper;
 import com.ruoyi.order.service.order.OrderCommissionService;
 import com.ruoyi.order.service.order.OrderStatusService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
 import javax.annotation.Resource;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -27,6 +43,18 @@ public class OrderStatusServiceImpl extends ServiceImpl<OrderMapper, Order> impl
 
     @Resource
     OrderCommissionService orderCommissionService;
+
+    @Resource
+    private AgentAccountMapper agentAccountMapper;
+
+    @Resource
+    private VipUserMapper vipUserMapper;
+
+    @Resource
+    private VipConfigMapper vipConfigMapper;
+
+    @Resource
+    private VipUpgradeLogMapper vipUpgradeLogMapper;
 
     /**
      * 记录订单失败
@@ -143,6 +171,7 @@ public class OrderStatusServiceImpl extends ServiceImpl<OrderMapper, Order> impl
                 if(ProductEnum.DAILY_SETTLEMENT.getStatus().equals(Integer.valueOf(order.getProductType()))){
                     orderCommissionService.saveOrderCommission(order);
                 }
+                handleVipUpgrade(order);
             }
         } catch (Exception e) {
             log.info("记录激活失败:{},{}",order.getOrderId(),e.getMessage());
@@ -178,6 +207,140 @@ public class OrderStatusServiceImpl extends ServiceImpl<OrderMapper, Order> impl
         } catch (Exception e) {
             log.info("记录充值失败:{},{}",order.getOrderId(),e.getMessage());
         }
+    }
+
+    private void handleVipUpgrade(Order order) {
+        try {
+            if (order == null) {
+                return;
+            }
+
+            Set<String> relatedAgentCodes = new LinkedHashSet<>();
+            if (StrUtil.isNotBlank(order.getDownstreamCode())) {
+                relatedAgentCodes.add(order.getDownstreamCode());
+            }
+
+            if (StrUtil.isNotBlank(order.getDownstreamFatherList())) {
+                List<AgentCommissionJson> chain = JSON.parseArray(order.getDownstreamFatherList(), AgentCommissionJson.class);
+                if (!CollectionUtils.isEmpty(chain)) {
+                    chain.stream()
+                            .map(AgentCommissionJson::getAgentCode)
+                            .filter(StrUtil::isNotBlank)
+                            .forEach(relatedAgentCodes::add);
+                }
+            }
+
+            if (CollectionUtils.isEmpty(relatedAgentCodes)) {
+                return;
+            }
+
+            for (String agentCode : relatedAgentCodes) {
+                processVipUpgradeForAgent(agentCode, order);
+            }
+        } catch (Exception e) {
+            log.error("[VIP] 订单激活处理VIP升级失败，orderId={}", order != null ? order.getOrderId() : null, e);
+        }
+    }
+
+    private void processVipUpgradeForAgent(String agentCode, Order order) {
+        try {
+            if (StrUtil.isBlank(agentCode)) {
+                return;
+            }
+
+            AgentAccount agentAccount = agentAccountMapper.selectOne(new LambdaQueryWrapper<AgentAccount>()
+                    .eq(AgentAccount::getAgentCode, agentCode)
+                    .eq(AgentAccount::getIsEnabled, BaseConstant.ZERO_INT)
+                    .last("limit 1"));
+            if (agentAccount == null) {
+                log.debug("[VIP] 激活订单未找到有效代理商, 跳过升级. agentCode={}, orderId={}", agentCode, order.getOrderId());
+                return;
+            }
+
+            int currentLevel = agentAccount.getLevel() == null ? BaseConstant.ZERO_INT : agentAccount.getLevel();
+
+            VipUser vipUser = vipUserMapper.selectOne(new LambdaQueryWrapper<VipUser>()
+                    .eq(VipUser::getAgentCode, agentCode)
+                    .last("limit 1"));
+            Date now = new Date();
+            if (vipUser == null) {
+                vipUser = new VipUser();
+                vipUser.setAgentAccountId(agentAccount.getAgentAccountId());
+                vipUser.setAgentCode(agentCode);
+                vipUser.setAgentName(agentAccount.getAgentName());
+                vipUser.setUserId(agentAccount.getSysUserId());
+                vipUser.setVipLevel(currentLevel);
+                vipUser.setCreateTime(now);
+                vipUser.setUpdateTime(now);
+                vipUserMapper.insert(vipUser);
+            } else if (vipUser.getVipLevel() != null) {
+                currentLevel = Math.max(currentLevel, vipUser.getVipLevel());
+            }
+
+            List<VipConfig> configList = vipConfigMapper.selectList(new LambdaQueryWrapper<VipConfig>()
+                    .eq(VipConfig::getIsEnabled, BaseConstant.ONE_INT)
+                    .orderByAsc(VipConfig::getVipLevel));
+            if (CollectionUtils.isEmpty(configList)) {
+                return;
+            }
+
+            int activatedCount = countActivatedOrdersForAgent(agentCode);
+
+            int targetLevel = currentLevel;
+            for (VipConfig config : configList) {
+                Integer level = config.getVipLevel();
+                if (level == null) {
+                    continue;
+                }
+                int required = config.getRequiredOrders() == null ? 0 : config.getRequiredOrders();
+                if (activatedCount >= required && level > targetLevel) {
+                    targetLevel = level;
+                }
+            }
+
+            if (targetLevel <= currentLevel) {
+                if (vipUser.getVipLevel() == null || !vipUser.getVipLevel().equals(currentLevel)) {
+                    vipUser.setVipLevel(currentLevel);
+                    vipUser.setUpdateTime(now);
+                    vipUserMapper.updateById(vipUser);
+                }
+                return;
+            }
+
+            vipUser.setVipLevel(targetLevel);
+            vipUser.setUpdateTime(now);
+            vipUserMapper.updateById(vipUser);
+
+            agentAccount.setLevel(targetLevel);
+            agentAccount.setUpdateTime(System.currentTimeMillis());
+            agentAccountMapper.updateById(agentAccount);
+
+            VipUpgradeLog upgradeLog = new VipUpgradeLog();
+            upgradeLog.setUserId(agentAccount.getSysUserId());
+            upgradeLog.setAgentCode(agentCode);
+            upgradeLog.setAgentName(agentAccount.getAgentName());
+            upgradeLog.setFromLevel(currentLevel);
+            upgradeLog.setToLevel(targetLevel);
+            upgradeLog.setUpgradeType("AUTO");
+            upgradeLog.setUpgradeReason("订单累计达到升级条件");
+            upgradeLog.setOrderCount(activatedCount);
+            upgradeLog.setCreateTime(now);
+            vipUpgradeLogMapper.insert(upgradeLog);
+
+            log.info("[VIP] 代理商{}升级：{} -> {}，激活单量：{} (订单ID:{})", agentCode, currentLevel, targetLevel, activatedCount, order.getOrderId());
+        } catch (Exception e) {
+            log.error("[VIP] 处理代理商VIP升级失败，agentCode={}，orderId={}", agentCode, order.getOrderId(), e);
+        }
+    }
+
+    private int countActivatedOrdersForAgent(String agentCode) {
+        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(Order::getOrderStatus, OrderEnum.ACTIVATED.getStatus())
+                .and(q -> q.eq(Order::getDownstreamCode, agentCode)
+                        .or()
+                        .like(Order::getDownstreamFatherList, "\"agentCode\":\"" + agentCode + "\""));
+        long count = this.count(wrapper);
+        return (int) count;
     }
 
 }

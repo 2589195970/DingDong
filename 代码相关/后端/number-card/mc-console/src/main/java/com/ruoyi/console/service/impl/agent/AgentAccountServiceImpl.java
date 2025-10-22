@@ -19,6 +19,7 @@ import com.ruoyi.common.order.dto.SmsDTO;
 import com.ruoyi.common.order.entity.*;
 import com.ruoyi.common.order.vo.AgentRegistrationStatisticsVO;
 import com.ruoyi.common.order.vo.AgentStatisticsVO;
+import com.ruoyi.common.vip.entity.VipUser;
 import com.ruoyi.common.utils.CacheUtils;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
@@ -33,7 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import com.ruoyi.console.mapper.VipUserMapper;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -43,6 +46,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.Date;
 
 
 /**
@@ -85,6 +89,8 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
     @Resource
     AgentProductService agentProductService;
 
+    @Resource
+    private VipUserMapper vipUserMapper;
 
 
     /**
@@ -93,6 +99,7 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
      * @return
      * @throws BizException
      */
+    @Transactional(rollbackFor = Exception.class)
     public void addAgentAccount(AgentAccountAddBO agentAccountAddBO) throws BizException {
         log.info("用户注册开始:{}",JSONObject.toJSONString(agentAccountAddBO));
         //判断推荐人是否存在
@@ -176,6 +183,7 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         parentAgentJsons.add(parentAgentJson);
         agentAccount.setParentAgentList(JSONObject.toJSONString(parentAgentJsons));
         baseMapper.insert(agentAccount);
+        createDefaultVipUser(sysUser, agentAccount);
         //创建提现相关记录
         withdrawalRecordService.addWithdrawalRecord(sysUser.getUserId(), agentAccount.getAgentCode());
         CommissionConfig commissionConfig = new CommissionConfig();
@@ -211,6 +219,28 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         }
         // 正则表达式：数字、大小写字母、汉字
         return ReUtil.isMatch("^[0-9a-zA-Z\\u4E00-\\u9FA5]+$", input);
+    }
+
+    /**
+     * 创建默认VIP记录，保持代理账号与VIP表同步
+     *
+     * @param sysUser      刚创建的系统用户
+     * @param agentAccount 刚创建的代理账号
+     */
+    private void createDefaultVipUser(SysUser sysUser, AgentAccount agentAccount) {
+        if (sysUser == null || agentAccount == null) {
+            return;
+        }
+        VipUser vipUser = new VipUser();
+        vipUser.setAgentAccountId(agentAccount.getAgentAccountId());
+        vipUser.setUserId(sysUser.getUserId());
+        vipUser.setAgentCode(agentAccount.getAgentCode());
+        vipUser.setAgentName(agentAccount.getAgentName());
+        vipUser.setVipLevel(agentAccount.getLevel());
+        Date now = new Date();
+        vipUser.setCreateTime(now);
+        vipUser.setUpdateTime(now);
+        vipUserMapper.insert(vipUser);
     }
 
 

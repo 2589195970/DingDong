@@ -252,7 +252,7 @@ export function selectNameAudit(data) {
 // 删除实名审核记录
 export function nameAuditId(data) {
   return request({
-    url: "/agentNameAudit​/nameAuditId?nameAuditId=" + data,
+    url: "/agentNameAudit/nameAuditId?nameAuditId=" + data,
     method: "get",
   });
 }

@@ -22,6 +22,7 @@ import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.common.utils.file.MimeTypeUtils;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.console.service.VipUserService;
 
 /**
  * 个人信息 业务处理
@@ -38,6 +39,9 @@ public class SysProfileController extends BaseController
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private VipUserService vipUserService;
+
     /**
      * 个人信息
      */
@@ -51,6 +55,7 @@ public class SysProfileController extends BaseController
         ajax.put("postGroup", userService.selectUserPostGroup(loginUser.getUsername()));
         //查询代理商信息
         ajax.put("agentAccount", userService.getUserAgentAccountInfo(user.getUserId()));
+        ajax.put("vipInfo", vipUserService.selectVipSummaryByUserId(user.getUserId()));
         return ajax;
     }
 

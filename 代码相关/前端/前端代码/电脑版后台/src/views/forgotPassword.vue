@@ -74,7 +74,7 @@
 </template>
 
 <script>
-import { sendSms, resetPassword } from "@/api/login";
+import { sendSms } from "@/api/login";
 import CryptoJS from 'crypto-js'
 
 export default {
@@ -189,17 +189,8 @@ export default {
     handleResetPassword() {
       this.$refs.forgotPasswordForm.validate(valid => {
         if (valid) {
-          this.loading = true;
-          resetPassword(this.forgotPasswordForm).then(res => {
-            this.$alert("<font color='red'>密码重置成功！请使用新密码登录。</font>", '系统提示', {
-              dangerouslyUseHTMLString: true,
-              type: 'success'
-            }).then(() => {
-              this.$router.push("/login");
-            }).catch(() => {});
-          }).catch(error => {
-            this.loading = false;
-            this.$message.error(error.message || "密码重置失败，请稍后重试");
+          this.$alert('请联系平台管理员完成密码重置，或通过短信登录后在个人中心修改密码。', '提示', {
+            type: 'warning'
           });
         }
       });

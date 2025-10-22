@@ -21,6 +21,7 @@ import com.ruoyi.framework.web.service.SysLoginService;
 import com.ruoyi.framework.web.service.SysPermissionService;
 import com.ruoyi.system.service.ISysMenuService;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.console.service.VipUserService;
 
 import static com.ruoyi.common.utils.SecurityUtils.getLoginUser;
 
@@ -43,6 +44,9 @@ public class SysLoginController
 
     @Autowired
     private ISysUserService userService;
+
+    @Autowired
+    private VipUserService vipUserService;
 
     /**
      * 登录方法
@@ -116,6 +120,7 @@ public class SysLoginController
         ajax.put("permissions", permissions);
         // 添加代理商账户信息（移动端需要）
         ajax.put("agentAccount", userService.getUserAgentAccountInfo(user.getUserId()));
+        ajax.put("vipInfo", vipUserService.selectVipSummaryByUserId(user.getUserId()));
         return ajax;
     }
 

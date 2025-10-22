@@ -25,13 +25,3 @@ export function getAgentStatistics(agentCode) {
     method: 'get'
   })
 }
-
-// 导出代理商排名数据
-export function exportAgentRanking(data) {
-  return request({
-    url: '/agentManagement/exportAgentRanking',
-    method: 'post',
-    data: data,
-    responseType: 'blob'
-  })
-}

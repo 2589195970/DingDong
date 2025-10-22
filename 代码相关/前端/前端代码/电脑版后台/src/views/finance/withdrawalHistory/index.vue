@@ -142,7 +142,7 @@
 </template>
 
 <script>
-    import { selectWithdrawalApplicationListPage, updateWithdrawalApplication, deletelithdrawalApplication } from "@/api/monitor/finance";
+    import { selectWithdrawalApplicationListPage, updateWithdrawalApplication, deleteWithdrawalApplication } from "@/api/monitor/finance";
     export default {
         name: "Operlog",
         dicts: ['sys_oper_type', 'sys_common_status'],

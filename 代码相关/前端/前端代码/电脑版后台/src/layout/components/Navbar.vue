@@ -21,6 +21,8 @@
         <!--  <size-select id="size-select" class="right-menu-item hover-effect" />-->
         <!--</el-tooltip>-->
 
+        <vip-badge class="right-menu-item" />
+
       </template>
 
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
@@ -69,6 +71,7 @@ import SizeSelect from '@/components/SizeSelect'
 import Search from '@/components/HeaderSearch'
 import RuoYiGit from '@/components/RuoYi/Git'
 import RuoYiDoc from '@/components/RuoYi/Doc'
+import VipBadge from '@/components/VipBadge'
 
 export default {
   components: {
@@ -79,7 +82,8 @@ export default {
     SizeSelect,
     Search,
     RuoYiGit,
-    RuoYiDoc
+    RuoYiDoc,
+    VipBadge
   },
   data() {
     return {

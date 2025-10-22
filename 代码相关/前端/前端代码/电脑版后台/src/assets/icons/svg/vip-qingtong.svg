@@ -1,0 +1,44 @@
+<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bronze-bg" cx="50%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#f4d6c1" />
+      <stop offset="45%" stop-color="#b67446" />
+      <stop offset="100%" stop-color="#230b04" />
+    </radialGradient>
+    <linearGradient id="bronze-facet-a" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f2c5a3" />
+      <stop offset="45%" stop-color="#be713d" />
+      <stop offset="100%" stop-color="#5c2c16" />
+    </linearGradient>
+    <linearGradient id="bronze-facet-b" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffe2cb" />
+      <stop offset="50%" stop-color="#d59563" />
+      <stop offset="100%" stop-color="#8a4a26" />
+    </linearGradient>
+    <linearGradient id="bronze-facet-c" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#efbf97" />
+      <stop offset="60%" stop-color="#c67945" />
+      <stop offset="100%" stop-color="#682f14" />
+    </linearGradient>
+    <linearGradient id="bronze-facet-d" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d38858" />
+      <stop offset="60%" stop-color="#8f4a27" />
+      <stop offset="100%" stop-color="#3d170b" />
+    </linearGradient>
+    <linearGradient id="bronze-facet-e" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e0a77b" />
+      <stop offset="55%" stop-color="#9a552d" />
+      <stop offset="100%" stop-color="#341005" />
+    </linearGradient>
+    <radialGradient id="bronze-highlight" cx="50%" cy="30%" r="40%">
+      <stop offset="0%" stop-color="#fde4d0" stop-opacity="0.75" />
+      <stop offset="100%" stop-color="#fde4d0" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <path d="M291.5328 262.519467l-116.701867 158.1056h233.472z m233.472 567.671466l116.701867-409.6h-233.3696z m233.472-567.671466l-116.770133 158.1056h233.472z m0 0" fill="url(#bronze-facet-a)" />
+  <path d="M525.0048 262.519467l-116.701867 158.1056h233.3696z m0 0" fill="url(#bronze-facet-b)" />
+  <path d="M408.302933 420.625067l116.701867-158.1056h-233.472z m233.3696 0l116.770134-158.1056h-233.472z m0 0" fill="url(#bronze-facet-c)" />
+  <path d="M174.830933 420.625067l350.173867 409.6-116.701867-409.6z m0 0" fill="url(#bronze-facet-d)" />
+  <path d="M641.706667 420.625067l-116.701867 409.6 350.173867-409.6z m0 0" fill="url(#bronze-facet-e)" />
+  <circle cx="512" cy="350" r="200" fill="url(#bronze-highlight)" />
+</svg>

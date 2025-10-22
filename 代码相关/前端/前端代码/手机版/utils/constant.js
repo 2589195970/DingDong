@@ -4,6 +4,7 @@ const constant = {
    roles: 'vuex_roles',
    permissions: 'vuex_permissions',
    agentAccount: 'vuex_agent_account',
+   vipInfo: 'vuex_vip_info',
 
    // 实名认证状态常量 (与数据库定义保持一致)
    REAL_NAME_STATUS: {

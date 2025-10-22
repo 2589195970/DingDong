@@ -29,16 +29,6 @@
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
         <el-button
-          type="warning"
-          plain
-          icon="el-icon-download"
-          size="mini"
-          @click="handleExport"
-          v-hasPermi="['agent:ranking:export']"
-        >导出</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
           type="info"
           plain
           icon="el-icon-refresh"
@@ -94,7 +84,7 @@
 </template>
 
 <script>
-import { getAgentRankingPage, exportAgentRanking, exportOrderCommissionList } from "@/api/agent";
+import { getAgentRankingPage } from "@/api/agent";
 
 export default {
   name: "AgentRanking",
@@ -190,12 +180,6 @@ export default {
     /** 刷新按钮操作 */
     handleRefresh() {
       this.getList();
-    },
-    /** 导出按钮操作 */
-    handleExport() {
-      this.download('agentManagement/exportAgentRanking', {
-        ...this.queryParams
-      }, `代理商排名_${new Date().getTime()}.xlsx`)
     },
     /** 格式化数字 */
     formatNumber(num) {

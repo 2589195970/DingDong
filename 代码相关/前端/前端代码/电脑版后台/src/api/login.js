@@ -72,15 +72,3 @@ export function getCodeImg() {
     timeout: 20000
   })
 }
-
-// 重置密码
-export function resetPassword(data) {
-  return request({
-    url: '/agentAccount/resetPassword',
-    headers: {
-      isToken: false
-    },
-    method: 'post',
-    data: data
-  })
-}

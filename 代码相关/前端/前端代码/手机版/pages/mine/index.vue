@@ -14,8 +14,11 @@
             点击登录
           </view>
           <view v-if="name" @click="handleToInfo" class="user-info">
-            <view class="u_title">
-              {{ name }}
+            <view class="user-info__row">
+              <view class="u_title">
+                {{ name }}
+              </view>
+              <vip-badge v-if="vipInfo" :vip-info="vipInfo" size="small" />
             </view>
           </view>
         </view>
@@ -191,8 +194,12 @@ import {
   getAgentExtendUrlVO,
   selectDashboardStatistics
 } from "@/api/order/order.js";
+import VipBadge from '@/components/vip-badge/vip-badge.vue'
 
 export default {
+  components: {
+    VipBadge
+  },
   data() {
     return {
       commissionopen: false,
@@ -219,6 +226,11 @@ export default {
         activations: 0,
         commission: 0
       },
+    }
+  },
+  computed: {
+    vipInfo() {
+      return this.$store.state.user.vipInfo || null
     }
   },
   onLoad() {
@@ -416,15 +428,20 @@ page {
       }
     }
 
-    .user-info {
-      margin-left: 15px;
+      .user-info {
+        margin-left: 15px;
 
-      .u_title {
-        font-size: 18px;
-        line-height: 30px;
+        .user-info__row {
+          display: flex;
+          align-items: center;
+        }
+
+        .u_title {
+          font-size: 18px;
+          line-height: 30px;
+        }
       }
     }
-  }
 
   .content-section {
     position: relative;

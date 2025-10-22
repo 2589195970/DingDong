@@ -1,5 +1,5 @@
-// let baseUrl = 'https://api.dingdonghaoka.com/api';
-let baseUrl = 'http://127.0.0.1:8081';
+let baseUrl = 'https://api.dingdonghaoka.com/api';
+// let baseUrl = 'http://127.0.0.1:8081';
 function getQueryString(name) {
   var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)","i");
   var r = window.location.search.substr(1).match(reg);

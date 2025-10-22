@@ -1,6 +1,13 @@
 import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 
+const defaultVipInfo = () => ({
+  vipLevel: 0,
+  vipLevelName: '',
+  vipLevelIcon: '',
+  hasVipRecord: false
+})
+
 const user = {
   state: {
     token: getToken(),
@@ -8,7 +15,8 @@ const user = {
     name: '',
     avatar: '',
     roles: [],
-    permissions: []
+    permissions: [],
+    vipInfo: defaultVipInfo()
   },
 
   mutations: {
@@ -23,6 +31,12 @@ const user = {
     },
     SET_AVATAR: (state, avatar) => {
       state.avatar = avatar
+    },
+    SET_VIP_INFO: (state, vipInfo) => {
+      state.vipInfo = {
+        ...defaultVipInfo(),
+        ...(vipInfo || {})
+      }
     },
     SET_ROLES: (state, roles) => {
       state.roles = roles
@@ -65,6 +79,7 @@ const user = {
           commit('SET_ID', user.userId)
           commit('SET_NAME', user.userName)
           commit('SET_AVATAR', avatar)
+          commit('SET_VIP_INFO', res.vipInfo)
           resolve(res)
         }).catch(error => {
           reject(error)
@@ -79,6 +94,7 @@ const user = {
           commit('SET_TOKEN', '')
           commit('SET_ROLES', [])
           commit('SET_PERMISSIONS', [])
+          commit('SET_VIP_INFO', defaultVipInfo())
           removeToken()
           resolve()
         }).catch(error => {
@@ -91,6 +107,7 @@ const user = {
     FedLogOut({ commit }) {
       return new Promise(resolve => {
         commit('SET_TOKEN', '')
+        commit('SET_VIP_INFO', defaultVipInfo())
         removeToken()
         resolve()
       })

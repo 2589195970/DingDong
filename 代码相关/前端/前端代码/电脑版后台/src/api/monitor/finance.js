@@ -15,16 +15,17 @@ export function updateWithdrawalApplication(data) {
   });
 }
 
-export function deletelithdrawalApplication() {
+export function deleteWithdrawalApplication(withdrawalApplicationId) {
   return request({
-    url: "/withdrawalApplication/deletelithdrawalApplication",
+    url: "/withdrawalApplication/deleteWithdrawalApplication",
     method: "get",
+    params: { withdrawalApplicationId }
   });
 }
 // 代理商新增申请提现
 export function addAgentWithdrawalApplication(data) {
   return request({
-    url: "/agentWithdrawalApplication/addAgentWithdrawalApplication ",
+    url: "/agentWithdrawalApplication/addAgentWithdrawalApplication",
     method: "post",
     data: data
   })
