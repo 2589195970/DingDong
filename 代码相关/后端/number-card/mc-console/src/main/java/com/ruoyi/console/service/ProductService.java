@@ -7,9 +7,11 @@ import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.ProductAddAndUpdateBO;
 import com.ruoyi.common.order.bo.ProductCopyBO;
+import com.ruoyi.common.order.bo.ProductInitRequest;
 import com.ruoyi.common.order.bo.ProductSelectBO;
 import com.ruoyi.common.order.bo.ProductUpdateStatusBO;
 import com.ruoyi.common.order.entity.Product;
+import com.ruoyi.common.order.vo.ProductInitResult;
 import com.ruoyi.common.order.vo.ProductSelectVO;
 
 import java.util.Map;
@@ -89,12 +91,21 @@ public interface ProductService extends IService<Product> {
      Product getProduct(String productCode) throws BizException;
 
      /**
-      * 根据Code查询产品信息 包括已下架产品
-      *
-      * @param
-      * @return
-      */
+     * 根据Code查询产品信息 包括已下架产品
+     *
+     * @param
+     * @return
+     */
      Product getProductNotStatus(String productCode) throws BizException;
+
+     /**
+      * 初始化代理产品
+      * @param request 请求参数
+      * @param loginUser 登录信息
+      * @return 结果统计
+      * @throws BizException 业务异常
+      */
+     ProductInitResult initAgentProducts(ProductInitRequest request, LoginUser loginUser) throws BizException;
 
 
      /**

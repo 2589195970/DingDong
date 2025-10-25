@@ -35,7 +35,7 @@
                 <!-- <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button> -->
             </el-form-item>
         </el-form>
-        <el-table ref="tables" v-loading="loading" :data="list" row-key="operatorReportId" border lazy height="650">
+        <el-table ref="tables" v-loading="loading" :data="list" row-key="operatorReportId" border lazy :max-height="tableMaxHeight">
             <el-table-column label="ID" align="center" prop="productId"width="50" />
             <el-table-column label="产品名称" align="center" prop="productName" width="110"/>
             <el-table-column label="产品主图" align="center" prop="productMasterMap">
@@ -75,17 +75,19 @@
                 </template>
             </el-table-column>
             <el-table-column label="产品佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
-            <el-table-column label="下游分销佣金" align="center" prop="distributionProductCommission"
-                :show-overflow-tooltip="true" />
-            <el-table-column label="收入佣金" align="center" prop="revenueProductCommission"
-                :show-overflow-tooltip="true" />
+          <el-table-column label="VIP固定加成(元)" align="center" prop="vipFixedCommission"
+                           :show-overflow-tooltip="true" />
+            <!--<el-table-column label="下游分销佣金" align="center" prop="distributionProductCommission"-->
+            <!--    :show-overflow-tooltip="true" />-->
+            <!--<el-table-column label="收入佣金" align="center" prop="revenueProductCommission"-->
+            <!--    :show-overflow-tooltip="true" />-->
 
 
             <el-table-column align="center" label="操作">
                 <template slot-scope="scope">
                     <el-button @click="share(scope.row)" type="text" size="small">产品海报</el-button>
-                    <br>
-                    <el-button @click="handleCommission(scope.row)" type="text" size="small">下游佣金</el-button>
+                    <!--<br>-->
+                    <!--<el-button @click="handleCommission(scope.row)" type="text" size="small">下游佣金</el-button>-->
                     <br>
                     <el-button @click="handlefuzhi(scope.row)" type="text" size="small">复制链接</el-button>
                     <el-button @click="handleOpen(scope.row)" type="text" size="small">打开链接</el-button>
@@ -99,8 +101,8 @@
             <el-form ref="form" v-model="form" label-width="100px">
                 <el-row>
                     <el-col :span="24">
-                        <el-form-item prop="productCommission" label="下游佣金">
-                            <el-input v-model="form.distributionProductCommission"></el-input>
+                        <el-form-item prop="productCommission" label="产品佣金">
+                            <el-input v-model="form.productCommission"></el-input>
                         </el-form-item>
                     </el-col>
                 </el-row>
@@ -199,12 +201,20 @@
                 searchType: [],
                 sharedata:{},
                 shareOpen:false,
+                tableMaxHeight: 500,
                 queryParams: {
                     pageNo: 1,
                     pageSize: 10,
                     productStatus: 0,
                 },
             };
+        },
+        mounted() {
+            this.updateTableMaxHeight();
+            window.addEventListener('resize', this.updateTableMaxHeight);
+        },
+        beforeDestroy() {
+            window.removeEventListener('resize', this.updateTableMaxHeight);
         },
         created() {
             this.getList();
@@ -282,7 +292,18 @@
 
             },
             submitForm() {
-                updateProductCommission(this.form).then((res) => {
+                const amount = this.form.productCommission === '' || this.form.productCommission === null || this.form.productCommission === undefined
+                    ? 0
+                    : Number(this.form.productCommission);
+                if (Number.isNaN(amount) || amount < 0) {
+                    this.$message.error('请输入不小于0的产品佣金');
+                    return;
+                }
+                const payload = {
+                    productCode: this.form.productCode,
+                    productCommission: amount
+                };
+                updateProductCommission(payload).then((res) => {
                     this.$message({
                         type: 'success',
                         message: '修改成功!'
@@ -294,7 +315,10 @@
             },
             handleCommission(data) {
                 this.openCommission = true;
-                this.form = data;
+                this.form = {
+                    productCode: data.productCode,
+                    productCommission: data.productCommission
+                };
             },
             handleImport() { },
             handleAdd() { },
@@ -329,6 +353,19 @@
 
             },
 
+            updateTableMaxHeight() {
+                this.$nextTick(() => {
+                    const table = this.$refs.tables && this.$refs.tables.$el;
+                    if (!table) {
+                        return;
+                    }
+                    const viewportHeight = window.innerHeight || 0;
+                    const tableTop = table.getBoundingClientRect().top || 0;
+                    const padding = 32;
+                    const computed = viewportHeight - tableTop - padding;
+                  this.tableMaxHeight = (computed > 320 ? computed : 320) - 100;
+                });
+            },
 
             getList() {
                 agentSelectProductListPage(this.queryParams).then((res) => {

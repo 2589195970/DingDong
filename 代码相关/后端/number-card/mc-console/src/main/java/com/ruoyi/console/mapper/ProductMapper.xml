@@ -51,6 +51,8 @@
             p.product_age_min as productAgeMin,
             p.product_age_max as productAgeMax,
             p.product_detail_map as productDetailMap,
+            p.sfyjfx as sfyjfx,
+            p.sffftk as sffftk,
             a.agent_product_id as agentProductId,
             a.product_status as productStatus,
             a.product_commission AS productCommission,

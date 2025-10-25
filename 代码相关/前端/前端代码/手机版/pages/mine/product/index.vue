@@ -102,9 +102,9 @@
 						佣金：{{dict.productCommission}}
 					</view>|
 
-					<view class="xtxview" @click="commissionOpoe(dict)">
-						下游佣金：{{dict.distributionProductCommission}}
-					</view>|
+					<!--<view class="xtxview" @click="commissionOpoe(dict)">-->
+					<!--	下游佣金：{{dict.distributionProductCommission}}-->
+					<!--</view>|-->
 					<view class="xtxview" @click="showTrue(dict)">
 						推广
 					</view>

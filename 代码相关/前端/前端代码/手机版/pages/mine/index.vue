@@ -2,32 +2,51 @@
   <view class="mine-container" :style="{height: `${windowHeight}px`}">
     <!--顶部个人信息栏-->
     <view class="header-section">
-      <view class="flex padding justify-between">
-        <view class="flex align-center">
-          <view v-if="!avatar" class="cu-avatar xl round bg-white">
-            <view class="iconfont icon-people text-gray icon"></view>
+      <view class="header-content">
+        <view class="profile-main">
+          <view class="profile-avatar">
+            <view v-if="!avatar" class="cu-avatar xl round bg-white">
+              <view class="iconfont icon-people text-gray icon"></view>
+            </view>
+            <image
+              v-else
+              @click="handleToAvatar"
+              :src="avatar"
+              class="cu-avatar xl round"
+              mode="aspectFill"
+            />
           </view>
-          <image v-if="avatar" @click="handleToAvatar" :src="avatar" class="cu-avatar xl round"
-                 mode="widthFix">
-          </image>
-          <view v-if="!name" @click="handleToLogin" class="login-tip">
-            点击登录
-          </view>
-          <view v-if="name" @click="handleToInfo" class="user-info">
-            <view class="user-info__row">
-              <view class="u_title">
-                {{ name }}
+          <view class="profile-details">
+            <view v-if="!name" @click="handleToLogin" class="login-tip">
+              点击登录
+            </view>
+            <view v-else class="user-info" @click="handleToInfo">
+              <view class="user-info__name">
+                <text class="user-info__name-text">{{ name }}</text>
               </view>
-              <vip-badge v-if="vipInfo" :vip-info="vipInfo" size="small" />
             </view>
           </view>
         </view>
-        <view @click="handleToInfo" class="flex align-center">
-          <text>个人信息</text>
-          <view class="iconfont icon-right"></view>
+        <view @click="handleToInfo" class="profile-action">
+          <text class="profile-action__text">个人信息</text>
+          <u-icon name="arrow-right" size="20" color="#4a5260"></u-icon>
         </view>
       </view>
     </view>
+    <view v-if="vipInfo" class="vip-summary-strip" @click.stop="handleVipBenefits">
+      <view class="vip-summary-strip__icon">
+        <image :src="vipTriggerIcon" mode="aspectFit" />
+      </view>
+      <view class="vip-summary-strip__text">
+        <text class="vip-summary-strip__title">{{ vipTriggerTitle }}</text>
+        <text class="vip-summary-strip__subtitle">{{ vipTriggerSubtitle }}</text>
+      </view>
+      <view class="vip-summary-strip__action">
+        <text>权益详情</text>
+        <u-icon name="arrow-right" size="18" color="#c46b08"></u-icon>
+      </view>
+    </view>
+
     <view class="content-section">
 
       <view class="revenue-card">
@@ -139,9 +158,9 @@
           <image src="@/static/images/mine/招募.png" class="btn-icon-with-padding"></image>
           <text class="btn-text">商城海报</text>
         </view>
-        <view class="function-btn" @click="commission">
+        <view class="function-btn" @click="vipBenefits">
           <image src="@/static/images/mine/佣金设置.png" class="btn-icon"></image>
-          <text class="btn-text">佣金设置</text>
+          <text class="btn-text">权益详情</text>
         </view>
         <view class="function-btn" @click="payouts">
           <image src="@/static/images/mine/佣金提现.png" class="btn-icon"></image>
@@ -181,6 +200,47 @@
 
     <!-- 为最后一个功能按钮区域添加底部间距 -->
     <view style="height: 60px;"></view>
+    <u-popup v-model="vipPopupVisible" mode="bottom" border-radius="26">
+      <view class="vip-popup">
+        <view class="vip-popup__header">
+          <text class="vip-popup__title">VIP 权益</text>
+          <view class="vip-popup__close" @click="vipPopupVisible = false">
+            <u-icon name="close" size="20" color="#999"></u-icon>
+          </view>
+        </view>
+        <view class="vip-popup__body">
+          <view v-if="vipCardsLoading" class="vip-popup__status">权益加载中...</view>
+          <view v-else-if="vipCardsError" class="vip-popup__status vip-popup__status--error">
+            <text>{{ vipCardsError }}</text>
+            <view class="vip-popup__retry" @click="retryVipCards">重新加载</view>
+          </view>
+          <view v-else-if="!vipCards.length" class="vip-popup__status">暂无 VIP 权益配置</view>
+          <scroll-view v-else class="vip-popup__scroll" scroll-y>
+            <view class="vip-popup__cards">
+              <view
+                v-for="card in vipCards"
+                :key="card.vipLevel"
+                class="vip-popup__card"
+                :class="{ 'is-active': Number(card.vipLevel) === currentVipLevel }">
+                <view class="vip-popup__card-icon">
+                  <image :src="resolveVipIcon(card)" mode="aspectFit" />
+                </view>
+                <view class="vip-popup__card-info">
+                  <text class="vip-popup__card-level">VIP{{ card.vipLevel }}</text>
+                  <text class="vip-popup__card-name">{{ card.levelName || ('VIP' + card.vipLevel) }}</text>
+                  <text v-if="card.requiredOrders != null" class="vip-popup__card-orders">升级需订单：{{ card.requiredOrders }}</text>
+                  <text v-if="card.remark" class="vip-popup__card-remark">{{ card.remark }}</text>
+                </view>
+                <view class="vip-popup__card-amount">
+                  <text class="vip-popup__card-value">¥{{ formatAmount(card.fixedCommission) }}</text>
+                  <text class="vip-popup__card-desc">固定加成</text>
+                </view>
+              </view>
+            </view>
+          </scroll-view>
+        </view>
+      </view>
+    </u-popup>
     <u-modal :show="commissionopen" @confirm="confirm" ref="uModal" @cancel="cancel" :showCancelButton='true'
              confirmText="保存图片" :asyncClose="true">
       <image :src="sc.shopQrcodeMap" alt="" class="qrcode-image"/>
@@ -194,12 +254,17 @@ import {
   getAgentExtendUrlVO,
   selectDashboardStatistics
 } from "@/api/order/order.js";
-import VipBadge from '@/components/vip-badge/vip-badge.vue'
+import { getVipCommissionCards } from '@/api/mine/vip'
+import constant from '@/utils/constant'
+import {
+  resolveVipIcon as resolveVipIconUtil,
+  resolveVipLevelLabel,
+  getVipLevelNumber,
+  formatVipAmount,
+  hasVipRecord
+} from '@/utils/vip'
 
 export default {
-  components: {
-    VipBadge
-  },
   data() {
     return {
       commissionopen: false,
@@ -226,18 +291,64 @@ export default {
         activations: 0,
         commission: 0
       },
+      vipPopupVisible: false,
+      vipCards: [],
+      vipCardsLoading: false,
+      vipCardsLoaded: false,
+      vipCardsError: ''
     }
+  },
+  async onLoad() {
+    await this.refreshVipInfo(true)
+    this.select(); //获取列表
+    this.getStatsData(); //获取统计数据
+    this.ensureVipCards()
+  },
+  onShow() {
+    this.refreshVipInfo()
+    this.ensureVipCards()
   },
   computed: {
     vipInfo() {
       return this.$store.state.user.vipInfo || null
-    }
-  },
-  onLoad() {
-    this.select(); //获取列表
-    this.getStatsData(); //获取统计数据
-  },
-  computed: {
+    },
+    sanitizedVipInfo() {
+      return this.vipInfo || {}
+    },
+    currentVipLevel() {
+      return getVipLevelNumber(this.sanitizedVipInfo)
+    },
+    vipTriggerIcon() {
+      return resolveVipIconUtil(this.sanitizedVipInfo)
+    },
+    currentVipCard() {
+      if (!Array.isArray(this.vipCards) || !this.vipCards.length) {
+        return null
+      }
+      const level = this.currentVipLevel
+      if (level === null || level === undefined) {
+        return null
+      }
+      return this.vipCards.find(card => Number(card.vipLevel) === Number(level)) || null
+    },
+    vipTriggerTitle() {
+      if (!this.sanitizedVipInfo || (this.currentVipLevel === null && !this.sanitizedVipInfo.vipLevelName)) {
+        return 'VIP 权益'
+      }
+      return resolveVipLevelLabel(this.sanitizedVipInfo)
+    },
+    vipTriggerSubtitle() {
+      if (this.vipCardsLoading) {
+        return '权益加载中...'
+      }
+      if (this.currentVipCard && this.currentVipCard.fixedCommission !== undefined && this.currentVipCard.fixedCommission !== null) {
+        return `固定加成 ¥${formatVipAmount(this.currentVipCard.fixedCommission)}`
+      }
+      if (hasVipRecord(this.sanitizedVipInfo)) {
+        return '查看权益详情'
+      }
+      return '成为 VIP 解锁权益'
+    },
     avatar() {
       return this.$store.state.user.avatar
     },
@@ -245,9 +356,63 @@ export default {
       const systemInfo = uni.getSystemInfoSync();
       // 确保有足够的页面高度来显示所有内容
       return Math.max(systemInfo.windowHeight, 800);
+    },
+    agentAccount() {
+      return this.$store.state.user.agentAccount || {}
     }
   },
   methods: {
+    handleVipBenefits() {
+      if (!this.vipCardsLoaded && !this.vipCardsLoading) {
+        this.ensureVipCards()
+      }
+      this.vipPopupVisible = false
+      this.vipBenefits()
+    },
+    async refreshVipInfo(force = false) {
+      const hasName = Boolean(this.name)
+      const storeVipInfo = this.$store.state.user.vipInfo || {}
+      const hasVipRecord = !!storeVipInfo.hasVipRecord
+      if (!force && hasName && hasVipRecord) {
+        return
+      }
+      try {
+        await this.$store.dispatch('GetInfo')
+        this.name = this.$store.state.user.name
+      } catch (error) {
+        console.error('刷新用户信息失败:', error)
+      }
+    },
+    async ensureVipCards(force = false) {
+      if (this.vipCardsLoading) {
+        return
+      }
+      if (this.vipCardsLoaded && !force) {
+        return
+      }
+      this.vipCardsLoading = true
+      this.vipCardsError = ''
+      try {
+        const { data } = await getVipCommissionCards()
+        this.vipCards = Array.isArray(data) ? data : []
+        this.vipCardsLoaded = true
+      } catch (error) {
+        console.error('获取 VIP 权益失败:', error)
+        this.vipCardsError = 'VIP 权益加载失败，请稍后重试'
+        this.vipCardsLoaded = false
+      } finally {
+        this.vipCardsLoading = false
+      }
+    },
+    async retryVipCards() {
+      await this.ensureVipCards(true)
+    },
+    resolveVipIcon(item) {
+      return resolveVipIconUtil(item)
+    },
+    formatAmount(value) {
+      return formatVipAmount(value)
+    },
     miansc() {
       // this.$tab.navigateTo(`/pages/common/webview/index?title=我的商城&url=`+ this.sc.shopUrl)
       window.location.href = this.sc.shopUrl;
@@ -329,7 +494,28 @@ export default {
       this.$tab.navigateTo('/pages/home/use')
     },
 
+    getRealNameStatusText(status) {
+      const statusMap = {
+        [constant.REAL_NAME_STATUS.UNVERIFIED]: '未认证',
+        [constant.REAL_NAME_STATUS.VERIFYING]: '认证中',
+        [constant.REAL_NAME_STATUS.VERIFIED]: '已认证',
+        [constant.REAL_NAME_STATUS.FAILED]: '认证失败'
+      }
+      return statusMap[status] || '未认证'
+    },
     payouts() {
+      const status = this.agentAccount.realNameStatus
+      const isVerified = status === constant.REAL_NAME_STATUS.VERIFIED
+      if (!isVerified) {
+        const statusText = this.getRealNameStatusText(status)
+        const content = status === constant.REAL_NAME_STATUS.UNVERIFIED
+          ? '您还未进行实名认证，提现功能需要完成实名认证后才能使用。是否前往实名认证？'
+          : `当前实名认证状态为“${statusText}”，通过审核后才能使用提现功能。是否前往实名认证页面查看进度？`
+        this.$modal.confirm(content).then(() => {
+          this.$tab.navigateTo('/pages/mine/realname/index')
+        }).catch(() => {})
+        return
+      }
       this.$tab.navigateTo('/pages/mine/payouts/index')
     },
     product() {
@@ -377,7 +563,7 @@ export default {
     systemNotice() {
       this.$tab.navigateTo('/pages/notice/list')
     },
-    commission() {
+    vipBenefits() {
       this.$tab.navigateTo('/pages/mine/commission/index')
     },
     invite() {
@@ -411,41 +597,192 @@ page {
 
 
   .header-section {
-    padding: 15px 15px 45px 15px;
-    // background-color: #3c96f3;
-    // color: white;
+    padding: 30rpx 30rpx 90rpx;
+
+    .header-content {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 24rpx;
+      width: 100%;
+      box-sizing: border-box;
+      flex-wrap: wrap;
+    }
+
+    .profile-main {
+      display: flex;
+      align-items: flex-start;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .profile-avatar {
+      width: 120rpx;
+      height: 120rpx;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .profile-avatar .cu-avatar {
+      width: 120rpx;
+      height: 120rpx;
+      border: 2rpx solid #eaeaea;
+    }
+
+    .profile-avatar image {
+      width: 120rpx;
+      height: 120rpx;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .profile-avatar .icon {
+      font-size: 40rpx;
+    }
+
+    .profile-details {
+      margin-left: 24rpx;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
 
     .login-tip {
-      font-size: 18px;
-      margin-left: 10px;
+      font-size: 32rpx;
+      color: #4b5563;
+      cursor: pointer;
     }
 
-    .cu-avatar {
-      border: 2px solid #eaeaea;
-
-      .icon {
-        font-size: 40px;
-      }
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8rpx;
+      min-width: 0;
+      cursor: pointer;
     }
 
-      .user-info {
-        margin-left: 15px;
-
-        .user-info__row {
-          display: flex;
-          align-items: center;
-        }
-
-        .u_title {
-          font-size: 18px;
-          line-height: 30px;
-        }
-      }
+    .user-info__name {
+      font-size: 36rpx;
+      line-height: 46rpx;
+      font-weight: 700;
+      color: #1f2d3d;
+      letter-spacing: 1rpx;
     }
 
-  .content-section {
-    position: relative;
-    top: -50px;
+    .user-info__name-text {
+      max-width: 480rpx;
+      display: inline-block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .profile-action {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 16rpx;
+      padding: 20rpx 36rpx;
+      border-radius: 999rpx;
+      border: 1rpx solid #edf2f9;
+      background: #ffffff;
+      box-shadow: 0 16rpx 36rpx rgba(31, 45, 61, 0.12);
+      color: #1f2d3d;
+      font-size: 28rpx;
+      cursor: pointer;
+      margin-top: 12rpx;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    .profile-action__text {
+      font-size: 28rpx;
+      font-weight: 600;
+      letter-spacing: 1rpx;
+    }
+
+    .profile-action:active {
+      transform: scale(0.97);
+      box-shadow: 0 18rpx 38rpx rgba(255, 214, 102, 0.28);
+    }
+  }
+
+.vip-summary-strip {
+  margin: -60rpx 30rpx 24rpx;
+  padding: 24rpx 28rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #fff4d6 0%, #ffe0a1 100%);
+  box-shadow: 0 22rpx 40rpx rgba(255, 214, 102, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  cursor: pointer;
+}
+
+  .vip-summary-strip__icon {
+    width: 80rpx;
+    height: 80rpx;
+    border-radius: 20rpx;
+    background: rgba(255, 214, 102, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .vip-summary-strip__icon image {
+    width: 48rpx;
+    height: 48rpx;
+  }
+
+  .vip-summary-strip__text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
+  }
+
+  .vip-summary-strip__title {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #8c4b05;
+  }
+
+  .vip-summary-strip__subtitle {
+    font-size: 24rpx;
+    color: rgba(140, 75, 5, 0.75);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .vip-summary-strip__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8rpx;
+    color: #c46b08;
+    font-size: 24rpx;
+    flex-shrink: 0;
+  }
+
+  .vip-summary-strip:active {
+    transform: scale(0.98);
+  }
+
+.content-section {
+  position: relative;
+  top: 0;
+  margin-top: 0;
+
+  & + .content-section {
+    margin-top: 20rpx;
+  }
 
     .mine-actions {
       margin: 15px 15px;
@@ -757,6 +1094,177 @@ page {
     width: 100%;
     height: 800rpx;
     object-fit: contain;
+  }
+}
+
+.vip-popup {
+  padding: 20px 20px 28px;
+  background-color: #ffffff;
+  border-radius: 26px 26px 0 0;
+  min-height: 260px;
+
+  &__header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2d3d;
+  }
+
+  &__close {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 4px;
+  }
+
+  &__body {
+    max-height: 60vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__status {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 0;
+    font-size: 13px;
+    color: #909399;
+    text-align: center;
+
+    &--error {
+      color: #d46b08;
+    }
+  }
+
+  &__retry {
+    margin-top: 12px;
+    padding: 6px 20px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #ffd666 0%, #ffc53d 100%);
+    color: #8c4b05;
+    font-size: 13px;
+  }
+
+  &__scroll {
+    max-height: 52vh;
+  }
+
+  &__cards {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-bottom: 12px;
+  }
+
+  &__card {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+    box-shadow: 0 10px 24px rgba(31, 45, 61, 0.12);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.9) 0, rgba(255, 255, 255, 0) 55%),
+        radial-gradient(circle at 80% 15%, rgba(255, 255, 255, 0.6) 0, rgba(255, 255, 255, 0) 60%);
+      opacity: 0.35;
+    }
+
+    &-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(255, 214, 102, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 14px;
+      overflow: hidden;
+
+      image {
+        width: 70%;
+        height: 70%;
+      }
+    }
+
+    &-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      position: relative;
+    }
+
+    &-level {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2f3c50;
+    }
+
+    &-name {
+      font-size: 12px;
+      color: rgba(47, 60, 80, 0.7);
+      margin-top: 2px;
+    }
+
+    &-orders {
+      font-size: 11px;
+      color: rgba(47, 60, 80, 0.55);
+      margin-top: 4px;
+    }
+
+    &-remark {
+      font-size: 11px;
+      color: rgba(47, 60, 80, 0.55);
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    &-amount {
+      text-align: right;
+    }
+
+    &-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #d46b08;
+      display: block;
+    }
+
+    &-desc {
+      font-size: 12px;
+      color: rgba(47, 60, 80, 0.65);
+      margin-top: 4px;
+      display: block;
+    }
+
+    &.is-active {
+      border: 1px solid rgba(250, 173, 20, 0.6);
+      box-shadow: 0 18px 32px rgba(250, 173, 20, 0.25);
+      transform: translateY(-2px);
+    }
   }
 }
 </style>

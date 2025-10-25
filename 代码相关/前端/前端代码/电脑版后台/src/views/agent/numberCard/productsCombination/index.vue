@@ -97,8 +97,8 @@
             <el-form ref="form" v-model="form" label-width="100px">
                 <el-row>
                     <el-col :span="24">
-                        <el-form-item prop="productCommission" label="下游佣金">
-                            <el-input v-model="form.distributionProductCommission"></el-input>
+                        <el-form-item prop="productCommission" label="产品佣金">
+                            <el-input v-model="form.productCommission"></el-input>
                         </el-form-item>
                     </el-col>
                 </el-row>
@@ -274,7 +274,18 @@
 
             },
             submitForm() {
-                updateProductCommission(this.form).then((res) => {
+                const amount = this.form.productCommission === '' || this.form.productCommission === null || this.form.productCommission === undefined
+                    ? 0
+                    : Number(this.form.productCommission);
+                if (Number.isNaN(amount) || amount < 0) {
+                    this.$message.error('请输入不小于0的产品佣金');
+                    return;
+                }
+                const payload = {
+                    productCode: this.form.productCode,
+                    productCommission: amount
+                };
+                updateProductCommission(payload).then((res) => {
                     this.$message({
                         type: 'success',
                         message: '修改成功!'
@@ -286,7 +297,10 @@
             },
             handleCommission(data) {
                 this.openCommission = true;
-                this.form = data;
+                this.form = {
+                    productCode: data.productCode,
+                    productCommission: data.productCommission
+                };
             },
             handleImport() { },
             handleAdd() { },

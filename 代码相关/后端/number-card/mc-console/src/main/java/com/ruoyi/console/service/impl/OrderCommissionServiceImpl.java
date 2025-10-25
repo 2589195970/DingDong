@@ -32,6 +32,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 /**
@@ -215,7 +218,43 @@ public class OrderCommissionServiceImpl extends ServiceImpl<OrderCommissionMappe
         if (orderCommissionId == null) {
             throw new BizException("佣金ID不能为空");
         }
-        return orderCommissionDetailsMapper.selectList(new LambdaQueryWrapper<OrderCommissionDetails>().eq(OrderCommissionDetails::getOrderCommissionId, orderCommissionId));
+        List<OrderCommissionDetails> details = orderCommissionDetailsMapper.selectList(new LambdaQueryWrapper<OrderCommissionDetails>().eq(OrderCommissionDetails::getOrderCommissionId, orderCommissionId));
+        if (CollectionUtils.isEmpty(details)) {
+            return details;
+        }
+        OrderCommission orderCommission = baseMapper.selectById(orderCommissionId);
+        if (orderCommission == null || StringUtils.isEmpty(orderCommission.getDownstreamFatherList())) {
+            return details;
+        }
+        List<AgentCommissionJson> agentInfoList = JSONObject.parseArray(orderCommission.getDownstreamFatherList(), AgentCommissionJson.class);
+        if (CollectionUtils.isEmpty(agentInfoList)) {
+            return details;
+        }
+        Map<String, AgentCommissionJson> agentInfoMap = agentInfoList.stream()
+                .filter(agent -> agent != null && StringUtils.isNotEmpty(agent.getAgentCode()))
+                .collect(Collectors.toMap(AgentCommissionJson::getAgentCode, Function.identity(), (a, b) -> a));
+        for (OrderCommissionDetails detail : details) {
+            AgentCommissionJson agentInfo = agentInfoMap.get(detail.getAgentCode());
+            if (agentInfo != null) {
+                detail.setAgentLevel(agentInfo.getLevel());
+                if (detail.getVipLevel() == null) {
+                    detail.setVipLevel(agentInfo.getVipLevel());
+                }
+                continue;
+            }
+            try {
+                AgentAccount agentAccount = agentAccountService.getAgentAccountByCode(detail.getAgentCode(), false);
+                if (agentAccount != null) {
+                    detail.setAgentLevel(agentAccount.getLevel());
+                    if (detail.getVipLevel() == null) {
+                        detail.setVipLevel(agentAccount.getLevel());
+                    }
+                }
+            } catch (BizException e) {
+                log.info("获取代理商等级失败 agentCode:{}, message:{}", detail.getAgentCode(), e.getMessage());
+            }
+        }
+        return details;
     }
 
 
@@ -274,9 +313,6 @@ public class OrderCommissionServiceImpl extends ServiceImpl<OrderCommissionMappe
                 log.info("佣金结算记录生成失败:{}",e.getMessage());
             }
         }
-
-
-
     }
 
 

@@ -70,9 +70,6 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
     ISysRoleService iSysRoleService;
 
     @Resource
-    CommissionConfigService commissionConfigService;
-
-    @Resource
     WithdrawalRecordService withdrawalRecordService;
 
     @Resource(name = "configStringRedisTemplate")
@@ -109,7 +106,7 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         }
         //父编码
         AgentAccount parentAgent = agentAccountList.get(BaseConstant.ZERO_INT);
-        if (parentAgent.getLevel() >= BaseConstant.AGENT_LEVEL_INT) {
+        if (parentAgent.getLevel() >= BaseConstant.SEX_INT) {
             throw new BizException("代理商等级超限,请联系管理员");
         }
         SmsDTO smsDTO  = new SmsDTO();
@@ -186,11 +183,6 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         createDefaultVipUser(sysUser, agentAccount);
         //创建提现相关记录
         withdrawalRecordService.addWithdrawalRecord(sysUser.getUserId(), agentAccount.getAgentCode());
-        CommissionConfig commissionConfig = new CommissionConfig();
-        commissionConfig.setSysUserId(sysUser.getUserId());
-        commissionConfig.setAgentCode(agentAccount.getAgentCode());
-        //创建佣金配置记录
-        commissionConfigService.addCommissionConfig(commissionConfig);
         //添加父代理商默认开放产品
         agentProductService.addRegisterAccountProduct(agentAccount);
         //添加代理推广海报
@@ -250,19 +242,21 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
      * @return
      */
     public List<AgentAccount> selectChildAgentList(LoginUser loginUser, Integer isEnabled) throws BizException {
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_CHILD_LIST, loginUser.getUserId(), isEnabled);
-        String agentAccountJson = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StringUtils.isNotEmpty(agentAccountJson)) {
-            return JSONObject.parseArray(agentAccountJson, AgentAccount.class);
-        }
+        // 注释掉缓存查询，直接从数据库查询
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_CHILD_LIST, loginUser.getUserId(), isEnabled);
+        // String agentAccountJson = configStringRedisTemplate.opsForValue().get(cacheKey);
+        // if (StringUtils.isNotEmpty(agentAccountJson)) {
+        //     return JSONObject.parseArray(agentAccountJson, AgentAccount.class);
+        // }
         AgentAccount agentAccount = getAgentAccountByUserId(loginUser.getUserId(), false);
         if (agentAccount == null) {
             return new ArrayList<>();
         }
         List<AgentAccount> childAgentAccountList = baseMapper.selectList(new LambdaQueryWrapper<AgentAccount>().eq(AgentAccount::getParentAgentCode, agentAccount.getAgentCode()).eq(isEnabled != null, AgentAccount::getIsEnabled, isEnabled));
-        if (!CollectionUtils.isEmpty(childAgentAccountList)) {
-            //configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(childAgentAccountList), CacheKeyConstants.CATCH_TIME, TimeUnit.MINUTES);
-        }
+        // 注释掉缓存写入
+        // if (!CollectionUtils.isEmpty(childAgentAccountList)) {
+        //     configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(childAgentAccountList), CacheKeyConstants.CATCH_TIME, TimeUnit.MINUTES);
+        // }
         return childAgentAccountList;
     }
 
@@ -273,11 +267,12 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
      * @return
      */
     public AgentAccount getAgentAccountByUserId(Long userId, boolean b) throws BizException {
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_USER_ID, userId);
-        String agentAccountJson = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StringUtils.isNotEmpty(agentAccountJson)) {
-            return JSONObject.parseObject(agentAccountJson, AgentAccount.class);
-        }
+        // 注释掉缓存查询，直接从数据库查询
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_USER_ID, userId);
+        // String agentAccountJson = configStringRedisTemplate.opsForValue().get(cacheKey);
+        // if (StringUtils.isNotEmpty(agentAccountJson)) {
+        //     return JSONObject.parseObject(agentAccountJson, AgentAccount.class);
+        // }
         AgentAccount agentAccount = baseMapper.selectOne(new LambdaQueryWrapper<AgentAccount>().eq(AgentAccount::getSysUserId, userId).eq(AgentAccount::getIsEnabled, BaseConstant.ZERO_INT));
         if (b && agentAccount == null) {
             throw new BizException("登录账号未注册代理商");
@@ -285,7 +280,8 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         if(agentAccount.getIsEnabled() == BaseConstant.ONE_INT){
             throw new BizException("{}账号已被禁用", agentAccount.getAgentName());
         }
-        //configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(agentAccount), CacheKeyConstants.CATCH_TIME, TimeUnit.MINUTES);
+        // 注释掉缓存写入
+        // configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(agentAccount), CacheKeyConstants.CATCH_TIME, TimeUnit.MINUTES);
         return agentAccount;
     }
 
@@ -299,11 +295,12 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         if(StringUtils.isEmpty(agentCode)){
             throw new BizException("代理商编码:{}", agentCode);
         }
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_CODE, agentCode);
-        String agentAccountJson = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StringUtils.isNotEmpty(agentAccountJson)) {
-            return JSONObject.parseObject(agentAccountJson, AgentAccount.class);
-        }
+        // 注释掉缓存查询，直接从数据库查询
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_CODE, agentCode);
+        // String agentAccountJson = configStringRedisTemplate.opsForValue().get(cacheKey);
+        // if (StringUtils.isNotEmpty(agentAccountJson)) {
+        //     return JSONObject.parseObject(agentAccountJson, AgentAccount.class);
+        // }
         AgentAccount agentAccount = baseMapper.selectOne(new LambdaQueryWrapper<AgentAccount>().eq(AgentAccount::getAgentCode, agentCode).eq(AgentAccount::getIsEnabled, BaseConstant.ZERO_INT));
         if (b && agentAccount == null) {
             throw new BizException("{}账号未注册代理商", agentCode);
@@ -311,7 +308,8 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         if(agentAccount.getIsEnabled() == BaseConstant.ONE_INT){
             throw new BizException("{}账号已被禁用", agentAccount.getAgentName());
         }
-        //configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(agentAccount), CacheKeyConstants.CATCH_TIME, TimeUnit.MINUTES);
+        // 注释掉缓存写入
+        // configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(agentAccount), CacheKeyConstants.CATCH_TIME, TimeUnit.MINUTES);
         return agentAccount;
     }
 
@@ -331,10 +329,11 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
             agentAccount.setCardIdUrlBack(cardIdUrlBack);
         }
         baseMapper.updateById(agentAccount);
+        // 注释掉缓存删除
         //修改之后删除缓存
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_CODE, agentCode);
-        configStringRedisTemplate.delete(cacheKey);
-        configStringRedisTemplate.delete(CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_USER_ID, agentAccount.getSysUserId()));
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_CODE, agentCode);
+        // configStringRedisTemplate.delete(cacheKey);
+        // configStringRedisTemplate.delete(CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_USER_ID, agentAccount.getSysUserId()));
     }
 
     /**

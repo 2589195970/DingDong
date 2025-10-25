@@ -255,4 +255,16 @@ public class ProductAddAndUpdateBO {
     @ApiModelProperty("产品佣金")
     private Integer productCommission;
 
+    /**
+     * 是否参与佣金返现 0 否 1 是
+     */
+    @ApiModelProperty("是否参与佣金返现 0 否 1 是")
+    private Integer sfyjfx = 0;
+
+    /**
+     * 是否需要付费提卡 0 否 1 是
+     */
+    @ApiModelProperty("是否需要付费提卡 0 否 1 是")
+    private Integer sffftk = 0;
+
 }

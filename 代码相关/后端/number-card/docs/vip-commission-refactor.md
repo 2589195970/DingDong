@@ -15,15 +15,15 @@
 ## 2. 目标与业务约束
 - **统一口径**：所有产品、所有链路的分佣仅由上下游 VIP 等级决定，取消个人自定义比例。
 - **可解释性**：结算明细需展示 VIP 等级、VIP 加成金额，保证对账可追溯。
-- **实时性**：VIP 等级调整后，新订单与佣金链应立即生效；必要时提供批量刷新历史链的机制。
+- **实时性**：VIP 等级调整后，新订单与佣金链应立即生效；必要时提供批量刷新链路的工具以快速同步。
 - **场景约束**：三级代理 `zhao(vip3)` 下单，原始利润 100；VIP3 额外 +15；上级 `li(vip2)` 只保留 `20 - 15 = 5`；再上级 `qian(vip1)` 拿到 `25 - 20 = 5`；若 `qian` 升为 VIP2，其额外加成压缩 `li`，直至 `li` 利润 0。
 
 ## 3. 差距与改造点
 - **配置策略收口**
-  - 逐步废弃 `t_commission_config` 的自定义比例，改为按 VIP 配置驱动。建议在 `t_vip_config` 中新增字段 `retain_fixed`（单位元），明确每个 VIP 等级在完成订单时的固定加成额度。
-  - 保留历史数据以兼容旧订单，但新订单改走 VIP 路径，可在 `CommissionConfigServiceImpl.computeCommission` 内部首先尝试 VIP 固定加成计算，不命中时回退旧逻辑以降低切换风险。
+  - 逐步废弃 `t_commission_config` 的自定义比例，改为按 VIP 配置驱动。复用 `t_vip_config` 已有的 `fixed_commission`（单位元），明确每个 VIP 等级在完成订单时的固定加成额度，并统一由该字段提供固定收益。
+  - 清理 `CommissionConfigServiceImpl` 及全链路对 `t_commission_config` 的依赖，彻底下线按代理自定义比例的计算逻辑。
 - **链路计算调整**
-  - `AgentProductServiceImpl.updateAgentProductCommission` (`mc-console/src/main/java/com/ruoyi/console/service/impl/agent/AgentProductServiceImpl.java:205`) 目前只关心个人配置，需要改为：获取代理与父级的 VIP 信息 → 基于固定加成计算本级保留金额与下发额度 → 递归同步所有子级。建议新增 `VipCommissionCalculator` 工具类封装固定加成公式，避免逻辑散落在多个服务。
+  - `AgentProductServiceImpl.updateAgentProductCommission` (`mc-console/src/main/java/com/ruoyi/console/service/impl/agent/AgentProductServiceImpl.java:205`) 目前只关心个人配置，需要改为：获取代理与父级的 VIP 信息 → 基于固定加成计算本级保留金额与下发额度，逻辑在服务内部集中实现，避免分散在多处。
   - `AgentServiceImpl.getAgentFatherList` 在构造链时应识别 VIP 信息，补充 `vipLevel`、`vipFixedBonus` 等字段（可直接扩展 `AgentCommissionJson`）。缓存 Key 需拼接链上各级 VIP 版本号，或在 VIP 变更后主动失效缓存。
 - **结算明细补充字段**
   - `OrderCommissionDetails` (`ruoyi-common/src/main/java/com/ruoyi/common/order/entity/OrderCommissionDetails.java:20`) 增加 `vipLevel`、`vipBonusCommission` 字段，记录每条明细因 VIP 改动的金额。
@@ -34,16 +34,16 @@
 - **前后台联动**
   - 管理端需新增“VIP佣金策略”配置界面，取代原来的代理自定义佣金页面；前端的佣金设置入口需指向 VIP 页面。
   - 代理端佣金明细 API (`ruoyi-admin/src/main/java/com/ruoyi/web/controller/console/agent/AgentCommissionController.java`) 返回结构需要增加 VIP 字段，UI 上展示“基础收益 + VIP加成”。
+  - “VIP加成配置”界面需以卡片或视觉化组件呈现 `VipConfig` 列表，突出各等级的固定加成金额，便于代理快速自查。
 - **缓存与批量刷新**
   - VIP 等级变更后，应刷新对应代理及其所有下游的 `t_agent_product` 记录，可复用 `AgentProductServiceImpl.updateAgentProductCommission` 的递归能力。
-  - 若历史订单需要重算，可提供后台任务，根据订单时间段重建 `downstreamFatherList` 并重写 `t_order_commission_details`，保证账实一致。
 
 ## 4. 实施计划（建议分阶段）
 1. **梳理配置**
-   - 数据库层为 `t_vip_config` 增加用于记录固定加成的字段（如 `retain_fixed`）并编写迁移脚本。
-   - 在 `CommissionConfigServiceImpl` 中兼容 VIP 配置读取；新增开关以便灰度切换。
+   - 数据库层确认并补齐 `t_vip_config.fixed_commission` 的数据口径，必要时通过迁移脚本重算各 VIP 等级的固定加成数值。
+   - 移除 `CommissionConfigServiceImpl` 及对 `t_commission_config` 的读写逻辑，确保所有佣金计算统一走 VIP 固定加成路径。
 2. **核心链路改造**
-   - 编写 `VipCommissionCalculator`（输入：上游可分配金额、当前代理 VIP、父级 VIP；输出：本级收入、向下分配金额、VIP 加成），同时产出单元测试覆盖边界。
+   - 在 `AgentProductServiceImpl` 内实现固定加成计算方法（输入：上游可分配金额、当前代理 VIP、父级 VIP；输出：本级收入、向下分配金额、VIP 加成），同时产出单元测试覆盖边界。
    - 改写 `AgentProductServiceImpl.updateAgentProductCommission` 和 `AgentServiceImpl.getAgentFatherList`，去除对 `CommissionConfig` 的直接依赖。
    - 调整缓存策略，VIP 变更后联动失效。
 3. **结算明细扩展**
@@ -51,10 +51,9 @@
    - 更新导出逻辑（如 `AgentCommissionServiceImpl.exportOrderCommissionList`）以展示新增字段。
 4. **前台能力与回溯工具**
    - 更新管理端页面，提供 VIP 策略配置、批量刷新工具入口。
-   - 补充“历史订单重算”后台任务，必要时仅在运营确认后执行。
 5. **灰度与切换**
-   - 先在测试环境验证 VIP 级差是否满足财务预期，再删除/禁用旧的 `t_commission_config` 自定义入口。
-   - 发布后持续监控佣金报表，与旧系统交叉核对至少一个结算周期。
+   - 验证测试环境的 VIP 级差是否符合预期后，彻底删除 `t_commission_config` 相关表结构与配置入口。
+   - 发布后持续监控新逻辑下的佣金报表，确保固定加成配置生效。
 
 ## 5. 示例演算（结合业务场景）
 | 代理 | 等级 | 基础收入 (旧逻辑) | VIP固定加成 | 新收入 | 上级可分配余额 |
@@ -72,7 +71,6 @@
 ## 6. 风险与验证
 - **暴露风险**
   - VIP 配置缺失时需要兜底策略，否则链路会返回 0 造成全链断崖。
-  - 历史订单若不重算，会出现“新逻辑报表与旧账不一致”的窗口期。
   - 多层代理、跨产品场景需测试上限（默认 5 层，见 `BaseConstant.AGENT_LEVEL_INT`）。
 - **验证建议**
   1. 编写单测覆盖不同 VIP 等级组合（含保留额不足、父级不够扣的场景）。
@@ -81,12 +79,11 @@
   4. 导出报表，与预计公式对账。
 
 ## 7. 数据迁移与兼容
-- 新增字段通过 `sql/Vx.y.z` 升级脚本发版，迁移时将历史 `CommissionConfig` 逐条映射至对应的 VIP 等级策略（可按当前等级聚合求平均，为后续运营确认提供参考）。
-- 迁移完成后关闭代理自定义佣金入口，保留表结构用于审计（或后续彻底删除）。
-- 若需要重算历史佣金，可按订单时间批次执行“链路重构 + 结算重写”，操作前需备份相关表。
+- 系统上线前即刻删除 `t_commission_config` 表及相关持久层对象，只保留基于 `t_vip_config.fixed_commission` 的配置。
+- 仅需使用迁移脚本确保 `t_vip_config.fixed_commission` 的初始数据齐备，无需保留或回溯历史佣金记录。
+- 数据库需同步新增 `t_order_commission.vip_adjust_amount`、`t_order_commission_details.vip_level / vip_bonus_commission` 字段，以记录 VIP 元数据。
 
-## 8. 待确认事项
-- 固定加成额度是否存在全局上限或分运营商、分产品的差异化配置需求？
-- VIP 加成是否允许跨层级消耗（下级加成不足由上上级兜底），需业务给出明确边界。
-- 旧订单是否需要实时重算？若否，需在报表中明确切换时间点。
-- 前台展示是否需要列出“VIP加成”单独字段，便于代理自查。
+## 8. 需求确认
+- 固定加成额度采用统一标准，不区分运营商与产品。
+- VIP 等级严格递进，不存在“下级 VIP 高于上级”或跨层级兜底的场景。
+- 前台需以视觉化卡片展示 `VipConfig` 列表及固定加成字段，满足代理自查需求。

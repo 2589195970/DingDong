@@ -344,6 +344,18 @@ public class OrderSelectVO {
     @ApiModelProperty("是否需要审核 0 否 1 是")
     private Integer sfxysh;
 
+    /**
+     * 是否参与佣金返现 0 否 1 是
+     */
+    @ApiModelProperty("是否参与佣金返现 0 否 1 是")
+    private Integer sfyjfx;
+
+    /**
+     * 是否需要付费提卡 0 否 1 是
+     */
+    @ApiModelProperty("是否需要付费提卡 0 否 1 是")
+    private Integer sffftk;
+
 
     /**
      * 照片上传时间

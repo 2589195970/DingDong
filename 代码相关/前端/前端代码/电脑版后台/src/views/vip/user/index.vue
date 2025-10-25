@@ -162,6 +162,7 @@ import {
 } from '@/api/vip/user'
 import { listVipConfig } from '@/api/vip/config'
 import { parseTime } from '@/utils/ruoyi'
+import { normalizeVipLevel, resolveVipLevelLabel } from '@/utils/vip'
 
 export default {
   name: 'VipUser',
@@ -233,7 +234,12 @@ export default {
       this.loading = true
       const query = Object.assign({}, this.queryParams)
       if (query.vipLevel !== undefined && query.vipLevel !== null && query.vipLevel !== '') {
-        query.vipLevel = Number(query.vipLevel)
+        const normalized = normalizeVipLevel(query.vipLevel)
+        if (normalized === null) {
+          delete query.vipLevel
+        } else {
+          query.vipLevel = normalized
+        }
       }
       listVipUser(query).then(res => {
         const data = res.data || {}
@@ -252,7 +258,7 @@ export default {
     fetchVipLevelOptions() {
       const fallback = [
         { value: 0, label: '0级-普通会员' },
-        { value: 1, label: '1级-铜牌会员' },
+        { value: 1, label: '1级-青铜会员' },
         { value: 2, label: '2级-银牌会员' },
         { value: 3, label: '3级-金牌会员' },
         { value: 4, label: '4级-白金会员' },
@@ -261,10 +267,20 @@ export default {
       listVipConfig({ pageNo: 1, pageSize: 100, isEnabled: 1 }).then(res => {
         const data = res.data || {}
         const rows = data.rows || []
-        this.vipLevelOptions = rows.map(item => ({
-          value: item.vipLevel,
-          label: `${item.vipLevel}级-${item.levelName}`
-        }))
+        this.vipLevelOptions = rows
+          .map(item => {
+            const level = normalizeVipLevel(item.vipLevel)
+            if (level === null) {
+              return null
+            }
+            const name = item.levelName || resolveVipLevelLabel({ vipLevel: level })
+            return {
+              value: level,
+              label: `${level}级-${name}`
+            }
+          })
+          .filter(Boolean)
+          .sort((a, b) => normalizeVipLevel(a.value) - normalizeVipLevel(b.value))
         if (!this.vipLevelOptions.length) {
           this.vipLevelOptions = fallback
         }
@@ -273,8 +289,15 @@ export default {
       })
     },
     formatVipLevel(level) {
-      const target = this.vipLevelOptions.find(item => item.value === level)
-      return target ? target.label : level
+      const numeric = normalizeVipLevel(level)
+      if (numeric === null) {
+        return level ?? '-'
+      }
+      const target = this.vipLevelOptions.find(item => normalizeVipLevel(item.value) === numeric)
+      if (target) {
+        return target.label
+      }
+      return `${numeric}级-${resolveVipLevelLabel({ vipLevel: numeric })}`
     },
     handleQuery() {
       this.queryParams.pageNo = 1
@@ -305,6 +328,8 @@ export default {
       this.resetFormData()
       if (this.vipLevelOptions.length > 0) {
         this.form.vipLevel = this.vipLevelOptions[0].value
+      } else {
+        this.form.vipLevel = 0
       }
       this.dialogTitle = '新增VIP用户'
       this.open = true
@@ -341,7 +366,8 @@ export default {
         } else {
           payload.userId = null
         }
-        payload.vipLevel = Number(payload.vipLevel || 0)
+        const normalizedVipLevel = normalizeVipLevel(payload.vipLevel)
+        payload.vipLevel = normalizedVipLevel === null ? 0 : normalizedVipLevel
         const request = payload.id ? updateVipUser(payload.id, payload) : addVipUser(payload)
         request.then(() => {
           this.$modal.msgSuccess(payload.id ? '修改成功' : '新增成功')
@@ -397,7 +423,7 @@ export default {
       }
       this.setLevelForm = {
         id: row.id,
-        vipLevel: row.vipLevel,
+        vipLevel: normalizeVipLevel(row.vipLevel),
         remark: ''
       }
       if (this.setLevelForm.vipLevel === undefined || this.setLevelForm.vipLevel === null) {
@@ -431,7 +457,10 @@ export default {
           this.$modal.msgWarning('缺少用户标识，无法设置等级')
           return
         }
-        payload.vipLevel = Number(payload.vipLevel)
+        payload.vipLevel = normalizeVipLevel(payload.vipLevel)
+        if (payload.vipLevel === null) {
+          payload.vipLevel = 0
+        }
         setVipLevel(payload).then(() => {
           this.$modal.msgSuccess('设置成功')
           this.setLevelOpen = false

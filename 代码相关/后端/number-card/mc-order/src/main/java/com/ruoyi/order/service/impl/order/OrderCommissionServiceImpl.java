@@ -52,10 +52,10 @@ public class OrderCommissionServiceImpl extends ServiceImpl<OrderCommissionMappe
         List<AgentCommissionJson> agentCommissionJsons = JSONObject.parseArray(order.getDownstreamFatherList(),AgentCommissionJson.class);
         if(!CollectionUtils.isEmpty(agentCommissionJsons)){
             orderCommission.setProductCommission(agentCommissionJsons.get(BaseConstant.ZERO_INT).getProductCommission());
-            baseMapper.updateById(orderCommission);
         }
         //添加佣金详情
         List<OrderCommissionDetails> orderCommissionDetailsList = new ArrayList<>();
+        int totalVipBonus = 0;
         for (int i = 0;i<agentCommissionJsons.size();i++){
             OrderCommissionDetails orderCommissionDetails = new OrderCommissionDetails();
             orderCommissionDetails.setOrderId(order.getOrderId());
@@ -66,14 +66,20 @@ public class OrderCommissionServiceImpl extends ServiceImpl<OrderCommissionMappe
             orderCommissionDetails.setProductCommission(agentCommissionJsons.get(i).getProductCommission());
             orderCommissionDetails.setDistributionProductCommission(agentCommissionJsons.get(i).getDistributionProductCommission());
             orderCommissionDetails.setRevenueProductCommission(agentCommissionJsons.get(i).getRevenueProductCommission());
+            orderCommissionDetails.setVipLevel(agentCommissionJsons.get(i).getVipLevel());
+            orderCommissionDetails.setVipBonusCommission(agentCommissionJsons.get(i).getVipBonusCommission());
             orderCommissionDetails.setCreateTime(System.currentTimeMillis());
             //如果是进单代理 无需分佣金到下级
             int j =((agentCommissionJsons.size()-1)==i)?i: i+1;
             orderCommissionDetails.setAgentSourceCode(agentCommissionJsons.get(j).getAgentCode());
             orderCommissionDetails.setAgentSourceName(agentCommissionJsons.get(j).getAgentName());
             orderCommissionDetailsList.add(orderCommissionDetails);
+            totalVipBonus += agentCommissionJsons.get(i).getVipBonusCommission() == null ? BaseConstant.ZERO_INT : agentCommissionJsons.get(i).getVipBonusCommission();
         }
         orderCommissionDetailsMapper.insert(orderCommissionDetailsList);
+        orderCommission.setVipAdjustAmount(totalVipBonus);
+        orderCommission.setUpdateTime(System.currentTimeMillis());
+        baseMapper.updateById(orderCommission);
         log.info("订单佣金结算生产记录结束,订单佣金记录ID：{},订单ID:{}",orderCommission.getOrderCommissionId(),order.getOrderId());
     }
 

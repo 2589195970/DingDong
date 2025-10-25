@@ -424,10 +424,9 @@ public class VipUserServiceImpl extends ServiceImpl<VipUserMapper, VipUser> impl
             agentAccount.setUpdateTime(System.currentTimeMillis());
             agentAccountService.updateById(agentAccount);
 
-            // 记录升级日志
             VipUpgradeLog upgradeLog = new VipUpgradeLog();
-            upgradeLog.setUserId(vipUser.getUserId());
-            upgradeLog.setAgentCode(vipUser.getAgentCode());
+            upgradeLog.setUserId(vipUser != null ? vipUser.getUserId() : null);
+            upgradeLog.setAgentCode(vipUser != null ? vipUser.getAgentCode() : agentAccount.getAgentCode());
             upgradeLog.setAgentName(agentAccount.getAgentName());
             upgradeLog.setFromLevel(fromLevel);
             upgradeLog.setToLevel(toLevel);

@@ -272,14 +272,15 @@ public class DoudianServiceImpl implements DoudianService {
      */
     @Override
     public String getOrDeleteToken(String type, String shopId) throws Exception {
-        String key = CacheUtils.generalKey(DouDianConstant.DOUDIAN_TOKEN_KEY, shopId);
-        if (type != null && type.equals(BaseConstant.ONE_STRING)) {
-            return configStringRedisTemplate.opsForValue().get(key);
-
-        }
-        if (type != null && type.equals(BaseConstant.TWO_STRING)) {
-            configStringRedisTemplate.delete(key);
-        }
+        // 注释掉缓存操作，不再从缓存读取或删除token
+        // String key = CacheUtils.generalKey(DouDianConstant.DOUDIAN_TOKEN_KEY, shopId);
+        // if (type != null && type.equals(BaseConstant.ONE_STRING)) {
+        //     return configStringRedisTemplate.opsForValue().get(key);
+        //
+        // }
+        // if (type != null && type.equals(BaseConstant.TWO_STRING)) {
+        //     configStringRedisTemplate.delete(key);
+        // }
         return null;
     }
 

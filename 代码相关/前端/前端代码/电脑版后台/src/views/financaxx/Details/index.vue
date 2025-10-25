@@ -42,7 +42,8 @@
         <el-table ref="tables" v-loading="loading" :data="list" row-key="operatorReportId" border lazy
             :tree-props="{ children: 'children' }" height="550" :row-class-name="tableRowClassName"
             @selection-change="handleSelectionChange">
-            <el-table-column label="ID" align="center" prop="withdrawalRecordId" />
+            <el-table-column label="明细ID" align="center" prop="withdrawalRecordDetailsId" :show-overflow-tooltip="true" />
+            <el-table-column label="订单ID" align="center" prop="sourceNumber" min-width="120" />
             <el-table-column label="类型" align="center" prop="amountType" :show-overflow-tooltip="true" >
                 <template slot-scope="scope">
                     <p v-if="scope.row.amountType==0" >存入</p>

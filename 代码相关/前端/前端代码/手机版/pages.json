@@ -58,13 +58,13 @@
 				"navigationStyle": "custom"
 			}
 		},
-		{
-			"path": "pages/mine/commission/index",
-			"style": {
-				"navigationBarTitleText": "佣金设置",
-				"navigationStyle": "custom"
-			}
-		},
+	{
+		"path": "pages/mine/commission/index",
+		"style": {
+			"navigationBarTitleText": "权益详情",
+			"navigationStyle": "custom"
+		}
+	},
 		{
 			"path": "pages/mine/product/index",
 			"style": {

@@ -188,6 +188,12 @@ public class OrderCommission {
     private Integer productCommission;
 
     /**
+     * VIP 加成汇总金额
+     */
+    @ApiModelProperty("VIP加成汇总金额")
+    private Integer vipAdjustAmount;
+
+    /**
      * 备注
      */
     @ApiModelProperty("备注")

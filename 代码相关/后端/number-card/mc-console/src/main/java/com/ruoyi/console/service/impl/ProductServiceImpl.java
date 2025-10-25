@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ruoyi.common.constant.CacheKeyConstants;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.order.bo.ProductCopyBO;
+import com.ruoyi.common.order.bo.ProductInitRequest;
 import com.ruoyi.common.order.entity.*;
 import com.ruoyi.common.utils.CacheUtils;
 import com.ruoyi.console.mapper.ProductMapper;
@@ -23,6 +24,7 @@ import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.ProductAddAndUpdateBO;
 import com.ruoyi.common.order.bo.ProductSelectBO;
 import com.ruoyi.common.order.bo.ProductUpdateStatusBO;
+import com.ruoyi.common.order.vo.ProductInitResult;
 import com.ruoyi.common.order.vo.ProductSelectVO;
 import com.ruoyi.common.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +37,11 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -60,9 +65,6 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     @Resource
     AgentAccountService agentAccountService;
-
-    @Resource
-    CommissionConfigService commissionConfigService;
 
     @Resource
     UpstreamApiService upstreamApiService;
@@ -134,10 +136,16 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         BeanUtil.copyProperties(productAddAndUpdateBO,product);
         //生成产品编码 8位数
         product.setProductCode(RandomUtil.randomString(BaseConstant.EIGHT_INT));
-        product.setProductStatus(ProductEnum.ProductStatusEnum.YES.getStatus());
+        product.setProductStatus(ProductEnum.ProductStatusEnum.NO.getStatus());
         //排序默认0
         product.setProductSort(BaseConstant.ZERO_INT);
         product.setProductCommission(BaseConstant.ZERO_INT);
+        if(product.getSfyjfx() == null){
+            product.setSfyjfx(BaseConstant.ZERO_INT);
+        }
+        if(product.getSffftk() == null){
+            product.setSffftk(BaseConstant.ZERO_INT);
+        }
         product.setIsDispatchUpstreamApi(BaseConstant.ZERO_INT);
         product.setIsCopy(BaseConstant.ZERO_INT);
         product.setCreateTime(System.currentTimeMillis());
@@ -166,9 +174,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         AgentAccount parentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(),true);
         agentProductService.addProductPoster(parentAgentAccount,product);
         //创建所有子代理的代理商产品
-        for (AgentAccount agentAccount:agentAccountList){
-            agentProductService.addSubAgentProduct(agentAccount,parentAgentAccount,product,product.getProductCommission());
-        }
+        agentProductService.addSubAgentProducts(agentAccountList,parentAgentAccount,product,product.getProductCommission());
     }
 
 
@@ -214,8 +220,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         //添加产品
         baseMapper.insert(productCopy);
         //创建所有子代理的代理商产品
+        agentProductService.addSubAgentProducts(agentAccountList,parentAgentAccount,productCopy,productCopy.getProductCommission());
         for (AgentAccount agentAccount:agentAccountList){
-            agentProductService.addSubAgentProduct(agentAccount,parentAgentAccount,productCopy,productCopy.getProductCommission());
             agentProductService.addSubAgentProductPoster(agentAccount,product);
         }
     }
@@ -239,6 +245,12 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         BeanUtil.copyProperties(productAddAndUpdateBO,updateProduct);
         updateProduct.setProductCode(product.getProductCode());
         updateProduct.setUpdateTime(System.currentTimeMillis());
+        if(updateProduct.getSfyjfx() == null){
+            updateProduct.setSfyjfx(BaseConstant.ZERO_INT);
+        }
+        if(updateProduct.getSffftk() == null){
+            updateProduct.setSffftk(BaseConstant.ZERO_INT);
+        }
         UpstreamApi upstreamApi = upstreamApiService.getById(productAddAndUpdateBO.getUpstreamApiId());
         if(upstreamApi == null){
             throw new BizException("上游API不能为空");
@@ -274,11 +286,17 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             //最新的代理商产品
             Map<String,String> agentProductStrMap =productAddAndUpdateBO.getAgentCodeList().stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
             //需新增代理商产品
+            List<AgentAccount> needAddAgents = new ArrayList<>();
             for (String agentCode:productAddAndUpdateBO.getAgentCodeList()){
                 //创建所有子代理的代理商产品
                 if(agentProductListMap.get(agentCode)==null){
                     AgentAccount agentAccount = agentAccountService.getAgentAccountByCode(agentCode,true);
-                    agentProductService.addSubAgentProduct(agentAccount,parentAgentAccount,updateProduct,updateProduct.getProductCommission());
+                    needAddAgents.add(agentAccount);
+                }
+            }
+            if(!CollectionUtils.isEmpty(needAddAgents)){
+                agentProductService.addSubAgentProducts(needAddAgents,parentAgentAccount,updateProduct,updateProduct.getProductCommission());
+                for (AgentAccount agentAccount:needAddAgents){
                     agentProductService.addSubAgentProductPoster(agentAccount,updateProduct);
                 }
             }
@@ -540,7 +558,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             throw new BizException("product code不存在:{}", productCode);
         }
         Product product;
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_API, productCode);
+        // 注释掉缓存查询，直接从数据库查询
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_API, productCode);
         // String json = configStringRedisTemplate.opsForValue().get(cacheKey);
         // if (StrUtil.isBlankIfStr(json)) {
             product = baseMapper.selectOne(new LambdaQueryWrapper<Product>().eq(Product::getProductCode, productCode));
@@ -550,7 +569,8 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             if (product.getProductStatus() == BaseConstant.ZERO_INT) {
                 throw new BizException("产品已下架:{}", productCode);
             }
-            configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(product), 10, TimeUnit.MINUTES);
+            // 注释掉缓存写入
+            // configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(product), 10, TimeUnit.MINUTES);
         // } else {
         //     product = JSONObject.parseObject(json, Product.class);
         // }
@@ -569,17 +589,188 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             throw new BizException("product code不存在:{}", productCode);
         }
         Product product = null;
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_API_NOT_STATUS, productCode);
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
+        // 注释掉缓存查询，直接从数据库查询
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_API_NOT_STATUS, productCode);
+        // String json = configStringRedisTemplate.opsForValue().get(cacheKey);
         // if (StrUtil.isBlankIfStr(json)) {
             product = baseMapper.selectOne(new LambdaQueryWrapper<Product>().eq(Product::getProductCode, productCode));
-            if(product != null){
-                configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(product), 10, TimeUnit.MINUTES);
-            }
+            // 注释掉缓存写入
+            // if(product != null){
+            //     configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(product), 10, TimeUnit.MINUTES);
+            // }
         // } else {
         //     product = JSONObject.parseObject(json, Product.class);
         // }
         return product;
+    }
+
+    @Override
+    public ProductInitResult initAgentProducts(ProductInitRequest request, LoginUser loginUser) throws BizException {
+        ProductInitRequest payload = request == null ? new ProductInitRequest() : request;
+        ProductInitResult result = new ProductInitResult();
+        boolean dryRun = Boolean.TRUE.equals(payload.getDryRun());
+        boolean includeDisabledAgent = Boolean.TRUE.equals(payload.getIncludeDisabledAgent());
+        boolean includeOffShelfProduct = Boolean.TRUE.equals(payload.getIncludeOffShelfProduct());
+
+        AgentAccount rootAgent = null;
+        if (!loginUser.getUser().isAdmin()) {
+            rootAgent = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+            if (StringUtils.isNotEmpty(rootAgent.getParentAgentCode())) {
+                throw new BizException("仅允许最高级代理执行初始化");
+            }
+        } else {
+            try {
+                rootAgent = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), false);
+            } catch (BizException ignored) {
+            }
+        }
+
+        LambdaQueryWrapper<Product> productWrapper = new LambdaQueryWrapper<>();
+        if (!CollectionUtils.isEmpty(payload.getProductIdList())) {
+            productWrapper.in(Product::getProductId, payload.getProductIdList());
+        }
+        if (!includeOffShelfProduct) {
+            productWrapper.eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus());
+        }
+        List<Product> productList = baseMapper.selectList(productWrapper);
+        if (CollectionUtils.isEmpty(productList)) {
+            result.addWarning("未找到需要初始化的商品");
+            return result;
+        }
+
+        LambdaQueryWrapper<AgentAccount> agentWrapper = new LambdaQueryWrapper<>();
+        if (!includeDisabledAgent) {
+            agentWrapper.eq(AgentAccount::getIsEnabled, BaseConstant.ZERO_INT);
+        }
+        List<AgentAccount> allAgents = agentAccountService.list(agentWrapper);
+        if (CollectionUtils.isEmpty(allAgents)) {
+            result.addWarning("未找到可用的代理商");
+            return result;
+        }
+        Map<String, AgentAccount> agentMap = allAgents.stream()
+                .collect(Collectors.toMap(AgentAccount::getAgentCode, Function.identity(), (a, b) -> a));
+
+        Set<String> scopedAgentCodes = new HashSet<>();
+        if (loginUser.getUser().isAdmin()) {
+            scopedAgentCodes.addAll(agentMap.keySet());
+        } else {
+            scopedAgentCodes.add(rootAgent.getAgentCode());
+            for (AgentAccount agent : allAgents) {
+                if (agent == null) {
+                    continue;
+                }
+                if (rootAgent.getAgentCode().equals(agent.getAgentCode())) {
+                    continue;
+                }
+                if (StringUtils.isNotEmpty(agent.getParentAgentList())
+                        && agent.getParentAgentList().contains(rootAgent.getAgentCode())) {
+                    scopedAgentCodes.add(agent.getAgentCode());
+                }
+            }
+        }
+        List<AgentAccount> scopedAgents = scopedAgentCodes.stream()
+                .map(agentMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(scopedAgents)) {
+            result.addWarning("未匹配到需要初始化的代理商范围");
+            return result;
+        }
+
+        for (Product product : productList) {
+            if (product == null) {
+                continue;
+            }
+            Map<String, AgentProduct> existingMap = agentProductService.list(
+                    new LambdaQueryWrapper<AgentProduct>()
+                            .eq(AgentProduct::getParentProductCode, product.getProductCode())
+            ).stream().collect(Collectors.toMap(ap -> buildAgentProductKey(ap.getAgentCode(), ap.getParentAgentCode()),
+                    Function.identity(), (a, b) -> a));
+
+            for (AgentAccount agent : scopedAgents) {
+                if (agent == null) {
+                    continue;
+                }
+                String parentCode = agent.getParentAgentCode();
+                if (StringUtils.isEmpty(parentCode)) {
+                    continue;
+                }
+                if (!scopedAgentCodes.contains(parentCode)) {
+                    continue;
+                }
+                AgentAccount parentAgent = agentMap.get(parentCode);
+                if (parentAgent == null) {
+                    continue;
+                }
+                String key = buildAgentProductKey(agent.getAgentCode(), parentCode);
+                AgentProduct existing = existingMap.remove(key);
+                if (existing == null) {
+                    if (product.getIsAllAgent() != null && product.getIsAllAgent().equals(BaseConstant.ONE_INT)) {
+                        if (!dryRun) {
+                            agentProductService.addSubAgentProduct(agent, parentAgent, product, product.getProductCommission());
+                        }
+                        result.setCreated(result.getCreated() + 1);
+                    } else {
+                        result.addWarning(String.format("产品[%s]未为代理[%s]配置可见范围，未执行新增", product.getProductCode(), agent.getAgentCode()));
+                    }
+                    continue;
+                }
+
+                boolean needUpdate = false;
+                AgentProduct updateEntity = new AgentProduct();
+
+                if (StringUtils.isNotEmpty(product.getProductName())
+                        && !product.getProductName().equals(existing.getParentProductName())) {
+                    updateEntity.setParentProductName(product.getProductName());
+                    needUpdate = true;
+                }
+                if (product.getProductStatus() != null
+                        && !product.getProductStatus().equals(existing.getProductStatus())) {
+                    updateEntity.setProductStatus(product.getProductStatus());
+                    needUpdate = true;
+                }
+                if (needUpdate) {
+                    if (!dryRun) {
+                        updateEntity.setUpdateTime(System.currentTimeMillis());
+                        agentProductService.update(updateEntity,
+                                new LambdaQueryWrapper<AgentProduct>().eq(AgentProduct::getAgentProductId, existing.getAgentProductId()));
+                    }
+                    result.setUpdated(result.getUpdated() + 1);
+                }
+
+                Integer productCommission = product.getProductCommission() == null ? BaseConstant.ZERO_INT : product.getProductCommission();
+                if (existing.getProductCommission() == null || !existing.getProductCommission().equals(productCommission)) {
+                    if (!dryRun) {
+                        agentProductService.updateAgentProductCommission(product.getProductCode(), agent.getAgentCode(), productCommission);
+                    }
+                    result.setCommissionSynced(result.getCommissionSynced() + 1);
+                }
+
+                if (StringUtils.isEmpty(existing.getProductQrcodeMap()) && StringUtils.isNotEmpty(product.getProductMasterMap())) {
+                    if (!dryRun) {
+                        try {
+                            agentProductService.addSubAgentProductPoster(agent, product);
+                        } catch (BizException e) {
+                            result.addWarning(String.format("生成代理[%s]产品[%s]海报失败:%s", agent.getAgentCode(), product.getProductCode(), e.getMessage()));
+                        }
+                    }
+                    result.setPosterSynced(result.getPosterSynced() + 1);
+                }
+            }
+
+            if (product.getIsAllAgent() != null && product.getIsAllAgent().equals(BaseConstant.ONE_INT) && !existingMap.isEmpty()) {
+                for (AgentProduct orphan : existingMap.values()) {
+                    if (orphan == null || !scopedAgentCodes.contains(orphan.getAgentCode())) {
+                        continue;
+                    }
+                    if (!dryRun) {
+                        agentProductService.deleteAgentProduct(orphan.getAgentProductId());
+                    }
+                    result.setDeleted(result.getDeleted() + 1);
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -638,13 +829,14 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     @Override
     public Map<String, Object> getProductCategoryCount() throws BizException {
         Map<String, Object> result = new HashMap<>();
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_CATEGORY_COUNT_API);
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        
-        if (StrUtil.isBlankIfStr(json)) {
+        // 注释掉缓存查询，直接从数据库查询
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_CATEGORY_COUNT_API);
+        // String json = configStringRedisTemplate.opsForValue().get(cacheKey);
+
+        // if (StrUtil.isBlankIfStr(json)) {
             // 查询各产品类型的产品数量
             Map<String, Integer> productTypeCount = new HashMap<>();
-            
+
             try {
                 // 日结秒返产品数量
                 int dailySettlementCount = baseMapper.selectCount(
@@ -653,7 +845,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                         .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
                 ).intValue();
                 productTypeCount.put("dailySettlement", dailySettlementCount);
-                
+
                 // 月结产品数量
                 int monthlyStatementCount = baseMapper.selectCount(
                     new LambdaQueryWrapper<Product>()
@@ -661,7 +853,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                         .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
                 ).intValue();
                 productTypeCount.put("monthlyStatement", monthlyStatementCount);
-                
+
                 // 长期产品数量
                 int longTimeCount = baseMapper.selectCount(
                     new LambdaQueryWrapper<Product>()
@@ -669,7 +861,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                         .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
                 ).intValue();
                 productTypeCount.put("longTime", longTimeCount);
-                
+
                 // 其他产品数量
                 int otherCount = baseMapper.selectCount(
                     new LambdaQueryWrapper<Product>()
@@ -677,7 +869,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                         .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
                 ).intValue();
                 productTypeCount.put("other", otherCount);
-                
+
                 // 组合返佣产品数量
                 int combinationCount = baseMapper.selectCount(
                     new LambdaQueryWrapper<Product>()
@@ -685,23 +877,28 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                         .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
                 ).intValue();
                 productTypeCount.put("combination", combinationCount);
-                
+
                 // 计算总产品数量
                 int totalCount = dailySettlementCount + monthlyStatementCount + longTimeCount + otherCount + combinationCount;
-                
+
                 result.put("productTypeCount", productTypeCount);
                 result.put("totalCount", totalCount);
-                
-                // 缓存结果，10分钟过期
-                configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(result), 10, TimeUnit.MINUTES);
+
+                // 注释掉缓存写入
+                // configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(result), 10, TimeUnit.MINUTES);
             } catch (Exception e) {
                 throw new BizException(e.getMessage());
             }
-        } else {
-            result = JSONObject.parseObject(json, Map.class);
-        }
-        
+        // } else {
+        //     result = JSONObject.parseObject(json, Map.class);
+        // }
+
         return result;
     }
 
+    private String buildAgentProductKey(String agentCode, String parentAgentCode) {
+        String agent = agentCode == null ? "" : agentCode;
+        String parent = parentAgentCode == null ? "" : parentAgentCode;
+        return agent + "#" + parent;
+    }
 }

@@ -1,15 +1,7 @@
 <template>
   <view class="vip-badge" v-if="visible">
     <image
-      v-if="remoteIcon"
-      :src="remoteIcon"
-      class="vip-badge__icon"
-      :style="iconStyle"
-      mode="aspectFit"
-    />
-    <image
-      v-else
-      :src="localIcon"
+      :src="badgeIcon"
       class="vip-badge__icon"
       :style="iconStyle"
       mode="aspectFit"
@@ -19,48 +11,12 @@
 </template>
 
 <script>
-import config from '@/config'
-import { isHttp, isEmpty } from '@/utils/validate'
-
-const ICON_BASE_PATH = '/static/vip-icons/'
-const LEVEL_ICON_MAP = {
-  6: 'vip-zungui',
-  5: 'vip-zuanshi',
-  4: 'vip-baijin',
-  3: 'vip-huangjin',
-  2: 'vip-baijin',
-  1: 'vip-qingtong',
-  0: 'vip-default'
-}
-const NAME_ICON_MAP = {
-  supreme: 'vip-zungui',
-  '尊贵': 'vip-zungui',
-  '尊贵级': 'vip-zungui',
-  '尊贵会员': 'vip-zungui',
-  'supreme vip': 'vip-zungui',
-  '钻石': 'vip-zuanshi',
-  '钻石级': 'vip-zuanshi',
-  '钻石会员': 'vip-zuanshi',
-  diamond: 'vip-zuanshi',
-  'diamond vip': 'vip-zuanshi',
-  '白金': 'vip-baijin',
-  '白金级': 'vip-baijin',
-  '白金会员': 'vip-baijin',
-  platinum: 'vip-baijin',
-  '银牌': 'vip-baijin',
-  '银牌会员': 'vip-baijin',
-  '黄金': 'vip-huangjin',
-  '黄金级': 'vip-huangjin',
-  '金牌': 'vip-huangjin',
-  '金牌会员': 'vip-huangjin',
-  gold: 'vip-huangjin',
-  '青铜': 'vip-qingtong',
-  '青铜级': 'vip-qingtong',
-  '青铜会员': 'vip-qingtong',
-  bronze: 'vip-qingtong',
-  '普通会员': 'vip-default',
-  normal: 'vip-default'
-}
+import { isEmpty } from '@/utils/validate'
+import {
+  resolveVipIcon,
+  resolveVipLevelLabel,
+  deriveVipLevelFromInfo
+} from '@/utils/vip'
 
 export default {
   name: 'VipBadge',
@@ -79,39 +35,15 @@ export default {
       return this.vipInfo || {}
     },
     level() {
-      const level = Number(this.sanitizedInfo.vipLevel)
-      return Number.isNaN(level) ? 0 : level
+      const parsed = deriveVipLevelFromInfo(this.sanitizedInfo)
+      return parsed === null ? 0 : parsed
     },
     levelName() {
-      const name = this.sanitizedInfo.vipLevelName
-      return isEmpty(name) ? `VIP${this.level}` : name
+      const label = resolveVipLevelLabel(this.sanitizedInfo)
+      return isEmpty(label) ? `VIP${this.level}` : label
     },
-    remoteIcon() {
-      const icon = this.sanitizedInfo.vipLevelIcon
-      if (!icon) {
-        return ''
-      }
-      if (icon.startsWith('data:')) {
-        return icon
-      }
-      if (isHttp(icon)) {
-        return icon
-      }
-      return `${config.baseUrl}${icon}`
-    },
-    localIcon() {
-      const mapIcon = LEVEL_ICON_MAP[this.level]
-      if (mapIcon) {
-        return `${ICON_BASE_PATH}${mapIcon}.svg`
-      }
-      const normalized = (this.levelName || '').toLowerCase()
-      if (NAME_ICON_MAP[normalized]) {
-        return `${ICON_BASE_PATH}${NAME_ICON_MAP[normalized]}.svg`
-      }
-      if (NAME_ICON_MAP[this.levelName]) {
-        return `${ICON_BASE_PATH}${NAME_ICON_MAP[this.levelName]}.svg`
-      }
-      return `${ICON_BASE_PATH}vip-default.svg`
+    badgeIcon() {
+      return resolveVipIcon(this.sanitizedInfo)
     },
     displayLabel() {
       return this.levelName
@@ -144,7 +76,8 @@ export default {
         fontSize = 32
       }
       return {
-        fontSize: `${fontSize}rpx`
+        fontSize: `${fontSize}rpx`,
+        letterSpacing: '1rpx'
       }
     }
   }
@@ -165,5 +98,7 @@ export default {
 .vip-badge__label {
   color: #ffffff;
   font-weight: 600;
+  letter-spacing: 1rpx;
+  text-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.25);
 }
 </style>

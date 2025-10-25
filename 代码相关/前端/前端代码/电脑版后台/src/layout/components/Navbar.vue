@@ -21,7 +21,15 @@
         <!--  <size-select id="size-select" class="right-menu-item hover-effect" />-->
         <!--</el-tooltip>-->
 
-        <vip-badge class="right-menu-item" />
+        <vip-commission-cards class="vip-pill" />
+        <router-link to="/user/profile" class="nav-link menu-pill">
+          <i class="el-icon-user nav-link__icon" />
+          <span class="nav-link__label">用户中心</span>
+        </router-link>
+        <router-link to="/system/notice" class="nav-link menu-pill">
+          <i class="el-icon-bell nav-link__icon" />
+          <span class="nav-link__label">公告中心</span>
+        </router-link>
 
       </template>
 
@@ -31,17 +39,6 @@
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown">
-          <router-link to="/user/profile">
-            <el-dropdown-item>个人中心</el-dropdown-item>
-          </router-link>
-          <router-link to="/system/notice">
-            <el-dropdown-item>
-              <span style="display: flex; align-items: center;">
-                公告中心
-                <el-badge v-if="unreadCount > 0" :value="unreadCount" class="notice-badge" style="margin-left: 8px;"/>
-              </span>
-            </el-dropdown-item>
-          </router-link>
           <el-dropdown-item @click.native="setting = true">
             <span>布局设置</span>
           </el-dropdown-item>
@@ -71,7 +68,7 @@ import SizeSelect from '@/components/SizeSelect'
 import Search from '@/components/HeaderSearch'
 import RuoYiGit from '@/components/RuoYi/Git'
 import RuoYiDoc from '@/components/RuoYi/Doc'
-import VipBadge from '@/components/VipBadge'
+import VipCommissionCards from '@/components/VipCommissionCards'
 
 export default {
   components: {
@@ -83,12 +80,11 @@ export default {
     Search,
     RuoYiGit,
     RuoYiDoc,
-    VipBadge
+    VipCommissionCards
   },
   data() {
     return {
-      unreadCount: 0, // 未读公告数量
-      noticeTimer: null // 公告轮询定时器
+      noticeTimer: null // placeholder if future intervals are reintroduced
     }
   },
   computed: {
@@ -115,9 +111,6 @@ export default {
     }
   },
   created() {
-    this.fetchUnreadCount();
-    // 每5分钟轮询一次未读公告数量
-    this.noticeTimer = setInterval(this.fetchUnreadCount, 5 * 60 * 1000);
   },
   beforeDestroy() {
     if (this.noticeTimer) {
@@ -138,24 +131,28 @@ export default {
           location.href = '/index';
         })
       }).catch(() => {});
-    },
-    // 获取未读公告数量
-    async fetchUnreadCount() {
-      try {
-        // 这里可以调用新的API获取未读公告数量
-        // 暂时模拟，实际项目中应该从后端API获取
-        // const response = await getUnreadNoticeCount();
-        // this.unreadCount = response.data;
-        this.unreadCount = Math.floor(Math.random() * 5); // 模拟数据
-      } catch (error) {
-        console.error('获取未读公告数量失败:', error);
-      }
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+@mixin menu-pill-base {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  height: 38px;
+  border-radius: 22px;
+  border: 1px solid #edf2f9;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  color: #1f2d3d;
+  line-height: 1;
+  text-decoration: none;
+}
+
 .navbar {
   height: auto;
   min-height: 80px;
@@ -264,6 +261,43 @@ export default {
           color: #1890ff;
         }
       }
+    }
+
+    .menu-pill {
+      @include menu-pill-base;
+      gap: 8px;
+      margin-left: 12px;
+
+      &:first-of-type {
+        margin-left: 0;
+      }
+
+      &:hover {
+        border-color: #ffd666;
+        box-shadow: 0 4px 12px rgba(255, 214, 102, 0.35);
+        color: #d46b08;
+      }
+
+      .nav-link__icon {
+        font-size: 18px;
+        color: #d46b08;
+      }
+
+      .nav-link__label {
+        font-weight: 600;
+        color: inherit;
+      }
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .vip-pill {
+      margin-right: 12px;
+      display: inline-flex;
+      align-items: center;
     }
 
     .avatar-container {

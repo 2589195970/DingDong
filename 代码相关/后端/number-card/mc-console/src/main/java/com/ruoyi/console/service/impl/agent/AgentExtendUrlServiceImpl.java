@@ -115,9 +115,10 @@ public class AgentExtendUrlServiceImpl implements AgentExtendUrlService {
         agentAccount.setCallbackUrl(callbackUrl);
         agentAccount.setUpdateTime(System.currentTimeMillis());
         agentAccountService.updateById(agentAccount);
+        // 注释掉缓存删除
         //修改之后删除缓存
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_CODE, agentCode);
-        configStringRedisTemplate.delete(cacheKey);
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_CODE, agentCode);
+        // configStringRedisTemplate.delete(cacheKey);
     }
 
 
@@ -152,8 +153,9 @@ public class AgentExtendUrlServiceImpl implements AgentExtendUrlService {
         smsService.checkSms(smsDTO);
         AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(),true);
         agentAccountService.updateAgentPhone(agentAccount.getAgentCode(),phone);
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_USER_ID, agentAccount.getSysUserId());
-        configStringRedisTemplate.delete(cacheKey);
+        // 注释掉缓存删除
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_USER_ID, agentAccount.getSysUserId());
+        // configStringRedisTemplate.delete(cacheKey);
     }
 
     /**
@@ -244,9 +246,9 @@ public class AgentExtendUrlServiceImpl implements AgentExtendUrlService {
             // 4. 更新数据库
             agentAccountMapper.updateById(agentAccount);
 
-            // 5. 清除缓存
-            String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_USER_ID, agentAccount.getSysUserId());
-            configStringRedisTemplate.delete(cacheKey);
+            // 5. 清除缓存（注释掉）
+            // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_USER_ID, agentAccount.getSysUserId());
+            // configStringRedisTemplate.delete(cacheKey);
 
             log.info("代理商 {} 成功更新海报图{}，图片URL: {}", agentAccount.getAgentCode(), posterIndex, imageUrl);
 

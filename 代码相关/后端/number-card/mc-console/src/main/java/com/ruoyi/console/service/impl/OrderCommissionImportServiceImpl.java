@@ -1,8 +1,10 @@
 package com.ruoyi.console.service.impl;
 
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
+import cn.hutool.poi.excel.ExcelWriter;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.constant.ImportOrderConstant;
 import com.ruoyi.common.exception.BizException;
@@ -18,9 +20,14 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -67,6 +74,33 @@ public class OrderCommissionImportServiceImpl  implements OrderCommissionImportS
         }
         //异步生成订单佣金记录
         orderCommissionService.saveOrderCommission(orderList);
+    }
+
+    /**
+     * 佣金导入模板下载
+     *
+     * @param response 响应
+     * @throws Exception 异常
+     */
+    @Override
+    public void downloadOrderCommissionTemplate(HttpServletResponse response) throws Exception {
+        ExcelWriter writer = ExcelUtil.getWriter(true);
+        ServletOutputStream outputStream = null;
+        try {
+            List<Map<String, Object>> templateRows = new ArrayList<>();
+            Map<String, Object> row = new HashMap<>(1);
+            row.put(ImportOrderConstant.ORDER_ID, "");
+            templateRows.add(row);
+            writer.write(templateRows, true);
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+            String fileName = URLEncoder.encode("导入佣金结算数据模板.xlsx", StandardCharsets.UTF_8.name());
+            response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
+            outputStream = response.getOutputStream();
+            writer.flush(outputStream, true);
+        } finally {
+            IoUtil.close(outputStream);
+            writer.close();
+        }
     }
 
     /**

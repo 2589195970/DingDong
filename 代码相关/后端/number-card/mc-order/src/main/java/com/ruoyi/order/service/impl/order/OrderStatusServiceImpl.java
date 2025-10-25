@@ -322,8 +322,8 @@ public class OrderStatusServiceImpl extends ServiceImpl<OrderMapper, Order> impl
             upgradeLog.setFromLevel(currentLevel);
             upgradeLog.setToLevel(targetLevel);
             upgradeLog.setUpgradeType("AUTO");
-            upgradeLog.setUpgradeReason("订单累计达到升级条件");
             upgradeLog.setOrderCount(activatedCount);
+            upgradeLog.setUpgradeReason("订单累计达到升级条件");
             upgradeLog.setCreateTime(now);
             vipUpgradeLogMapper.insert(upgradeLog);
 

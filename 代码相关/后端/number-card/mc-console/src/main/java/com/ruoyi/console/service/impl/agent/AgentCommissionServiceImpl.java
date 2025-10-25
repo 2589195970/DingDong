@@ -1,6 +1,5 @@
 package com.ruoyi.console.service.impl.agent;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ruoyi.common.constant.BaseConstant;
 import com.ruoyi.common.core.domain.model.LoginUser;
@@ -9,11 +8,12 @@ import com.ruoyi.common.core.page.PageResultFactory;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.AgentCommissionSelectBO;
 import com.ruoyi.common.order.entity.AgentAccount;
-import com.ruoyi.common.order.entity.AgentProduct;
-import com.ruoyi.common.order.entity.CommissionConfig;
 import com.ruoyi.common.order.entity.OrderCommissionDetails;
 import com.ruoyi.common.order.vo.AgentCommissionSelectVO;
+import com.ruoyi.common.utils.bean.BeanUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.ruoyi.common.vip.entity.VipConfig;
+import com.ruoyi.common.vip.vo.VipConfigVO;
 import com.ruoyi.console.mapper.OrderCommissionDetailsMapper;
 import com.ruoyi.console.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +24,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -41,11 +42,7 @@ public class AgentCommissionServiceImpl extends ServiceImpl<OrderCommissionDetai
     AgentAccountService agentAccountService;
 
     @Resource
-    CommissionConfigService commissionConfigService;
-
-    
-    @Resource
-    AgentProductService agentProductService;
+    VipConfigService vipConfigService;
 
     /**
      * 代理商订单佣金列表查询
@@ -70,36 +67,13 @@ public class AgentCommissionServiceImpl extends ServiceImpl<OrderCommissionDetai
     }
 
 
-    /**
-     * 代理商佣金配置查询
-     * @param loginUser
-     */
-    public CommissionConfig selectAgentCommissionConfig(LoginUser loginUser) throws BizException {
-        CommissionConfig commissionConfig = commissionConfigService.getOne(new LambdaQueryWrapper<CommissionConfig>().eq(CommissionConfig::getSysUserId,loginUser.getUserId()));
-        return commissionConfig;
-    }
-
-    /**
-     * 代理商佣金配置修改
-     * @param loginUser
-     */
-    public void agentUpdateCommissionConfig(CommissionConfig commissionConfig,LoginUser loginUser) throws BizException {
-        CommissionConfig commissionConfigOld = commissionConfigService.getOne(new LambdaQueryWrapper<CommissionConfig>().eq(CommissionConfig::getSysUserId,loginUser.getUserId()));
-        if(commissionConfigOld == null){
-            throw new BizException("当前账号不存在佣金配置");
+    @Override
+    public List<VipConfigVO> selectVipCommissionCards(LoginUser loginUser){
+        List<VipConfig> configs = vipConfigService.selectEnabledVipConfigs();
+        if (CollectionUtils.isEmpty(configs)) {
+            return new ArrayList<>();
         }
-        commissionConfigOld.setCommissionConfigType(commissionConfig.getCommissionConfigType());
-        commissionConfigOld.setFixedCommission(commissionConfig.getFixedCommission());
-        commissionConfigOld.setScaleCommission(commissionConfig.getScaleCommission());
-        commissionConfigOld.setRemark(commissionConfig.getRemark());
-        commissionConfigService.updateCommissionConfig(commissionConfigOld);
-        //佣金配置修改后 触发一次 佣金重新计算
-        List<AgentProduct> agentProductList = agentProductService.list(new LambdaQueryWrapper<AgentProduct>().eq(AgentProduct::getAgentCode,commissionConfigOld.getAgentCode()));
-        if(!CollectionUtils.isEmpty(agentProductList)){
-            for(AgentProduct agentProduct:agentProductList){
-                agentProductService.updateAgentProductCommission(agentProduct.getParentProductCode(),agentProduct.getAgentCode(),agentProduct.getProductCommission());
-            }
-        }
+        return configs.stream().map(this::convertToVipConfigVO).collect(Collectors.toList());
     }
 
     /**
@@ -143,5 +117,11 @@ public class AgentCommissionServiceImpl extends ServiceImpl<OrderCommissionDetai
             log.error("导出代理商佣金数据异常: {}", e.getMessage(), e);
             throw new BizException("导出代理商佣金数据失败: " + e.getMessage());
         }
+    }
+
+    private VipConfigVO convertToVipConfigVO(VipConfig config) {
+        VipConfigVO vo = new VipConfigVO();
+        BeanUtils.copyProperties(config, vo);
+        return vo;
     }
 }

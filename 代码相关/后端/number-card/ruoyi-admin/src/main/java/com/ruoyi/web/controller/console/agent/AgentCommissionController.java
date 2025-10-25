@@ -4,13 +4,9 @@ import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.core.page.ResponseEntity;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.*;
-import com.ruoyi.common.order.entity.CommissionConfig;
-import com.ruoyi.common.order.entity.WithdrawalRecordDetails;
-import com.ruoyi.common.order.vo.AgentAccountListVO;
 import com.ruoyi.common.order.vo.AgentCommissionSelectVO;
+import com.ruoyi.common.vip.vo.VipConfigVO;
 import com.ruoyi.console.service.AgentCommissionService;
-import com.ruoyi.console.service.AgentManagementService;
-import com.ruoyi.console.service.WithdrawalRecordDetailsService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 import static com.ruoyi.common.utils.SecurityUtils.getLoginUser;
 
@@ -57,45 +54,6 @@ public class AgentCommissionController {
     }
 
     /**
-     * 代理商佣金配置查询
-     *
-     * @return
-     */
-    @PostMapping("/selectAgentCommissionConfig")
-    @ApiOperation("代理商佣金配置查询(此方法无参数)")
-    public ResponseEntity<CommissionConfig> selectAgentCommissionConfig() {
-        try {
-            return ResponseEntity.success(agentCommissionService.selectAgentCommissionConfig(getLoginUser()));
-        } catch (BizException e) {
-            log.info("{}方法异常:{}", TAG, e.getMessage());
-            return ResponseEntity.error(e.getMessage(), null);
-        } catch (Exception e) {
-            log.info("{}方法异常:{}", TAG, e.getMessage());
-            return ResponseEntity.error("出错了,请稍候重试:{}", null);
-        }
-    }
-
-    /**
-     * 代理商佣金配置修改
-     *
-     * @return
-     */
-    @PostMapping("/agentUpdateCommissionConfig")
-    @ApiOperation("代理商佣金配置修改")
-    public ResponseEntity agentUpdateCommissionConfig(@RequestBody CommissionConfig commissionConfig) {
-        try {
-            agentCommissionService.agentUpdateCommissionConfig(commissionConfig, getLoginUser());
-            return ResponseEntity.success();
-        } catch (BizException e) {
-            log.info("{}方法异常:{}", TAG, e.getMessage());
-            return ResponseEntity.error(e.getMessage(), null);
-        } catch (Exception e) {
-            log.info("{}方法异常:{}", TAG, e.getMessage());
-            return ResponseEntity.error("出错了,请稍候重试:{}", null);
-        }
-    }
-
-    /**
      * 代理商订单佣金列表导出
      *
      * @return
@@ -116,4 +74,20 @@ public class AgentCommissionController {
         }
     }
 
+    /**
+     * 查询 VIP 佣金策略卡片
+     */
+    @GetMapping("/vipCards")
+    @ApiOperation("查询 VIP 佣金策略卡片")
+    public ResponseEntity<List<VipConfigVO>> selectVipCommissionCards() {
+        try {
+            return ResponseEntity.success(agentCommissionService.selectVipCommissionCards(getLoginUser()));
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", TAG, e.getMessage());
+            return ResponseEntity.error("出错了,请稍候重试:{}", null);
+        }
+    }
 }

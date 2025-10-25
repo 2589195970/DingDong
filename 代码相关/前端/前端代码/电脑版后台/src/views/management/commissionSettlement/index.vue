@@ -106,7 +106,10 @@
 
             <el-table ref="settlementform" :data="settlementform" row-key="oper" border lazy height="550">
 
-                <el-table-column label="代理商" align="center" prop="showDownstreamName" :show-overflow-tooltip="true" />
+                <el-table-column label="代理商" align="center" prop="agentName" :show-overflow-tooltip="true" />
+                <el-table-column label="代理商编码" align="center" prop="agentCode" :show-overflow-tooltip="true" />
+                <el-table-column label="代理商等级" align="center" prop="agentLevel" :show-overflow-tooltip="true" />
+                <el-table-column label="VIP等级" align="center" prop="vipLevel" :show-overflow-tooltip="true" />
                 <el-table-column label="产品佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
                 <el-table-column label="下游分销佣金" align="center" prop="distributionProductCommission"
                     :show-overflow-tooltip="true" />
@@ -119,7 +122,8 @@
         <el-dialog :visible.sync="upload.open" width="400px" append-to-body>
             <el-form>
                 <span>仅允许导入xls、xlsx格式文件。</span>
-                <!-- <a :href="fileUrl" download="导入数据模板.xlsx" style="color: blue;">下载模板</a> -->
+                <el-link type="primary" :underline="false" style="font-size: 12px; margin-left: 8px;"
+                    @click="downloadTemplate">下载模板</el-link>
                 <el-upload ref="upload" :limit="1" accept=".xlsx, .xls" :headers="upload.headers" :action="upload.url"
                     :disabled="upload.isUploading" :on-progress="handleFileUploadProgress"
                     :on-success="handleFileSuccess" :auto-upload="false" drag>
@@ -276,6 +280,9 @@
             this.getList();
         },
         methods: {
+            downloadTemplate() {
+                exportSettlement({}, `佣金结算导入模板.xlsx`, '/orderCommission/importTemplate');
+            },
             // 导入
             handleImport() {
                 this.upload.open = true;

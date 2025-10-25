@@ -3,6 +3,8 @@ package com.ruoyi.console.service;
 
 import com.ruoyi.common.order.bo.UploadNumberListExcelBO;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * @Description
  * @Author 陈思伟
@@ -19,5 +21,13 @@ public interface OrderCommissionImportService  {
      * @throws Exception
      */
     void uploadOrderCommissionExcel(UploadNumberListExcelBO uploadOrderListExcelBO) throws Exception;
+
+    /**
+     * 下载佣金导入模板
+     *
+     * @param response 响应
+     * @throws Exception 异常
+     */
+    void downloadOrderCommissionTemplate(HttpServletResponse response) throws Exception;
 
 }

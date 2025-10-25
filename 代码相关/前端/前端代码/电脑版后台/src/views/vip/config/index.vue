@@ -12,7 +12,12 @@
       </el-form-item>
       <el-form-item label="启用状态" prop="isEnabled">
         <el-select v-model="queryParams.isEnabled" placeholder="请选择启用状态" clearable style="width: 240px">
-          <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label" :value="Number(dict.value)" />
+          <el-option
+            v-for="dict in dict.type.sys_normal_disable"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value === '0' ? 1 : 0"
+          />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -71,7 +76,10 @@
       <el-table-column label="备注" prop="remark" min-width="160" show-overflow-tooltip />
       <el-table-column label="启用状态" prop="isEnabled" width="110" align="center">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.isEnabled" />
+          <dict-tag
+            :options="dict.type.sys_normal_disable"
+            :value="scope.row.isEnabled === 1 ? '0' : '1'"
+          />
         </template>
       </el-table-column>
       <el-table-column label="更新时间" prop="updateTime" min-width="160" align="center">

@@ -240,5 +240,26 @@ public class AgentCommissionSelectVO {
     @ApiModelProperty("来源代理商名称")
     private String agentSourceName;
 
+    /**
+     * VIP 等级
+     */
+    @Excel(name = "VIP等级")
+    @ApiModelProperty("VIP等级")
+    private Integer vipLevel;
+
+    /**
+     * VIP 加成金额
+     */
+    @Excel(name = "VIP加成(分)")
+    @ApiModelProperty("VIP加成金额")
+    private Integer vipBonusCommission;
+
+    /**
+     * 订单维度的 VIP 汇总加成
+     */
+    @Excel(name = "订单VIP汇总(分)")
+    @ApiModelProperty("订单VIP汇总金额")
+    private Integer vipAdjustAmount;
+
 
 }

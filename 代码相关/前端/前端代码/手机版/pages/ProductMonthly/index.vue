@@ -46,8 +46,15 @@
           <!-- 左侧底部佣金信息 -->
           <view class="image-bottom-info">
             <view class="commission-area-left">
-              <text class="commission-price-left">¥{{ dict.productCommission }}</text>
-              <text class="price-label-left">我的佣金</text>
+              <view class="commission-combo">
+                <text class="commission-label">佣金</text>
+                <text class="commission-base">¥{{ formatCommission(dict.productCommission) }}</text>
+                <template v-if="hasVipCommission(dict.vipFixedCommission)">
+                  <text class="commission-plus">+</text>
+                  <text class="commission-vip">¥{{ formatCommission(dict.vipFixedCommission) }}</text>
+                  <text class="vip-chip">VIP</text>
+                </template>
+              </view>
             </view>
           </view>
         </view>
@@ -240,6 +247,19 @@ export default {
         1: 'status-online'
       }
       return classMap[status] || 'status-default'
+    },
+    formatCommission(amount) {
+      if (amount === null || amount === undefined || amount === '') {
+        return '0'
+      }
+      const num = Number(amount)
+      if (Number.isNaN(num)) {
+        return amount
+      }
+      return Math.round(num).toString()
+    },
+    hasVipCommission(amount) {
+      return amount !== null && amount !== undefined
     },
 
     handleewma() {
@@ -573,16 +593,57 @@ page {
       align-items: center;
       text-align: center;
 
-      .commission-price-left {
-        font-size: 45rpx;
-        font-weight: bold;
-        color: #f09b7f;
-        margin-bottom: 4rpx;
+      .commission-combo {
+        display: inline-flex;
+        align-items: center;
+        gap: 4rpx;
+        max-width: 100%;
+        white-space: nowrap;
+      }
+
+      .commission-label,
+      .commission-base,
+      .commission-vip {
+        font-size: 34rpx;
+        font-weight: 600;
+        line-height: 1;
+      }
+
+      .commission-label {
+        font-weight: 500;
+        color: #999;
+        margin-right: 6rpx;
+      }
+
+      .commission-base {
+        color: #f04d4d;
+      }
+
+      .commission-plus {
+        font-size: 28rpx;
+        font-weight: 500;
+        color: #f27052;
+      }
+
+      .commission-vip {
+        color: #ff9f43;
+      }
+
+      .vip-chip {
+        font-size: 16rpx;
+        color: #ff9f43;
+        border: 1rpx solid rgba(255, 159, 67, 0.4);
+        padding: 2rpx 8rpx;
+        border-radius: 999rpx;
+        background: rgba(255, 159, 67, 0.15);
+        font-weight: 600;
+        letter-spacing: 1rpx;
       }
 
       .price-label-left {
-        font-size: 20rpx;
-        color: #666;
+        font-size: 22rpx;
+        color: #999;
+        letter-spacing: 1rpx;
       }
     }
   }
@@ -832,12 +893,28 @@ page {
 
     .image-bottom-info {
       .commission-area-left {
-        .commission-price-left {
-          font-size: 38rpx;
+        .commission-combo {
+          padding: 6rpx 12rpx;
+        }
+
+        .commission-label {
+          font-size: 36rpx;
+        }
+
+        .commission-base {
+          font-size: 36rpx;
+        }
+
+        .commission-vip {
+          font-size: 28rpx;
+        }
+
+        .vip-chip {
+          font-size: 16rpx;
         }
 
         .price-label-left {
-          font-size: 18rpx;
+          font-size: 20rpx;
         }
       }
     }
@@ -907,12 +984,28 @@ page {
 
     .image-bottom-info {
       .commission-area-left {
-        .commission-price-left {
+        .commission-combo {
+          padding: 4rpx 10rpx;
+        }
+
+        .commission-label {
           font-size: 32rpx;
         }
 
+        .commission-base {
+          font-size: 32rpx;
+        }
+
+        .commission-vip {
+          font-size: 24rpx;
+        }
+
+        .vip-chip {
+          font-size: 14rpx;
+        }
+
         .price-label-left {
-          font-size: 16rpx;
+          font-size: 18rpx;
         }
       }
     }

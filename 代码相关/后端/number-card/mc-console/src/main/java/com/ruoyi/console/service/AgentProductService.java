@@ -54,14 +54,12 @@ public interface AgentProductService extends IService<AgentProduct> {
     void deleteAgentProduct(Integer agentProductId);
 
     /**
-     * 修改子代理商 产品佣金
-     * 佣金需全部重新计算
+     * （已废弃）按旧逻辑级联刷新子代理佣金。
      */
     //void updateAgentProductCommission(AgentProductUpdateCommissionBO productUpdateStatusBO, LoginUser loginUser) throws BizException;
 
     /**
-     * 修改子代理商 产品佣金
-     * 佣金需全部重新计算
+     * 修改代理商产品佣金，仅更新当前代理自身数据。
      */
      void updateAgentProductCommission(String productCode,String agentCode,Integer commission) throws BizException;
 
@@ -73,6 +71,15 @@ public interface AgentProductService extends IService<AgentProduct> {
      */
     void updateAgentProduct(AgentProductUpdateBO agentProductUpdateBO, LoginUser loginUser) throws BizException;
 
+
+    /**
+     * 此方法会创建 代理商下所有子代理的产品包括本身
+     * @param agentAccounts 多个待分配代理
+     * @param parentAgentAccount 父级代理
+     * @param product 产品
+     * @param productCommission 父级佣金
+     */
+    void addSubAgentProducts(List<AgentAccount> agentAccounts, AgentAccount parentAgentAccount, Product product, Integer productCommission) throws BizException;
 
     /**
      * 此方法会创建 代理商下所有子代理的产品包括本身

@@ -47,17 +47,19 @@ public class ToolConfigServiceImpl extends ServiceImpl<ToolConfigMapper, ToolCon
             throw new BizException("toolConfigType 不存在:{}", toolConfigType);
         }
         ToolConfig toolConfig;
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.TOOL_CONFIG, toolConfigType);
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StrUtil.isBlankIfStr(json)) {
+        // 注释掉缓存查询，直接从数据库查询
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.TOOL_CONFIG, toolConfigType);
+        // String json = configStringRedisTemplate.opsForValue().get(cacheKey);
+        // if (StrUtil.isBlankIfStr(json)) {
             toolConfig = baseMapper.selectOne(new LambdaQueryWrapper<ToolConfig>().eq(ToolConfig::getToolConfigType, toolConfigType));
             if (toolConfig == null) {
                 throw new BizException("工具配置不存在:{}", toolConfig);
             }
-            configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(toolConfig), 10, TimeUnit.MINUTES);
-        } else {
-            toolConfig = JSONObject.parseObject(json, ToolConfig.class);
-        }
+            // 注释掉缓存写入
+            // configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(toolConfig), 10, TimeUnit.MINUTES);
+        // } else {
+        //     toolConfig = JSONObject.parseObject(json, ToolConfig.class);
+        // }
         return toolConfig;
     }
 
@@ -74,8 +76,9 @@ public class ToolConfigServiceImpl extends ServiceImpl<ToolConfigMapper, ToolCon
         }
         toolConfig.setUpdateTime(System.currentTimeMillis());
         baseMapper.updateById(toolConfig);
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.TOOL_CONFIG, toolConfig.getToolConfigType());
-        configStringRedisTemplate.delete(cacheKey);
+        // 注释掉缓存删除
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.TOOL_CONFIG, toolConfig.getToolConfigType());
+        // configStringRedisTemplate.delete(cacheKey);
     }
 
 

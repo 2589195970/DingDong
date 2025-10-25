@@ -56,4 +56,22 @@ public class AgentCommissionJson {
     @ApiModelProperty(value = "产品分销佣金")
     private Integer distributionProductCommission;
 
+    /**
+     * VIP 等级
+     */
+    @ApiModelProperty(value = "VIP等级")
+    private Integer vipLevel;
+
+    /**
+     * VIP 固定加成额度
+     */
+    @ApiModelProperty(value = "VIP固定加成额度")
+    private Integer vipFixedCommission;
+
+    /**
+     * 当前订单的 VIP 加成金额
+     */
+    @ApiModelProperty(value = "VIP加成金额")
+    private Integer vipBonusCommission;
+
 }

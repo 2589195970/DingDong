@@ -16,6 +16,8 @@
             p.upstream_product_name as upstreamProductName,
             p.product_status as productStatus,
             p.product_commission as productCommission,
+            p.sfyjfx as sfyjfx,
+            p.sffftk as sffftk,
             p.product_commission as distributionProductCommission,
             0 as revenueProductCommission,
             p.product_sort as productSort
@@ -43,6 +45,8 @@
             a.agent_name AS agentName,
             a.product_status AS productStatus,
             a.product_commission AS productCommission,
+            p.sfyjfx as sfyjfx,
+            p.sffftk as sffftk,
             a.distribution_product_commission AS distributionProductCommission,
             a.revenue_product_commission AS revenueProductCommission,
             a.product_sort AS productSort,

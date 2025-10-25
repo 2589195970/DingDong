@@ -3,17 +3,19 @@ package com.ruoyi.console.service.impl.agent;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ruoyi.common.constant.BaseConstant;
+import com.ruoyi.common.constant.CacheKeyConstants;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.core.page.PageResultFactory;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.AgentProductSelectBO;
 import com.ruoyi.common.order.bo.AgentProductUpdateBO;
-import com.ruoyi.common.order.bo.AgentProductUpdateCommissionBO;
 import com.ruoyi.common.order.entity.*;
 import com.ruoyi.common.order.vo.AgentProductVO;
+import com.ruoyi.common.utils.CacheUtils;
 import com.ruoyi.console.mapper.AgentProductMapper;
 import com.ruoyi.console.mapper.ProductMapper;
 import com.ruoyi.console.service.*;
@@ -27,8 +29,11 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -51,9 +56,6 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
     AgentAccountService agentAccountService;
 
     @Resource
-    CommissionConfigService commissionConfigService;
-
-    @Resource
     QrCodeService qrCodeService;
 
     @Resource
@@ -62,9 +64,14 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
     @Value(value = "${submit.h5}")
     private String h5url;
 
+    private static final int BATCH_INSERT_SIZE = 500;
+
     
     @Resource
     ToolConfigService toolConfigService;
+
+    @Resource(name = "configStringRedisTemplate")
+    private StringRedisTemplate configStringRedisTemplate;
 
     /**
      * 代理商分页产品查询
@@ -86,15 +93,26 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         //分页查询代理商产品
         List<AgentProductVO> agentProductSelectVOS = productMapper.selectAgentProductList(agentProductSelectBO.getOperatorType(), agentProductSelectBO.getProductStatus(), agentProductSelectBO.getProductType(),
                 agentProductSelectBO.getProductName(), agentAccount.getAgentCode(), (agentProductSelectBO.getPageNo() - 1) * agentProductSelectBO.getPageSize(), agentProductSelectBO.getPageSize());
-        for(AgentProductVO agentProductVO:agentProductSelectVOS){
+        for (AgentProductVO agentProductVO : agentProductSelectVOS) {
             agentProductVO.setH5Url(h5url + "?productCode=" + agentProductVO.getProductCode() + "&agentCode=" + agentAccount.getAgentCode());
-            List<AgentProduct> agentProductList = baseMapper.selectList(new LambdaQueryWrapper<AgentProduct>().eq(AgentProduct::getParentProductCode,agentProductVO.getProductCode()).eq(AgentProduct::getParentAgentCode,agentAccount.getAgentCode()));
-            if(!CollectionUtils.isEmpty(agentProductList)){
+            List<AgentProduct> agentProductList = baseMapper.selectList(new LambdaQueryWrapper<AgentProduct>()
+                    .eq(AgentProduct::getParentProductCode, agentProductVO.getProductCode())
+                    .eq(AgentProduct::getParentAgentCode, agentAccount.getAgentCode()));
+            if (!CollectionUtils.isEmpty(agentProductList)) {
                 List<String> agentCodeList = agentProductList.stream().map(AgentProduct::getAgentCode).collect(Collectors.toList());
                 agentProductVO.setAgentCodeList(agentCodeList);
-            }else {
+            } else {
                 agentProductVO.setAgentCodeList(new ArrayList<>());
             }
+            int upstreamAmount = agentProductVO.getProductCommission() == null ? BaseConstant.ZERO_INT : Math.max(agentProductVO.getProductCommission(), BaseConstant.ZERO_INT);
+            int retainAmount = agentProductVO.getRevenueProductCommission() == null ? BaseConstant.ZERO_INT : Math.max(agentProductVO.getRevenueProductCommission(), BaseConstant.ZERO_INT);
+            int downstreamAmount = agentProductVO.getDistributionProductCommission() == null ? BaseConstant.ZERO_INT : Math.max(agentProductVO.getDistributionProductCommission(), BaseConstant.ZERO_INT);
+            int vipBonus = BaseConstant.ZERO_INT;
+            agentProductVO.setUpstreamCommission(upstreamAmount);
+            agentProductVO.setVipFixedCommission(BaseConstant.ZERO_INT);
+            agentProductVO.setVipBonusCommission(vipBonus);
+            agentProductVO.setSelfCommission(retainAmount);
+            agentProductVO.setDownstreamCommission(downstreamAmount);
         }
         return PageResultFactory.createPageResult(agentProductSelectVOS, Long.valueOf(totalRows), agentProductSelectBO.getPageSize(), agentProductSelectBO.getPageNo());
     }
@@ -175,7 +193,7 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             addAgentProduct.setAgentCode(agentAccount.getAgentCode());
             addAgentProduct.setAgentName(agentAccount.getAgentName());
             addAgentProduct.setProductStatus(agentProduct.getProductStatus());
-            addAgentProduct.setProductCommission(agentProduct.getDistributionProductCommission());
+            addAgentProduct.setProductCommission(agentProduct.getProductCommission());
             addAgentProduct.setDistributionProductCommission(BaseConstant.ZERO_INT);
             addAgentProduct.setRevenueProductCommission(addAgentProduct.getProductCommission() - addAgentProduct.getDistributionProductCommission());
             addAgentProduct(addAgentProduct);
@@ -199,30 +217,26 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
 
 
     /**
-     * 修改子代理商 产品佣金
-     * 佣金需全部重新计算
+     * 修改代理商产品固定佣金，仅更新当前代理记录。
+     * 子级需要在各自触发更新时写入新的固定佣金。
      */
     public void updateAgentProductCommission(String productCode, String agentCode, Integer commission) throws BizException {
-        AgentAccount agentAccount = agentAccountService.getAgentAccountByCode(agentCode,true);
-        //更新自身佣金
-        AgentProduct agentProduct = baseMapper.selectOne(new LambdaQueryWrapper<AgentProduct>().eq(AgentProduct::getParentProductCode,productCode).eq(AgentProduct::getAgentCode,agentAccount.getAgentCode()));
-        if(agentProduct==null){
+        AgentAccount agentAccount = agentAccountService.getAgentAccountByCode(agentCode, true);
+        AgentProduct agentProduct = baseMapper.selectOne(new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getParentProductCode, productCode)
+                .eq(AgentProduct::getAgentCode, agentAccount.getAgentCode()));
+        if (agentProduct == null) {
             return;
         }
-        //查询佣金保留多少
-        Integer distributionProductCommission = commissionConfigService.computeCommission(agentCode, commission);
-        agentProduct.setProductCommission(commission);
-        agentProduct.setDistributionProductCommission(distributionProductCommission);
-        agentProduct.setRevenueProductCommission(agentProduct.getProductCommission() - agentProduct.getDistributionProductCommission());
+        int incomingAmount = commission == null ? BaseConstant.ZERO_INT : Math.max(commission, BaseConstant.ZERO_INT);
+        agentProduct.setProductCommission(incomingAmount);
+        agentProduct.setRevenueProductCommission(incomingAmount);
+        agentProduct.setDistributionProductCommission(BaseConstant.ZERO_INT);
         agentProduct.setUpdateTime(System.currentTimeMillis());
         baseMapper.updateById(agentProduct);
-        //查询下游所有子代理 重新计算佣金
-        List<AgentAccount> childAgentAccountList = agentAccountService.list(new LambdaQueryWrapper<AgentAccount>().like(AgentAccount::getParentAgentCode,agentAccount.getAgentCode()));
-        if(!CollectionUtils.isEmpty(childAgentAccountList)){
-            for (AgentAccount childAgentAccount:childAgentAccountList){
-                updateAgentProductCommission(productCode,childAgentAccount.getAgentCode(),agentProduct.getDistributionProductCommission());
-            }
-        }
+        clearCommissionCache(agentAccount.getAgentCode(), productCode);
+
+        // 固定佣金只作用于当前代理；子级需要在自身触发更新时写入新的固定值。
     }
 
 
@@ -283,61 +297,146 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
 
 
     /**
-     * 此方法会创建 代理商下所有子代理的产品包括本身
-     * @param agentAccount
-     * @param parentAgentAccount
-     * @param product
+     * 批量创建代理商产品（包含所有下级）
+     *
+     * @param agentAccounts       待分配代理列表
+     * @param parentAgentAccount  上级代理
+     * @param product             商品
+     * @param productCommission   上级佣金
+     * @throws BizException 业务异常
      */
     @Override
-    public void addSubAgentProduct(AgentAccount agentAccount, AgentAccount parentAgentAccount, Product product,Integer productCommission) throws BizException {
-        //创建子代理商产品信息
-        AgentProduct agentProduct = createAgentProduct(agentAccount,parentAgentAccount,product,productCommission);
-        // 获取子代理商编码
-        String parentAgentCode = agentAccount.getAgentCode();
-        if (parentAgentCode != null && !parentAgentCode.isEmpty()) {
-            // 根据父代理商编码查询父代理商账号信息
-            List<AgentAccount> childAgentAccountList = agentAccountService.list(new LambdaQueryWrapper<AgentAccount>().eq(AgentAccount::getParentAgentCode,parentAgentCode));
-            if (!CollectionUtils.isEmpty(childAgentAccountList)) {
-                for(AgentAccount childAgentAccount:childAgentAccountList){
-                    // 递归调用创建父代理商的产品信息
-                    addSubAgentProduct(childAgentAccount,agentAccount,product,agentProduct.getDistributionProductCommission());
-                }
-            }
+    public void addSubAgentProducts(List<AgentAccount> agentAccounts, AgentAccount parentAgentAccount, Product product, Integer productCommission) throws BizException {
+        if (CollectionUtils.isEmpty(agentAccounts) || product == null || parentAgentAccount == null) {
+            return;
+        }
+        List<AgentProduct> pendingInsert = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        for (AgentAccount agentAccount : agentAccounts) {
+            collectAgentProducts(agentAccount, parentAgentAccount, product, productCommission, pendingInsert, visited);
+        }
+        batchInsertAgentProducts(pendingInsert);
+
+        if (CollectionUtils.isEmpty(pendingInsert)) {
+            return;
+        }
+        for (AgentProduct agentProduct : pendingInsert) {
+            StringBuffer stringBuffer = new StringBuffer(h5url);
+            stringBuffer.append("?productCode=").append(agentProduct.getParentProductCode())
+                    .append("&agentCode=").append(agentProduct.getAgentCode());
+            createAgentProductPoster(agentProduct, product.getProductMasterMap(), stringBuffer.toString());
         }
     }
 
     /**
-     * 创建代理商产品信息
-     * @param agentAccount 代理商账号信息
-     * @return 代理商产品信息
+     * 保留单个新增接口，内部委托批量方法实现，兼容旧调用
      */
-    private AgentProduct createAgentProduct(AgentAccount agentAccount,AgentAccount parentAgentAccount,Product product,Integer productCommission) throws BizException {
-        //判断一下是否产品已存在过
-        List<AgentProduct> agentProductList = baseMapper.selectList(new LambdaQueryWrapper<AgentProduct>().eq(AgentProduct::getAgentCode,agentAccount.getAgentCode()).eq(AgentProduct::getParentProductCode,product.getProductCode())
-                .eq(AgentProduct::getParentAgentCode,parentAgentAccount.getAgentCode()));
-        if(!CollectionUtils.isEmpty(agentProductList)){
-            return agentProductList.get(BaseConstant.ZERO_INT);
+    @Override
+    public void addSubAgentProduct(AgentAccount agentAccount, AgentAccount parentAgentAccount, Product product, Integer productCommission) throws BizException {
+        if (agentAccount == null) {
+            return;
         }
+        addSubAgentProducts(Collections.singletonList(agentAccount), parentAgentAccount, product, productCommission);
+    }
+
+    private void collectAgentProducts(AgentAccount agentAccount,
+                                      AgentAccount parentAgentAccount,
+                                      Product product,
+                                      Integer parentCommission,
+                                      List<AgentProduct> pendingInsert,
+                                      Set<String> visited) throws BizException {
+        if (agentAccount == null || parentAgentAccount == null || product == null) {
+            return;
+        }
+
+        String recordKey = buildAgentProductKey(agentAccount.getAgentCode(), parentAgentAccount.getAgentCode(), product.getProductCode());
+        if (!visited.add(recordKey)) {
+            return;
+        }
+
+        AgentProduct agentProduct = baseMapper.selectOne(new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getAgentCode, agentAccount.getAgentCode())
+                .eq(AgentProduct::getParentProductCode, product.getProductCode())
+                .eq(AgentProduct::getParentAgentCode, parentAgentAccount.getAgentCode()));
+
+        int currentCommission;
+        if (agentProduct == null) {
+            agentProduct = buildAgentProduct(agentAccount, parentAgentAccount, product, parentCommission);
+            pendingInsert.add(agentProduct);
+            currentCommission = agentProduct.getProductCommission() == null ? resolveCommission(parentCommission) : agentProduct.getProductCommission();
+        } else {
+            currentCommission = agentProduct.getProductCommission() == null ? resolveCommission(parentCommission) : agentProduct.getProductCommission();
+        }
+
+        List<AgentAccount> childAgentAccountList = agentAccountService.list(
+                new LambdaQueryWrapper<AgentAccount>().eq(AgentAccount::getParentAgentCode, agentAccount.getAgentCode()));
+        if (CollectionUtils.isEmpty(childAgentAccountList)) {
+            return;
+        }
+        for (AgentAccount childAgentAccount : childAgentAccountList) {
+            collectAgentProducts(childAgentAccount, agentAccount, product, currentCommission, pendingInsert, visited);
+        }
+    }
+
+    private AgentProduct buildAgentProduct(AgentAccount agentAccount,
+                                           AgentAccount parentAgentAccount,
+                                           Product product,
+                                           Integer parentCommission) {
         AgentProduct agentProduct = new AgentProduct();
         agentProduct.setParentProductCode(product.getProductCode());
         agentProduct.setParentProductName(product.getProductName());
         agentProduct.setParentAgentCode(parentAgentAccount.getAgentCode());
-        agentProduct.setProductCommission(product.getProductCommission());
         agentProduct.setAgentCode(agentAccount.getAgentCode());
         agentProduct.setAgentName(agentAccount.getAgentName());
-        agentProduct.setProductStatus(product.getProductStatus());
-        addAgentProduct(agentProduct);
+        agentProduct.setIsAllAgent(BaseConstant.ZERO_INT);
+        agentProduct.setProductStatus(product.getProductStatus() == null ? BaseConstant.ONE_INT : product.getProductStatus());
 
-        //拼接二维码包含的url信息
-        StringBuffer stringBuffer = new StringBuffer(h5url);
-        stringBuffer.append("?productCode=").append(product.getProductCode()).append("&agentCode=").append(agentAccount.getAgentCode());
-        //创建子代理商产品海报图
-        createAgentProductPoster(agentProduct,product.getProductMasterMap(),stringBuffer.toString());
-        //重新计算佣金
-        updateAgentProductCommission(agentProduct.getParentProductCode(),agentProduct.getAgentCode(),productCommission);
-        //重新查询一遍数据 作为递归入参
-        agentProduct = baseMapper.selectById(agentProduct.getAgentProductId());
+        int commission = resolveCommission(parentCommission);
+        agentProduct.setProductCommission(commission);
+        agentProduct.setDistributionProductCommission(BaseConstant.ZERO_INT);
+        agentProduct.setRevenueProductCommission(commission);
+        agentProduct.setProductSort(BaseConstant.ZERO_INT);
+        agentProduct.setCreateTime(System.currentTimeMillis());
+        agentProduct.setUpdateTime(null);
+        agentProduct.setProductQrcodeMap(null);
         return agentProduct;
+    }
+
+    private int resolveCommission(Integer commission) {
+        if (commission == null) {
+            return BaseConstant.ZERO_INT;
+        }
+        return Math.max(commission, BaseConstant.ZERO_INT);
+    }
+
+    private void batchInsertAgentProducts(List<AgentProduct> agentProducts) {
+        if (CollectionUtils.isEmpty(agentProducts)) {
+            return;
+        }
+        int fromIndex = 0;
+        int size = agentProducts.size();
+        while (fromIndex < size) {
+            int toIndex = Math.min(fromIndex + BATCH_INSERT_SIZE, size);
+            List<AgentProduct> subList = agentProducts.subList(fromIndex, toIndex);
+            baseMapper.insertBatch(subList);
+            fromIndex = toIndex;
+        }
+    }
+
+    private String buildAgentProductKey(String agentCode, String parentAgentCode, String productCode) {
+        String agent = agentCode == null ? "" : agentCode;
+        String parent = parentAgentCode == null ? "" : parentAgentCode;
+        String product = productCode == null ? "" : productCode;
+        return agent + "#" + parent + "#" + product;
+    }
+
+    private void clearCommissionCache(String agentCode, String productCode) {
+        // 注释掉缓存删除操作
+        // if (configStringRedisTemplate == null || StringUtils.isEmpty(agentCode) || StringUtils.isEmpty(productCode)) {
+        //     return;
+        // }
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_PRODUCT_COMMISSION, agentCode, productCode);
+        // configStringRedisTemplate.delete(cacheKey);
     }
 
 
@@ -412,8 +511,19 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             //成功生成了海报图 删除原图并保存新图
             if(StringUtils.hasLength(url)){
                 String old = agentProduct.getProductQrcodeMap();
+                AgentProduct updateEntity = new AgentProduct();
+                updateEntity.setProductQrcodeMap(url);
+                if (agentProduct.getAgentProductId() != null) {
+                    updateEntity.setAgentProductId(agentProduct.getAgentProductId());
+                    baseMapper.updateById(updateEntity);
+                } else {
+                    baseMapper.update(updateEntity,
+                            new LambdaUpdateWrapper<AgentProduct>()
+                                    .eq(AgentProduct::getParentProductCode, agentProduct.getParentProductCode())
+                                    .eq(AgentProduct::getParentAgentCode, agentProduct.getParentAgentCode())
+                                    .eq(AgentProduct::getAgentCode, agentProduct.getAgentCode()));
+                }
                 agentProduct.setProductQrcodeMap(url);
-                baseMapper.updateById(agentProduct);
                 pictureService.deletePicture(old);
             }
         }catch (Exception e){

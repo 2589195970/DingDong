@@ -91,7 +91,7 @@ public enum OrderEnum {
 
 
     /**
-     * 订单结算状态 0 未到结算状态 1 待结算 22 部分结算 3已结算 4无法结算
+     * 订单结算状态 0 未到结算状态 1 待结算 2 部分结算 3已结算 4无法结算
      */
     public enum OrderCommissionEnum {
 

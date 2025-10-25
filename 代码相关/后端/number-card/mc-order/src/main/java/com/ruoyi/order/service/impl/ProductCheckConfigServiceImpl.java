@@ -57,18 +57,20 @@ public class ProductCheckConfigServiceImpl extends ServiceImpl<ProductCheckConfi
             throw new BizException("product code不存在:{}", productCode);
         }
         List<ProductCheckConfig> productCheckConfigList;
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_CHECK_CONFIG, productCode,checkConfigType);
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StrUtil.isBlankIfStr(json)) {
+        // 注释掉缓存查询，直接从数据库查询
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_CHECK_CONFIG, productCode,checkConfigType);
+        // String json = configStringRedisTemplate.opsForValue().get(cacheKey);
+        // if (StrUtil.isBlankIfStr(json)) {
             productCheckConfigList = baseMapper.selectList(new LambdaQueryWrapper<ProductCheckConfig>().eq(ProductCheckConfig::getProductCode, productCode)
                     .eq(ProductCheckConfig::getCheckConfigType, checkConfigType));
             if (CollectionUtils.isEmpty(productCheckConfigList)) {
                 return new ArrayList<>();
             }
-            configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(productCheckConfigList), 10, TimeUnit.MINUTES);
-        } else {
-            productCheckConfigList = JSONObject.parseArray(json, ProductCheckConfig.class);
-        }
+            // 注释掉缓存写入
+            // configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(productCheckConfigList), 10, TimeUnit.MINUTES);
+        // } else {
+        //     productCheckConfigList = JSONObject.parseArray(json, ProductCheckConfig.class);
+        // }
         return productCheckConfigList;
     }
 

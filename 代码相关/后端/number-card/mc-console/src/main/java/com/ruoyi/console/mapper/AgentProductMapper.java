@@ -1,9 +1,11 @@
 package com.ruoyi.console.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ruoyi.common.order.entity.AgentAccount;
 import com.ruoyi.common.order.entity.AgentProduct;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -14,5 +16,13 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface AgentProductMapper extends BaseMapper<AgentProduct> {
+
+    /**
+     * 批量插入代理商商品记录
+     *
+     * @param agentProducts 待插入列表
+     * @return 影响行数
+     */
+    int insertBatch(@Param("list") List<AgentProduct> agentProducts);
 
 }

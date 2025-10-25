@@ -196,7 +196,7 @@ export default {
     operatorTypeText() {
       const operatorMap = {
         '0': '中国移动',
-        '1': '中国电信',
+        // '1': '中国电信',
         '2': '中国联通',
         '3': '中国广电'
       };

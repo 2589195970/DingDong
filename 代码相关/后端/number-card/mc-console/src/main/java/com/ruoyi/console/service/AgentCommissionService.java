@@ -5,9 +5,9 @@ import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.AgentCommissionSelectBO;
-import com.ruoyi.common.order.entity.CommissionConfig;
 import com.ruoyi.common.order.entity.OrderCommissionDetails;
 import com.ruoyi.common.order.vo.AgentCommissionSelectVO;
+import com.ruoyi.common.vip.vo.VipConfigVO;
 
 /**
  * 代理商佣金列表
@@ -27,17 +27,12 @@ public interface AgentCommissionService extends IService<OrderCommissionDetails>
      PageResult<AgentCommissionSelectVO> selectOrderCommissionListPage(AgentCommissionSelectBO agentCommissionSelectBO, LoginUser loginUser) throws BizException;
 
     /**
-     * 代理商佣金配置查询
-     * @param loginUser
+     * 查询当前可用的 VIP 佣金卡片配置。
+     *
+     * @return VIP 配置列表
+     * @throws BizException 异常信息
      */
-     CommissionConfig selectAgentCommissionConfig(LoginUser loginUser) throws BizException;
-
-
-    /**
-     * 代理商佣金配置修改
-     * @param loginUser
-     */
-    void agentUpdateCommissionConfig(CommissionConfig commissionConfig,LoginUser loginUser) throws BizException;
+    java.util.List<VipConfigVO> selectVipCommissionCards(LoginUser loginUser) throws BizException;
 
     /**
      * 代理商订单佣金列表导出

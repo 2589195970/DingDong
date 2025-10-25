@@ -3,7 +3,6 @@ package com.ruoyi.order.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ruoyi.common.enums.ProductEnum;
@@ -17,14 +16,10 @@ import com.ruoyi.order.mapper.ProductMapper;
 import com.ruoyi.order.service.AgentService;
 import com.ruoyi.order.service.ProductService;
 import com.ruoyi.common.constant.BaseConstant;
-import com.ruoyi.common.constant.CacheKeyConstants;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.AgentProductBO;
 import com.ruoyi.common.order.entity.Product;
-import com.ruoyi.common.utils.CacheUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -32,7 +27,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -42,9 +36,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> implements ProductService {
-
-    @Resource(name = "configStringRedisTemplate")
-    protected StringRedisTemplate configStringRedisTemplate;
 
     @Resource
     AgentService agentService;
@@ -66,17 +57,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if (StrUtil.isBlankIfStr(productCode)) {
             throw new BizException("product code不存在:{}", productCode);
         }
-        Product product;
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_API, productCode);
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StrUtil.isBlankIfStr(json)) {
-            product = baseMapper.selectOne(new LambdaQueryWrapper<Product>().eq(Product::getProductCode, productCode));
-            if (product == null) {
-                throw new BizException("产品不存在:{}", productCode);
-            }
-            configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(product), 10, TimeUnit.MINUTES);
-        } else {
-            product = JSONObject.parseObject(json, Product.class);
+        Product product = baseMapper.selectOne(new LambdaQueryWrapper<Product>().eq(Product::getProductCode, productCode));
+        if (product == null) {
+            throw new BizException("产品不存在:{}", productCode);
         }
         return product;
     }
@@ -92,27 +75,20 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             throw new BizException("productCode或agentCode不存在:{}", productCode);
         }
         AgentProductBO agentProductBO;
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_PRODUCT_API, productCode,agentCode);
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StrUtil.isBlankIfStr(json)) {
-            if(agentService.isAdminAgent(agentCode)){
-                agentProductBO = baseMapper.selectAdminAgentProduct(productCode);
-                AgentAccount agentAccount =agentService.getAgentAccountByCode(agentCode);
-                agentProductBO.setAgentCode(agentAccount.getAgentCode());
-                agentProductBO.setAgentName(agentAccount.getAgentName());
-                agentProductBO.setParentAgentList(agentAccount.getParentAgentList());
-            }else {
-                agentProductBO = baseMapper.selectAgentProduct(productCode,agentCode);
-            }
-            if (agentProductBO == null) {
-                throw new BizException("代理商产品不存在:{}", productCode);
-            }
-            if(agentProductBO.getProductStatus()== BaseConstant.ZERO_INT){
-                throw new BizException("产品{}已下架", productCode);
-            }
-            configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(agentProductBO), 10, TimeUnit.MINUTES);
+        if (agentService.isAdminAgent(agentCode)) {
+            agentProductBO = baseMapper.selectAdminAgentProduct(productCode);
+            AgentAccount agentAccount = agentService.getAgentAccountByCode(agentCode);
+            agentProductBO.setAgentCode(agentAccount.getAgentCode());
+            agentProductBO.setAgentName(agentAccount.getAgentName());
+            agentProductBO.setParentAgentList(agentAccount.getParentAgentList());
         } else {
-            agentProductBO = JSONObject.parseObject(json, AgentProductBO.class);
+            agentProductBO = baseMapper.selectAgentProduct(productCode, agentCode);
+        }
+        if (agentProductBO == null) {
+            throw new BizException("代理商产品不存在:{}", productCode);
+        }
+        if (agentProductBO.getProductStatus() == BaseConstant.ZERO_INT) {
+            throw new BizException("产品{}已下架", productCode);
         }
         return agentProductBO;
     }
@@ -130,22 +106,15 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             throw new BizException("product code不存在:{}", productH5BO);
         }
         ProductH5VO productH5VO;
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_H5_API, productH5BO.getProductCode());
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StrUtil.isBlankIfStr(json)) {
-            Product product = getProduct(productH5BO.getProductCode());
-            if (product == null) {
-                throw new BizException("产品不存在:{}", productH5BO.getProductCode());
-            }
-            if (Objects.equals(product.getProductStatus(), ProductEnum.ProductStatusEnum.NO.getStatus())) {
-                throw new BizException("产品已下架:{}", product.getProductName());
-            }
-            productH5VO = new ProductH5VO();
-            BeanUtil.copyProperties(product,productH5VO);
-            configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(productH5VO), 10, TimeUnit.MINUTES);
-        } else {
-            productH5VO = JSONObject.parseObject(json, ProductH5VO.class);
+        Product product = getProduct(productH5BO.getProductCode());
+        if (product == null) {
+            throw new BizException("产品不存在:{}", productH5BO.getProductCode());
         }
+        if (Objects.equals(product.getProductStatus(), ProductEnum.ProductStatusEnum.NO.getStatus())) {
+            throw new BizException("产品已下架:{}", product.getProductName());
+        }
+        productH5VO = new ProductH5VO();
+        BeanUtil.copyProperties(product,productH5VO);
         return productH5VO;
     }
 
@@ -163,32 +132,25 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             throw new BizException("代理商code不存在:{}", productListBO.getAgentCode());
         }
         List<ProductListVO> productListVOList;
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_PRODUCT_lIST_API, productListBO.getAgentCode(),productListBO.getOperatorType());
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StrUtil.isBlankIfStr(json)) {
-            if(agentService.isAdminAgent(productListBO.getAgentCode())){
-                AgentAccount agentAccount = agentService.getAgentAccountByCode(productListBO.getAgentCode());
-                productListVOList = agentProductMapper.selectAdminAgentProductList(productListBO.getOperatorType());
-                for (ProductListVO productListVO:productListVOList){
-                    productListVO.setAgentCode(agentAccount.getAgentCode());
-                    agentAccount.setAgentName(agentAccount.getAgentName());
-                }
-            }else {
-                productListVOList = agentProductMapper.selectAgentProductList(productListBO.getAgentCode(),productListBO.getOperatorType());
-            }
-
-            if (CollectionUtils.isEmpty(productListVOList)) {
-               return new ArrayList<>();
-            }
-            //拼接h5落地页链接
+        if(agentService.isAdminAgent(productListBO.getAgentCode())){
+            AgentAccount agentAccount = agentService.getAgentAccountByCode(productListBO.getAgentCode());
+            productListVOList = agentProductMapper.selectAdminAgentProductList(productListBO.getOperatorType());
             for (ProductListVO productListVO:productListVOList){
-                StringBuffer stringBuffer = new StringBuffer(h5url);
-                stringBuffer.append("?productCode=").append(productListVO.getProductCode()).append("&agentCode=").append(productListVO.getAgentCode());
-                productListVO.setH5Url(stringBuffer.toString());
+                productListVO.setAgentCode(agentAccount.getAgentCode());
+                agentAccount.setAgentName(agentAccount.getAgentName());
             }
-            //configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(productListVOList), 10, TimeUnit.MINUTES);
-        } else {
-            productListVOList = JSONObject.parseArray(json, ProductListVO.class);
+        }else {
+            productListVOList = agentProductMapper.selectAgentProductList(productListBO.getAgentCode(),productListBO.getOperatorType());
+        }
+
+        if (CollectionUtils.isEmpty(productListVOList)) {
+           return new ArrayList<>();
+        }
+        //拼接h5落地页链接
+        for (ProductListVO productListVO:productListVOList){
+            StringBuffer stringBuffer = new StringBuffer(h5url);
+            stringBuffer.append("?productCode=").append(productListVO.getProductCode()).append("&agentCode=").append(productListVO.getAgentCode());
+            productListVO.setH5Url(stringBuffer.toString());
         }
         return productListVOList;
     }

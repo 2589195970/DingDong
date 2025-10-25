@@ -2,6 +2,7 @@ package com.ruoyi.common.order.entity;
 
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModelProperty;
@@ -56,6 +57,13 @@ public class OrderCommissionDetails {
     private String agentName;
 
     /**
+     * 代理商等级
+     */
+    @TableField(exist = false)
+    @ApiModelProperty(value = "代理商等级")
+    private Integer agentLevel;
+
+    /**
      * 产品佣金
      */
     @ApiModelProperty(value = "产品佣金")
@@ -84,6 +92,18 @@ public class OrderCommissionDetails {
      */
     @ApiModelProperty(value = "订单来源下游代理商名称")
     private String agentSourceName;
+
+    /**
+     * VIP 等级
+     */
+    @ApiModelProperty(value = "VIP等级")
+    private Integer vipLevel;
+
+    /**
+     * VIP 加成金额
+     */
+    @ApiModelProperty(value = "VIP加成金额")
+    private Integer vipBonusCommission;
 
     /**
      * 创建时间

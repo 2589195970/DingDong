@@ -76,7 +76,10 @@
         d.revenue_product_commission AS revenueProductCommission,
         d.distribution_product_commission as distributionProductCommission,
         d.agent_source_code as agentSourceCode,
-        d.agent_source_name as agentSourceName
+        d.agent_source_name as agentSourceName,
+        d.vip_level as vipLevel,
+        d.vip_bonus_commission as vipBonusCommission,
+        c.vip_adjust_amount as vipAdjustAmount
         FROM
         t_order_commission_details d LEFT JOIN t_order_commission c ON d.order_commission_id = c.order_commission_id
         WHERE

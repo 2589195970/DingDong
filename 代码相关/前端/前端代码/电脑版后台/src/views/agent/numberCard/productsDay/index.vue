@@ -7,10 +7,9 @@
             </el-form-item>
             <el-form-item prop="businessType">
                 <el-select v-model="queryParams.operatorType" placeholder="请选择运营商" clearable filterable>
-                    <el-option label="中国移动" value="0"></el-option>
-                    <el-option label="中国电信" value="1"></el-option>
-                    <el-option label="中国联通" value="2"></el-option>
-                    <el-option label="中国广电" value="3"></el-option>
+                    <el-option label="移动" value="0"></el-option>
+                    <el-option label="电信" value="1"></el-option>
+                    <el-option label="联通" value="2"></el-option>
                 </el-select>
             </el-form-item>
             <el-form-item prop="businessType">
@@ -19,6 +18,12 @@
                     <el-option label="已下架" value="0"></el-option>
                     <el-option label="上架中" value="1"></el-option>
                 </el-select>
+            </el-form-item>
+            <el-form-item prop="responsiblePeople">
+                <el-input v-model="queryParams.responsiblePeople" placeholder="请输入渠道名称"></el-input>
+            </el-form-item>
+            <el-form-item prop="responsiblePeople">
+                <el-input v-model="queryParams.productGsdq" placeholder="请输入归属地"></el-input>
             </el-form-item>
             <!-- <el-form-item prop="businessType">
                 <el-select v-model="queryParams.productType" placeholder="请选择结算模式" clearable filterable>
@@ -34,7 +39,7 @@
                 <!-- <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button> -->
             </el-form-item>
         </el-form>
-        <el-table ref="tables" v-loading="loading" :data="list" row-key="operatorReportId" border lazy height="650">
+        <el-table ref="tables" v-loading="loading" :data="list" row-key="operatorReportId" border lazy :max-height="tableMaxHeight">
             <el-table-column label="ID" align="center" prop="productId"width="50" />
             <el-table-column label="产品名称" align="center" prop="productName" width="110"/>
             <el-table-column label="产品主图" align="center" prop="productMasterMap">
@@ -45,10 +50,9 @@
 
             <el-table-column label="运营商" align="center" prop="operatorType" :show-overflow-tooltip="true">
                 <template slot-scope="scope">
-                    <p v-if="scope.row.operatorType==0">中国移动</p>
-                    <p v-if="scope.row.operatorType==1">中国电信</p>
-                    <p v-if="scope.row.operatorType==2">中国联通</p>
-                    <p v-if="scope.row.operatorType==3">中国广电</p>
+                    <p v-if="scope.row.operatorType==0">移动</p>
+                    <p v-if="scope.row.operatorType==1">电信</p>
+                    <p v-if="scope.row.operatorType==2">联通</p>
                 </template>
             </el-table-column>
             <el-table-column label="结算模式" align="center" prop="productType" :show-overflow-tooltip="true">
@@ -61,7 +65,7 @@
                 </template>
             </el-table-column>
             <el-table-column label="归属地区" align="center" prop="productGsdq" :show-overflow-tooltip="true" />
-            <el-table-column label="推广要求" align="center" prop="productDemand" :show-overflow-tooltip="true" />
+            <el-table-column label="推广要求" align="center" prop="productDemand"  />
             <el-table-column label="排序" align="center" prop="productSort" :show-overflow-tooltip="true">
                 <template slot-scope="scope">
                     <el-input v-model="scope.row.productSort" @blur="sort(scope.row)"></el-input>
@@ -73,11 +77,15 @@
                     <p v-if="scope.row.productStatus==1" style="color:green;">上架中</p>
                 </template>
             </el-table-column>
+            <!--<el-table-column label="上游分配(元)" align="center" prop="upstreamCommission" :show-overflow-tooltip="true" />-->
+            <!--<el-table-column label="本级收益(元)" align="center" prop="selfCommission" :show-overflow-tooltip="true" />-->
             <el-table-column label="产品佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
-            <el-table-column label="下游分销佣金" align="center" prop="distributionProductCommission"
+            <el-table-column label="VIP固定加成(元)" align="center" prop="vipFixedCommission"
                 :show-overflow-tooltip="true" />
-            <el-table-column label="收入佣金" align="center" prop="revenueProductCommission"
-                :show-overflow-tooltip="true" />
+            <!--<el-table-column label="VIP实际加成(元)" align="center" prop="vipBonusCommission"-->
+            <!--    :show-overflow-tooltip="true" />-->
+            <!--<el-table-column label="下游可分配(元)" align="center" prop="downstreamCommission"-->
+            <!--    :show-overflow-tooltip="true" />-->
 
 
             <el-table-column align="center" label="操作">
@@ -100,9 +108,8 @@
                     </el-button>
                     <br>
                     <el-button @click="share(scope.row)" type="text" size="small">产品海报</el-button>
-                    <br>
-                    <el-button @click="handleCommission(scope.row)" type="text" size="small">下游佣金</el-button>
-
+                    <!--<br>-->
+                    <!--<el-button @click="handleCommission(scope.row)" type="text" size="small">调整佣金</el-button>-->
                     <br>
                     <el-button @click="handlefuzhi(scope.row)" type="text" size="small">复制链接</el-button>
                     <el-button @click="handleOpen(scope.row)" type="text" size="small">打开链接</el-button>
@@ -116,9 +123,15 @@
             <el-form ref="form" v-model="form" label-width="100px">
                 <el-row>
                     <el-col :span="24">
-                        <el-form-item prop="productCommission" label="下游佣金">
-                            <el-input v-model="form.distributionProductCommission"></el-input>
+                        <el-form-item prop="upstreamCommission" label="上游分配(元)">
+                            <el-input v-model.number="form.upstreamCommission" type="number" min="0"></el-input>
                         </el-form-item>
+                        <div class="commission-summary">
+                            <p>当前VIP固定加成：{{ commissionSnapshot ? commissionSnapshot.vipFixedCommission : 0 }} 元</p>
+                            <p>VIP实际加成：{{ commissionSnapshot ? commissionSnapshot.vipBonusCommission : 0 }} 元</p>
+                            <p>本级收益(含VIP)：{{ commissionSnapshot ? commissionSnapshot.selfCommission : 0 }} 元</p>
+                            <p>下游可分配：{{ commissionSnapshot ? commissionSnapshot.downstreamCommission : 0 }} 元</p>
+                        </div>
                     </el-col>
                 </el-row>
             </el-form>
@@ -214,14 +227,23 @@
                 groupCode: [],
                 ruleForm: [],
                 searchType: [],
-                sharedata:{},
-                shareOpen:false,
                 queryParams: {
                     pageNo: 1,
                     pageSize: 10,
                     productType: 0,
                 },
+                sharedata:{},
+                shareOpen:false,
+                commissionSnapshot: null,
+                tableMaxHeight: 500,
             };
+        },
+        mounted() {
+            this.updateTableMaxHeight();
+            window.addEventListener('resize', this.updateTableMaxHeight);
+        },
+        beforeDestroy() {
+            window.removeEventListener('resize', this.updateTableMaxHeight);
         },
         created() {
             this.getList();
@@ -299,7 +321,18 @@
 
             },
             submitForm() {
-                updateProductCommission(this.form).then((res) => {
+                const upstream = this.form.upstreamCommission === '' || this.form.upstreamCommission === null || this.form.upstreamCommission === undefined
+                    ? 0
+                    : Number(this.form.upstreamCommission);
+                if (Number.isNaN(upstream) || upstream < 0) {
+                    this.$message.error('请输入不小于0的上游分配金额');
+                    return;
+                }
+                const payload = {
+                    productCode: this.form.productCode,
+                    productCommission: upstream
+                };
+                updateProductCommission(payload).then((res) => {
                     this.$message({
                         type: 'success',
                         message: '修改成功!'
@@ -310,8 +343,12 @@
 
             },
             handleCommission(data) {
+                this.commissionSnapshot = { ...data };
+                this.form = {
+                    productCode: data.productCode,
+                    upstreamCommission: data.upstreamCommission
+                };
                 this.openCommission = true;
-                this.form = data;
             },
             handleImport() { },
             handleAdd() { },
@@ -380,11 +417,32 @@
                     this.total = res.data.totalRows
                 })
             },
+            updateTableMaxHeight() {
+                this.$nextTick(() => {
+                    const table = this.$refs.tables && this.$refs.tables.$el;
+                    if (!table) {
+                        return;
+                    }
+                    const viewportHeight = window.innerHeight || 0;
+                    const tableTop = table.getBoundingClientRect().top || 0;
+                    const padding = 32;
+                    const computed = viewportHeight - tableTop - padding;
+                  this.tableMaxHeight = (computed > 320 ? computed : 320) - 100;
+                });
+            },
 
         },
     }
 </script>
 
 <style>
-
+.commission-summary {
+    margin-top: 10px;
+    color: #666;
+    font-size: 12px;
+    line-height: 1.6;
+}
+.commission-summary p {
+    margin: 0;
+}
 </style>

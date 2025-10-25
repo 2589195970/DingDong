@@ -148,6 +148,21 @@ public class OrderCommissionController {
         }
     }
 
+    /**
+     * 导入佣金结算模板下载
+     *
+     * @param response 响应
+     */
+    @PostMapping("/importTemplate")
+    @ApiOperation("导入佣金结算模板下载")
+    public void downloadOrderCommissionTemplate(HttpServletResponse response) {
+        try {
+            orderCommissionImportService.downloadOrderCommissionTemplate(response);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "downloadOrderCommissionTemplate", e.getMessage());
+        }
+    }
+
 
 
 }

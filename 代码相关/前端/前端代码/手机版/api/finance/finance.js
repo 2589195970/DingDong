@@ -1,4 +1,5 @@
 import request from "@/utils/request";
+import upload from "@/utils/upload";
 // 分页查询提现申请列表
 export function selectWithdrawalApplicationListPage(data) {
   return request({
@@ -152,5 +153,17 @@ export function updateAgentPhone(data,chah) {
   return request({
     url: "/agentExtendUrl/updateAgentPhone?smsCode="+ data +"&phone="+chah,
     method: "get",
+  })
+}
+
+// 更新海报图
+export function updatePosterImages({ filePath, posterIndex }) {
+  return upload({
+    url: "/agentExtendUrl/updatePosterImages",
+    filePath,
+    name: "file",
+    formData: {
+      posterIndex
+    }
   })
 }

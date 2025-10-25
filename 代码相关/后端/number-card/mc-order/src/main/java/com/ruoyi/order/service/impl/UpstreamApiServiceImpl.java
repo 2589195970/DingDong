@@ -46,17 +46,19 @@ public class UpstreamApiServiceImpl extends ServiceImpl<UpstreamApiMapper, Upstr
             throw new BizException("上游API CODE不存在:{}", upstreamApiCode);
         }
         UpstreamApi upstreamApi;
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.UPSTREAM_PRODUCT_API, upstreamApiCode);
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StrUtil.isBlankIfStr(json)) {
+        // 注释掉缓存查询，直接从数据库查询
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.UPSTREAM_PRODUCT_API, upstreamApiCode);
+        // String json = configStringRedisTemplate.opsForValue().get(cacheKey);
+        // if (StrUtil.isBlankIfStr(json)) {
             upstreamApi = baseMapper.selectOne(new LambdaQueryWrapper<UpstreamApi>().eq(UpstreamApi::getUpstreamApiCode, upstreamApiCode));
             if (upstreamApi == null) {
                 throw new BizException("上游API不存在:{}", upstreamApiCode);
             }
-            configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(upstreamApi), 10, TimeUnit.MINUTES);
-        } else {
-            upstreamApi = JSONObject.parseObject(json, UpstreamApi.class);
-        }
+            // 注释掉缓存写入
+            // configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(upstreamApi), 10, TimeUnit.MINUTES);
+        // } else {
+        //     upstreamApi = JSONObject.parseObject(json, UpstreamApi.class);
+        // }
         return upstreamApi;
     }
 
@@ -72,9 +74,10 @@ public class UpstreamApiServiceImpl extends ServiceImpl<UpstreamApiMapper, Upstr
             throw new BizException("上游APICODE或上游产品CODE不存在:{}", upstreamApiCode,upstreamProductCode);
         }
         UpstreamInfo upstreamInfo = null;
-        String cacheKey = CacheUtils.generalKey(CacheKeyConstants.UPSTREAM_PRODUCT_API_PRODUCT, upstreamApiCode,upstreamProductCode);
-        String json = configStringRedisTemplate.opsForValue().get(cacheKey);
-        if (StrUtil.isBlankIfStr(json)) {
+        // 注释掉缓存查询，直接从数据库查询
+        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.UPSTREAM_PRODUCT_API_PRODUCT, upstreamApiCode,upstreamProductCode);
+        // String json = configStringRedisTemplate.opsForValue().get(cacheKey);
+        // if (StrUtil.isBlankIfStr(json)) {
             UpstreamApi upstreamApi = getUpstreamApi(upstreamApiCode);
             UpstreamProduct upstreamProduct = upstreamProductMapper.selectOne(new LambdaQueryWrapper<UpstreamProduct>().eq(UpstreamProduct::getUpstreamApiCode, upstreamApiCode)
                     .eq(UpstreamProduct::getUpstreamProductCode, upstreamProductCode));
@@ -84,10 +87,11 @@ public class UpstreamApiServiceImpl extends ServiceImpl<UpstreamApiMapper, Upstr
             upstreamInfo = new UpstreamInfo();
             upstreamInfo.setUpstreamApi(upstreamApi);
             upstreamInfo.setUpstreamProduct(upstreamProduct);
-            configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(upstreamInfo), 10, TimeUnit.MINUTES);
-        } else {
-            upstreamInfo = JSONObject.parseObject(json, UpstreamInfo.class);
-        }
+            // 注释掉缓存写入
+            // configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(upstreamInfo), 10, TimeUnit.MINUTES);
+        // } else {
+        //     upstreamInfo = JSONObject.parseObject(json, UpstreamInfo.class);
+        // }
         return upstreamInfo;
     }
 

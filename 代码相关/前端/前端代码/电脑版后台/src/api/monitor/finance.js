@@ -79,24 +79,6 @@ export function selectWithdrawalRecordDetailsListPage(data) {
   })
 }
 // 查询提现记录
-export function selectAgentCommissionConfig(data) {
-  return request({
-    url: "/agentCommission/selectAgentCommissionConfig",
-    method: "post",
-    data: data,
-  })
-}
-// 查询提现记录
-export function agentUpdateCommissionConfig(data) {
-  return request({
-    url: "/agentCommission/agentUpdateCommissionConfig",
-    method: "post",
-    data: data,
-  })
-}
-
-
-
 // 代理商佣金查询
 export function selectOrderCommissionListPage(data) {
   return request({
@@ -113,6 +95,13 @@ export function exportOrderCommissionList(data) {
     method: 'post',
     data: data,
     responseType: 'blob'
+  })
+}
+// 查询 VIP 佣金策略卡片
+export function getVipCommissionCards() {
+  return request({
+    url: '/agentCommission/vipCards',
+    method: 'get'
   })
 }
 // 计算汇率

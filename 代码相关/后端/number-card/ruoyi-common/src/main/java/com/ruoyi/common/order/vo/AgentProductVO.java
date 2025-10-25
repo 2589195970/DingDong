@@ -78,6 +78,18 @@ public class AgentProductVO {
     private Integer productCommission;
 
     /**
+     * 是否参与佣金返现 0 否 1 是
+     */
+    @ApiModelProperty("是否参与佣金返现 0 否 1 是")
+    private Integer sfyjfx;
+
+    /**
+     * 是否需要付费提卡 0 否 1 是
+     */
+    @ApiModelProperty("是否需要付费提卡 0 否 1 是")
+    private Integer sffftk;
+
+    /**
      * 产品佣金
      */
     @ApiModelProperty("收入佣金(产品佣金-分销佣金)")
@@ -199,6 +211,36 @@ public class AgentProductVO {
      */
     @ApiModelProperty("产品H5链接")
     private String h5Url;
+
+    /**
+     * VIP 固定加成（单位：元），来源于当前代理的 VIP 配置
+     */
+    @ApiModelProperty("VIP固定加成(元)")
+    private Integer vipFixedCommission;
+
+    /**
+     * VIP 实际生效的加成金额（受上游可分配金额限制）
+     */
+    @ApiModelProperty("VIP实际加成(元)")
+    private Integer vipBonusCommission;
+
+    /**
+     * 上游分配给当前代理的佣金总额（含 VIP 保留与可继续下发部分）
+     */
+    @ApiModelProperty("上游分配佣金(元)")
+    private Integer upstreamCommission;
+
+    /**
+     * 当前代理可保留的佣金（含 VIP 加成）
+     */
+    @ApiModelProperty("本级收益(元，含VIP)")
+    private Integer selfCommission;
+
+    /**
+     * 可分配给下游的佣金余额
+     */
+    @ApiModelProperty("下游可分配佣金(元)")
+    private Integer downstreamCommission;
 
     /**
      * 开放代理商列表

@@ -26,6 +26,10 @@
             </el-form-item> -->
             <el-form-item>
                 <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
+                <el-button type="warning" icon="el-icon-refresh" size="mini" :loading="initLoading"
+                    @click="handleInitAgentProducts" v-hasPermi="['channel:channelManagement:edit']">
+                    初始化代理商品
+                </el-button>
                 <!-- <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button> -->
             </el-form-item>
         </el-form>
@@ -79,7 +83,7 @@
                     <p v-if="scope.row.productType==4" style="color: red;">组合返佣</p>
                 </template>
             </el-table-column>
-            <el-table-column label="推广要求" align="center" prop="productDemand" />
+            <el-table-column label="推广要求" align="center" prop="productDemand" width="200" />
             <el-table-column label="排序" align="center" prop="productSort" :show-overflow-tooltip="true">
                 <template slot-scope="scope">
                     <el-input v-model="scope.row.productSort" @blur="sort(scope.row)"></el-input>
@@ -98,6 +102,18 @@
                 </template>
             </el-table-column>
             <el-table-column label="佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
+            <!--<el-table-column label="佣金返现" align="center" prop="sfyjfx">-->
+            <!--    <template slot-scope="scope">-->
+            <!--        <span v-if="scope.row.sfyjfx == 1">是</span>-->
+            <!--        <span v-else>否</span>-->
+            <!--    </template>-->
+            <!--</el-table-column>-->
+            <!--<el-table-column label="付费提卡" align="center" prop="sffftk">-->
+            <!--    <template slot-scope="scope">-->
+            <!--        <span v-if="scope.row.sffftk == 1">是</span>-->
+            <!--        <span v-else>否</span>-->
+            <!--    </template>-->
+            <!--</el-table-column>-->
             <el-table-column align="center" label="操作" width="150" class-name="small-padding fixed-width">
                 <template slot-scope="scope">
                     <el-button @click="upClick(scope.row)" type="text" size="small"
@@ -234,6 +250,23 @@
                         <el-input v-model="ruleForm.balanceConfig"></el-input>
                     </el-form-item>
                 </div>
+                <!-- 销售配置 -->
+                <div class="topss">
+                    <div style="border-bottom: 1px solid #F2F2F2; font-weight: 700; font-size: 14px; margin: 10px;">销售配置
+                    </div>
+                    <el-form-item label="是否参与佣金返现" prop="sfyjfx">
+                        <el-radio-group v-model="ruleForm.sfyjfx">
+                            <el-radio :label="0">否</el-radio>
+                            <el-radio :label="1">是</el-radio>
+                        </el-radio-group>
+                    </el-form-item>
+                    <el-form-item label="是否需要付费提卡" prop="sffftk">
+                        <el-radio-group v-model="ruleForm.sffftk">
+                            <el-radio :label="0">否</el-radio>
+                            <el-radio :label="1">是</el-radio>
+                        </el-radio-group>
+                    </el-form-item>
+                </div>
                 <!-- 接口对接 -->
                 <div class="topss">
                     <div style="border-bottom: 1px solid #F2F2F2; font-weight: 700; font-size: 14px; margin: 10px;">接口对接
@@ -310,10 +343,11 @@
                     <div style="border-bottom: 1px solid #F2F2F2; font-weight: 700; font-size: 14px; margin: 10px;">审核配置
                     </div>
                     <el-form-item label="是否需要审核" prop="sfxysh">
-                        <el-radio-group v-model="ruleForm.sfxysh">
+                        <el-radio-group v-model="ruleForm.sfxysh" :disabled="isAuditDisabled">
                             <el-radio :label="0">否</el-radio>
                             <el-radio :label="1">是</el-radio>
                         </el-radio-group>
+                        <span v-if="isAuditDisabled" class="form-tips">需开启“需要上传照片”后方可审核</span>
                     </el-form-item>
                 </div>
                 <el-form-item style="width: 100%; text-align: center;">
@@ -344,7 +378,8 @@
         updateProduct,
         selectChildAgentList,
         selectUpstreamProductListPage,
-        selectUpstreamApiListPage
+        selectUpstreamApiListPage,
+        initAgentProducts
     } from "@/api/monitor/business";
     import { getToken } from "@/utils/auth";
     import PhotoConfig from "@/components/PhotoConfig/index.vue";
@@ -402,6 +437,10 @@
                     photoRequired: 0,
                     photoConfig: null
                 },
+                booleanOptions: [
+                    { label: '否', value: 0 },
+                    { label: '是', value: 1 }
+                ],
                 queryParams: {
                     pageNo: 1,
                     pageSize: 10,
@@ -458,8 +497,27 @@
                         name: '上架中',
                         id: 1
                     },
-                ]
+                ],
+                initLoading: false
             };
+        },
+        computed: {
+            isAuditDisabled() {
+                if (!this.ruleForm || this.ruleForm.photoRequired === undefined) {
+                    return true;
+                }
+                return Number(this.ruleForm.photoRequired) !== 1;
+            }
+        },
+        watch: {
+            'ruleForm.photoRequired'(val) {
+                if (!this.ruleForm || this.ruleForm.sfxysh === undefined) {
+                    return;
+                }
+                if (Number(val) !== 1) {
+                    this.ruleForm.sfxysh = 0;
+                }
+            }
         },
         created() {
             this.getList();
@@ -496,6 +554,9 @@
                 // 同步到ruleForm
                 this.ruleForm.photoRequired = newVal.photoRequired;
                 this.ruleForm.photoConfig = newVal.photoConfig;
+                if (Number(this.ruleForm.photoRequired) !== 1) {
+                    this.ruleForm.sfxysh = 0;
+                }
             },
             handleOpen(data){
                 window.open(data.h5Url, '_blank')
@@ -530,6 +591,18 @@
                 // 确保 sfxysh 字段有默认值
                 if (this.ruleForm.sfxysh === undefined || this.ruleForm.sfxysh === null) {
                     this.ruleForm.sfxysh = 0;
+                }
+                if (this.ruleForm.sfyjfx === undefined || this.ruleForm.sfyjfx === null) {
+                    this.ruleForm.sfyjfx = 0;
+                }
+                if (this.ruleForm.sffftk === undefined || this.ruleForm.sffftk === null) {
+                    this.ruleForm.sffftk = 0;
+                }
+                if (this.ruleForm.sfyjfx === undefined || this.ruleForm.sfyjfx === null) {
+                    this.ruleForm.sfyjfx = 0;
+                }
+                if (this.ruleForm.sffftk === undefined || this.ruleForm.sffftk === null) {
+                    this.ruleForm.sffftk = 0;
                 }
                 console.log(this.ruleForm.isAllAgent);
 
@@ -737,6 +810,49 @@
                     });
                 });
             },
+            handleInitAgentProducts() {
+                this.$confirm('确认根据当前商品配置初始化所有代理商品？', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.initLoading = true;
+                    initAgentProducts({}).then((res) => {
+                        const stats = res && res.data ? res.data : {};
+                        const created = stats.created || 0;
+                        const updated = stats.updated || 0;
+                        const deleted = stats.deleted || 0;
+                        const commissionSynced = stats.commissionSynced || 0;
+                        const posterSynced = stats.posterSynced || 0;
+                        this.$message({
+                            type: 'success',
+                            message: `新增${created} 更新${updated} 删除${deleted} 佣金同步${commissionSynced} 海报同步${posterSynced}`
+                        });
+                        if (stats.warnings && stats.warnings.length) {
+                            const content = stats.warnings.map(item => `<p>${item}</p>`).join('');
+                            this.$alert(content, '执行提醒', {
+                                dangerouslyUseHTMLString: true
+                            });
+                        }
+                        this.getList();
+                    }).catch((err) => {
+                        const message = err && err.response && err.response.data && err.response.data.msg
+                            ? err.response.data.msg
+                            : '初始化失败，请稍候重试';
+                        this.$message({
+                            type: 'error',
+                            message
+                        });
+                    }).finally(() => {
+                        this.initLoading = false;
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消初始化'
+                    });
+                });
+            },
 
             getList() {
                 selectProductListPage(this.queryParams).then((res) => {
@@ -794,6 +910,12 @@
         width: 256px;
         height: auto;
         display: block;
+    }
+
+    .form-tips {
+        margin-left: 12px;
+        color: #909399;
+        font-size: 12px;
     }
 
     .el-input--suffix {

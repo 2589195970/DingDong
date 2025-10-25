@@ -1,6 +1,7 @@
 package com.ruoyi.web.controller.console;
 
 import com.ruoyi.common.order.bo.ProductCopyBO;
+import com.ruoyi.common.order.bo.ProductInitRequest;
 import com.ruoyi.common.order.bo.ProductUpdateStatusBO;
 import com.ruoyi.console.service.ProductService;
 import com.ruoyi.common.core.page.PageResult;
@@ -8,6 +9,7 @@ import com.ruoyi.common.core.page.ResponseEntity;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.ProductAddAndUpdateBO;
 import com.ruoyi.common.order.bo.ProductSelectBO;
+import com.ruoyi.common.order.vo.ProductInitResult;
 import com.ruoyi.common.order.vo.ProductSelectVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -168,6 +170,25 @@ public class ProductController {
             e.printStackTrace();
             log.info("{}方法异常:{}", "updateProductCommission", e.getMessage());
             return ResponseEntity.error("出错了,请稍候重试:"+e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 初始化代理商品
+     *
+     * @return
+     */
+    @PostMapping("/initAgentProducts")
+    @ApiOperation("初始化代理商品")
+    public ResponseEntity<ProductInitResult> initAgentProducts(@RequestBody(required = false) ProductInitRequest request) {
+        try {
+            return ResponseEntity.success(productService.initAgentProducts(request, getLoginUser()));
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "initAgentProducts", e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "initAgentProducts", e.getMessage());
+            return ResponseEntity.error("出错了,请稍候重试:" + e.getMessage(), null);
         }
     }
 

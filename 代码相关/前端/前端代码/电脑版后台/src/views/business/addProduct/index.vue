@@ -12,7 +12,7 @@
             <el-form-item label="运营商" prop="region">
                 <el-select v-model="ruleForm.operatorType" placeholder="请选择运营商">
                     <el-option label="中国移动" value="0"></el-option>
-                    <el-option label="中国移动" value="0"></el-option>
+                    <!--<el-option label="中国移动" value="0"></el-option>-->
                     <el-option label="中国电信" value="1"></el-option>
                     <el-option label="中国联通" value="2"></el-option>
                     <el-option label="中国广电" value="3"></el-option>
@@ -95,6 +95,22 @@
                 <el-input v-model="ruleForm.balanceConfig"></el-input>
             </el-form-item>
         </div>
+        <!-- 销售配置 -->
+        <div class="topss">
+            <div style="border-bottom: 1px solid #F2F2F2; font-weight: 700; font-size: 14px; margin: 10px;">销售配置</div>
+            <el-form-item label="是否参与佣金返现" prop="sfyjfx">
+                <el-radio-group v-model="ruleForm.sfyjfx">
+                    <el-radio :label="0">否</el-radio>
+                    <el-radio :label="1">是</el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <el-form-item label="是否需要付费提卡" prop="sffftk">
+                <el-radio-group v-model="ruleForm.sffftk">
+                    <el-radio :label="0">否</el-radio>
+                    <el-radio :label="1">是</el-radio>
+                </el-radio-group>
+            </el-form-item>
+        </div>
         <!-- 接口对接 -->
         <div class="topss">
             <div style="border-bottom: 1px solid #F2F2F2; font-weight: 700; font-size: 14px; margin: 10px;">接口对接</div>
@@ -168,12 +184,14 @@
         <div class="topss">
             <div style="border-bottom: 1px solid #F2F2F2; font-weight: 700; font-size: 14px; margin: 10px;">审核配置</div>
             <el-form-item label="是否需要审核" prop="sfxysh">
-                <el-radio-group v-model="ruleForm.sfxysh">
+                <el-radio-group v-model="ruleForm.sfxysh" :disabled="isAuditDisabled">
                     <el-radio :label="0">否</el-radio>
                     <el-radio :label="1">是</el-radio>
                 </el-radio-group>
+                <span v-if="isAuditDisabled" class="form-tips">需开启“需要上传照片”后方可审核</span>
             </el-form-item>
         </div>
+
         <div class="topss">
 
         </div>
@@ -220,6 +238,8 @@
                     photoRequired: 0, // 默认不需要上传照片
                     photoConfig: null, // 照片配置
                     sfxysh: 0, // 默认不需要审核
+                    sfyjfx: 1, // 默认参与佣金返现
+                    sffftk: 0, // 默认不需要付费提卡
                     // 接口相关字段
                     upstreamApiId: '',
                     upstreamApiName: '',
@@ -256,6 +276,18 @@
                 },
             };
         },
+        computed: {
+            isAuditDisabled() {
+                return Number(this.ruleForm.photoRequired) !== 1;
+            }
+        },
+        watch: {
+            'ruleForm.photoRequired'(val) {
+                if (Number(val) !== 1) {
+                    this.ruleForm.sfxysh = 0;
+                }
+            }
+        },
         created() {
             selectUpstreamApiListPage({}).then((res) => {
                 console.log(res.data);
@@ -288,6 +320,9 @@
                 // 同步到ruleForm
                 this.ruleForm.photoRequired = newVal.photoRequired;
                 this.ruleForm.photoConfig = newVal.photoConfig;
+                if (Number(this.ruleForm.photoRequired) !== 1) {
+                    this.ruleForm.sfxysh = 0;
+                }
             },
             submitForm(formName) {
 
@@ -358,6 +393,8 @@
                 this.ruleForm.photoRequired = 0;
                 this.ruleForm.photoConfig = null;
                 this.ruleForm.sfxysh = 0;
+                this.ruleForm.sfyjfx = 0;
+                this.ruleForm.sffftk = 0;
             }
         }
     }
@@ -394,6 +431,12 @@
         width: 178px;
         height: 178px;
         display: block;
+    }
+
+    .form-tips {
+        margin-left: 12px;
+        color: #909399;
+        font-size: 12px;
     }
 
     .el-input--suffix {

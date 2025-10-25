@@ -24,6 +24,8 @@
             p.product_gsdq as productGsdq,
             p.product_fafs as productFafs,
             p.product_hyqx as productHyqx,
+            p.sfyjfx as sfyjfx,
+            p.sffftk as sffftk,
             p.product_qrcode_map as productQrcodeMap
         FROM
             t_product p
@@ -57,6 +59,8 @@
         p.product_gsdq as productGsdq,
         p.product_fafs as productFafs,
         p.product_hyqx as productHyqx,
+        p.sfyjfx as sfyjfx,
+        p.sffftk as sffftk,
         a.product_qrcode_map as productQrcodeMap,
         a.agent_product_id as agentProductId,
         a.product_status as productStatus,

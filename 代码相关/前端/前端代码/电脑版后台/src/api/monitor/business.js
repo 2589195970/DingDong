@@ -50,6 +50,14 @@ export function updateProductSort(data) {
     data: data,
   });
 }
+// 初始化代理商品
+export function initAgentProducts(data) {
+  return request({
+    url: "/product/initAgentProducts",
+    method: "post",
+    data: data,
+  });
+}
 // 复制产品
 export function copyProduct(data) {
   return request({

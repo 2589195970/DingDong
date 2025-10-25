@@ -227,6 +227,18 @@ public class ProductSelectVO {
     @ApiModelProperty("产品佣金")
     private Integer productCommission;
 
+    /**
+     * 是否参与佣金返现 0 否 1 是
+     */
+    @ApiModelProperty("是否参与佣金返现 0 否 1 是")
+    private Integer sfyjfx;
+
+    /**
+     * 是否需要付费提卡 0 否 1 是
+     */
+    @ApiModelProperty("是否需要付费提卡 0 否 1 是")
+    private Integer sffftk;
+
 
     /**
      * 产品展示排序

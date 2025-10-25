@@ -100,11 +100,12 @@ public class DouDianManagerServiceImpl implements DouDianManagerService {
         String date = DBUtils.getTableNameByDate(new DateTime(), "yyyy-MM-dd HH:mm:ss");
         //首先从Redis中获取token,找到就返回
         String accessToken = "";
-        String key = CacheUtils.generalKey(DouDianConstant.DOUDIAN_TOKEN_KEY, shopId);
-        accessToken = configStringRedisTemplate.opsForValue().get(key);
-        if (accessToken != null) {
-            return accessToken;
-        }
+        // 注释掉缓存查询，每次都从上游API获取
+        // String key = CacheUtils.generalKey(DouDianConstant.DOUDIAN_TOKEN_KEY, shopId);
+        // accessToken = configStringRedisTemplate.opsForValue().get(key);
+        // if (accessToken != null) {
+        //     return accessToken;
+        // }
         //构造请求token参数
         DouDianCreateTokenRequest createTokenRequest = DouDianCreateTokenRequest.builder() .code("").grantType("authorization_self").shopId(shopId).build();
         //对参数进行序列化
@@ -132,12 +133,13 @@ public class DouDianManagerServiceImpl implements DouDianManagerService {
             if (data.containsKey("access_token") && data.get("access_token") != null) {
                 accessToken = DouDianMapUtil.getString(data, "access_token");
                 if (StringUtils.hasLength(accessToken)) {
+                    // 注释掉缓存写入
                     //获取过期时间
-                    Integer expiresIn = data.get("expires_in") != null ? Integer.valueOf(String.valueOf(data.get("expires_in"))) : null;
-                    if (expiresIn != null) {
-                        //获取返回的token，并且存入缓存
-                        configStringRedisTemplate.opsForValue().set(key, accessToken, expiresIn, TimeUnit.SECONDS);
-                    }
+                    // Integer expiresIn = data.get("expires_in") != null ? Integer.valueOf(String.valueOf(data.get("expires_in"))) : null;
+                    // if (expiresIn != null) {
+                    //     //获取返回的token，并且存入缓存
+                    //     configStringRedisTemplate.opsForValue().set(key, accessToken, expiresIn, TimeUnit.SECONDS);
+                    // }
                     return accessToken;
                 }
             }
