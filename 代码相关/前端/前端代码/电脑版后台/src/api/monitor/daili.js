@@ -67,3 +67,48 @@ export function updateProductCommission(data) {
     data: data,
   });
 }
+
+// 修改下级提卡费
+export function updateProductCardFee(data) {
+  return request({
+    url: "/agentProduct/updateCardFee",
+    method: "post",
+    data: data,
+  });
+}
+
+// 查询直属下级提卡费信息
+export function listCardFeeChildren(data) {
+  return request({
+    url: "/agentProduct/listCardFeeChildren",
+    method: "post",
+    data: data,
+  });
+}
+
+// 查询提卡费特例列表
+export function listCardFeeOverrides(data) {
+  return request({
+    url: "/agentProduct/listCardFeeOverrides",
+    method: "post",
+    data: data,
+  });
+}
+
+// 新增或更新提卡费特例
+export function upsertCardFeeOverride(data) {
+  return request({
+    url: "/agentProduct/upsertCardFeeOverride",
+    method: "post",
+    data: data,
+  });
+}
+
+// 取消提卡费特例
+export function cancelCardFeeOverride(data) {
+  return request({
+    url: "/agentProduct/cancelCardFeeOverride",
+    method: "post",
+    data: data,
+  });
+}

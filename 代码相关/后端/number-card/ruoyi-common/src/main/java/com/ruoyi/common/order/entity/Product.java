@@ -274,6 +274,18 @@ public class Product {
     private Integer sffftk;
 
     /**
+     * 基础提卡费(元)
+     */
+    @ApiModelProperty("基础提卡费(元)")
+    private Integer baseCardFee;
+
+    /**
+     * 初始话费余额(元)
+     */
+    @ApiModelProperty("初始话费余额(元)")
+    private Integer productInitialBalance;
+
+    /**
      * 产品展示排序
      */
     @ApiModelProperty("产品展示排序")

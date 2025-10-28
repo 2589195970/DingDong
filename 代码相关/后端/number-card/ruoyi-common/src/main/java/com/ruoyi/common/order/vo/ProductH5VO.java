@@ -78,6 +78,18 @@ public class ProductH5VO {
     private Integer sffftk;
 
     /**
+     * 基础提卡费(元)
+     */
+    @ApiModelProperty("基础提卡费(元)")
+    private Integer baseCardFee;
+
+    /**
+     * 初始话费余额(元)
+     */
+    @ApiModelProperty("初始话费余额(元)")
+    private Integer productInitialBalance;
+
+    /**
      * 照片上传配置 JSON格式
      */
     @ApiModelProperty("照片上传配置 JSON格式")

@@ -146,6 +146,12 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if(product.getSffftk() == null){
             product.setSffftk(BaseConstant.ZERO_INT);
         }
+        if (product.getBaseCardFee() == null || product.getBaseCardFee() < 0) {
+            product.setBaseCardFee(BaseConstant.ZERO_INT);
+        }
+        if (product.getProductInitialBalance() == null || product.getProductInitialBalance() < 0) {
+            product.setProductInitialBalance(BaseConstant.ZERO_INT);
+        }
         product.setIsDispatchUpstreamApi(BaseConstant.ZERO_INT);
         product.setIsCopy(BaseConstant.ZERO_INT);
         product.setCreateTime(System.currentTimeMillis());
@@ -172,6 +178,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         baseMapper.insert(product);
         //生成所有子代理产品记录
         AgentAccount parentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(),true);
+        ensureSelfAgentProduct(product, parentAgentAccount);
         agentProductService.addProductPoster(parentAgentAccount,product);
         //创建所有子代理的代理商产品
         agentProductService.addSubAgentProducts(agentAccountList,parentAgentAccount,product,product.getProductCommission());
@@ -220,6 +227,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         //添加产品
         baseMapper.insert(productCopy);
         //创建所有子代理的代理商产品
+        ensureSelfAgentProduct(productCopy, parentAgentAccount);
         agentProductService.addSubAgentProducts(agentAccountList,parentAgentAccount,productCopy,productCopy.getProductCommission());
         for (AgentAccount agentAccount:agentAccountList){
             agentProductService.addSubAgentProductPoster(agentAccount,product);
@@ -250,6 +258,12 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
         if(updateProduct.getSffftk() == null){
             updateProduct.setSffftk(BaseConstant.ZERO_INT);
+        }
+        if (updateProduct.getBaseCardFee() == null || updateProduct.getBaseCardFee() < 0) {
+            updateProduct.setBaseCardFee(BaseConstant.ZERO_INT);
+        }
+        if (updateProduct.getProductInitialBalance() == null || updateProduct.getProductInitialBalance() < 0) {
+            updateProduct.setProductInitialBalance(BaseConstant.ZERO_INT);
         }
         UpstreamApi upstreamApi = upstreamApiService.getById(productAddAndUpdateBO.getUpstreamApiId());
         if(upstreamApi == null){
@@ -894,6 +908,33 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         // }
 
         return result;
+    }
+
+    private void ensureSelfAgentProduct(Product product, AgentAccount agentAccount) throws BizException {
+        if (product == null || agentAccount == null || StringUtils.isEmpty(product.getProductCode())) {
+            return;
+        }
+
+        AgentProduct existing = agentProductService.getOne(
+                new LambdaQueryWrapper<AgentProduct>()
+                        .eq(AgentProduct::getParentProductCode, product.getProductCode())
+                        .eq(AgentProduct::getAgentCode, agentAccount.getAgentCode()),
+                false);
+        if (existing != null) {
+            return;
+        }
+
+        AgentProduct selfAgentProduct = new AgentProduct();
+        selfAgentProduct.setParentProductCode(product.getProductCode());
+        selfAgentProduct.setParentProductName(product.getProductName());
+        selfAgentProduct.setParentAgentCode(agentAccount.getParentAgentCode());
+        selfAgentProduct.setAgentCode(agentAccount.getAgentCode());
+        selfAgentProduct.setAgentName(agentAccount.getAgentName());
+        selfAgentProduct.setIsAllAgent(product.getIsAllAgent());
+        selfAgentProduct.setProductStatus(product.getProductStatus());
+        selfAgentProduct.setProductCommission(product.getProductCommission());
+
+        agentProductService.addAgentProduct(selfAgentProduct);
     }
 
     private String buildAgentProductKey(String agentCode, String parentAgentCode) {

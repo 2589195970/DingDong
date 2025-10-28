@@ -94,6 +94,9 @@
             <el-form-item label="余额配置" prop="name">
                 <el-input v-model="ruleForm.balanceConfig"></el-input>
             </el-form-item>
+            <el-form-item label="初始话费余额(元)">
+                <el-input-number v-model="ruleForm.productInitialBalance" :min="0" :precision="0" />
+            </el-form-item>
         </div>
         <!-- 销售配置 -->
         <div class="topss">
@@ -109,6 +112,9 @@
                     <el-radio :label="0">否</el-radio>
                     <el-radio :label="1">是</el-radio>
                 </el-radio-group>
+            </el-form-item>
+            <el-form-item label="基础提卡费(元)" v-if="Number(ruleForm.sffftk) === 1">
+                <el-input-number v-model="ruleForm.baseCardFee" :min="0" :precision="0" />
             </el-form-item>
         </div>
         <!-- 接口对接 -->
@@ -267,7 +273,9 @@
                     productRemark: '',
                     productTemplateJson: '',
                     productAgeMin: '',
-                    productAgeMax: ''
+                    productAgeMax: '',
+                    baseCardFee: 0,
+                    productInitialBalance: 0
                 },
                 // 照片配置数据
                 photoConfigData: {
@@ -395,6 +403,8 @@
                 this.ruleForm.sfxysh = 0;
                 this.ruleForm.sfyjfx = 0;
                 this.ruleForm.sffftk = 0;
+                this.ruleForm.baseCardFee = 0;
+                this.ruleForm.productInitialBalance = 0;
             }
         }
     }

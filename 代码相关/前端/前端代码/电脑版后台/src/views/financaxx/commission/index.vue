@@ -54,33 +54,44 @@
                     <p>开卡人手机号:{{scope.row.cardPhone}}</p>
                 </template>
             </el-table-column>
-            <el-table-column label="佣金总额" align="left" prop="productMasterMap">
+            <el-table-column label="佣金总额" align="left" prop="productMasterMap" width="150">
                 <template slot-scope="scope">
-                    <p>产品佣金:{{scope.row.productCommission}}</p>
-                    <p>收入佣金:{{scope.row.revenueProductCommission}}</p>
-                    <p>分销佣金:{{scope.row.distributionProductCommission}}</p>
+                    <p>固定佣金:{{ formatAmount(getBaseCommission(scope.row)) }}</p>
+                    <p>VIP等级:{{ formatVipLevel(scope.row.vipLevel) }}</p>
+                    <p>VIP加成:{{ formatAmount(getVipBonus(scope.row)) }}</p>
+                    <p>结算佣金:{{ formatAmount(getSettlementTotal(scope.row)) }}</p>
                 </template>
             </el-table-column>
             <el-table-column label="结算模式" align="center" prop="orderCommissionStatus" width="110"
                 :show-overflow-tooltip="true">
                 <template slot-scope="scope">
-                    <p v-if="scope.row.orderCommissionStatus==0">未到结算状态</p>
-                    <p v-if="scope.row.orderCommissionStatus==1">待结算</p>
-                    <p v-if="scope.row.orderCommissionStatus==2">部分结算</p>
-                    <p v-if="scope.row.orderCommissionStatus==3">已结算</p>
-                    <p v-if="scope.row.orderCommissionStatus==4">无法结算</p>
-                    <!-- <p v-if="scope.row.withdrawalType==0" >号卡佣金</p>
-                    <p v-if="scope.row.withdrawalType==1" >代理商提现</p>
-                    <p v-if="scope.row.withdrawalType==2" >管理员操作</p> -->
+                    <p v-if="scope.row.orderCommissionStatus==0" class="settlement-text">未到结算状态</p>
+                    <p v-if="scope.row.orderCommissionStatus==1"
+                        class="settlement-text settlement-text--pending">待结算</p>
+                    <p v-if="scope.row.orderCommissionStatus==2"
+                        class="settlement-text settlement-text--partial">部分结算</p>
+                    <p v-if="scope.row.orderCommissionStatus==3"
+                        class="settlement-text settlement-text--success">已结算</p>
+                    <p v-if="scope.row.orderCommissionStatus==4"
+                        class="settlement-text settlement-text--danger">无法结算</p>
                 </template>
             </el-table-column>
-            <el-table-column label="状态" align="center" prop="operatorType" :show-overflow-tooltip="true">
+            <el-table-column label="无法结算原因" align="left" prop="orderCommissionMessage" width="150"
+                :show-overflow-tooltip="true">
+                <template slot-scope="scope">
+                    <span v-if="scope.row.orderCommissionStatus === 4" class="settlement-reason">
+                        {{ scope.row.orderCommissionMessage || '--' }}
+                    </span>
+                    <span v-else class="settlement-reason settlement-reason--placeholder">--</span>
+                </template>
+            </el-table-column>
+            <el-table-column label="状态" align="center" prop="operatorType" :show-overflow-tooltip="true" width="80" >
                 <template slot-scope="scope">
                     <p v-if="scope.row.isRecharged==0">未充值</p>
                     <p v-if="scope.row.isRecharged==1">已充值</p>
                 </template>
             </el-table-column>
-            <el-table-column label="生成时间" align="center" prop="orderCreateTime" :show-overflow-tooltip="true">
+            <el-table-column label="生成时间" align="center" prop="orderCreateTime" :show-overflow-tooltip="true" >
                 <template slot-scope="scope">
                     <p>{{formatTimestamp(scope.row.orderCreateTime)}}</p>
                 </template>
@@ -145,6 +156,33 @@
             this.getList();
         },
         methods: {
+            formatAmount(amount) {
+                if (amount === undefined || amount === null) {
+                    return '--';
+                }
+                const numeric = Number(amount);
+                if (Number.isNaN(numeric)) {
+                    return amount;
+                }
+                return numeric;
+            },
+            formatVipLevel(level) {
+                if (level === undefined || level === null) {
+                    return '--';
+                }
+                return `VIP${level}`;
+            },
+            getBaseCommission(row) {
+                const base = Number(row && row.revenueProductCommission);
+                return Number.isNaN(base) ? 0 : base;
+            },
+            getVipBonus(row) {
+                const bonus = Number(row && row.vipBonusCommission);
+                return Number.isNaN(bonus) ? 0 : bonus;
+            },
+            getSettlementTotal(row) {
+                return this.getBaseCommission(row) + this.getVipBonus(row);
+            },
             // 时间戳转换
             formatTimestamp(timestamp) {
                 const date = new Date(timestamp);
@@ -164,12 +202,12 @@
             },
             tableRowClassName({ row, rowIndex }) {
                 if (row.contactExpireTime) {
-                    var begindate = new Date(Date.parse(this.changeTime(row.contactExpireTime))); //将开始时间由字符串格式转换为日期格式       
-                    begindate = new Date(Date.parse(begindate)); //将开始时间由字符串格式转换为日期格式       
-                    var myDate = new Date(); //此处将服务器当前日期作为结束日期，也可为其他任意时间 
-                    var startDate = begindate.getTime(); //将开始日期转换成毫秒 
-                    var endDate = myDate.getTime(); //将结束日期转换成毫秒  
-                    var day = parseInt((startDate - endDate) / 1000 / 3600 / 24); //结束日期减去开始日期后转换成天数    
+                    var begindate = new Date(Date.parse(this.changeTime(row.contactExpireTime))); //将开始时间由字符串格式转换为日期格式
+                    begindate = new Date(Date.parse(begindate)); //将开始时间由字符串格式转换为日期格式
+                    var myDate = new Date(); //此处将服务器当前日期作为结束日期，也可为其他任意时间
+                    var startDate = begindate.getTime(); //将开始日期转换成毫秒
+                    var endDate = myDate.getTime(); //将结束日期转换成毫秒
+                    var day = parseInt((startDate - endDate) / 1000 / 3600 / 24); //结束日期减去开始日期后转换成天数
                     console.log('day', day); //day 457
                     if (day < 0) {
                         return 'warning-row';
@@ -194,18 +232,18 @@
             handleExport() {
                 // 构建导出参数，与查询条件保持一致
                 const exportParams = { ...this.queryParams };
-                
+
                 // 处理日期范围
                 if (this.dateRange && this.dateRange.length === 2) {
                     exportParams.startTime = this.dateRange[0];
                     exportParams.endTime = this.dateRange[1];
                 }
-                
+
                 // 调用导出接口
                 exportOrderCommissionList(exportParams).then(response => {
                     // 创建下载链接
-                    const blob = new Blob([response], { 
-                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                    const blob = new Blob([response], {
+                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                     });
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
@@ -215,7 +253,7 @@
                     link.click();
                     document.body.removeChild(link);
                     window.URL.revokeObjectURL(url);
-                    
+
                     this.$message.success('导出成功');
                 }).catch(error => {
                     console.error('导出失败:', error);
@@ -262,5 +300,36 @@
 
     .el-table .success-row2 {
         color: #409EFF;
+    }
+
+    .settlement-text {
+        color: #4B5563;
+    }
+
+    .settlement-text--pending {
+        color: #faad14;
+    }
+
+    .settlement-text--partial {
+        color: #1890ff;
+    }
+
+    .settlement-text--success {
+        color: #52c41a;
+    }
+
+    .settlement-text--danger {
+        color: #f5222d;
+    }
+
+    .settlement-reason {
+        display: inline-block;
+        max-width: 50%;
+        font-size: 12px;
+        color: #6B7280;
+    }
+
+    .settlement-reason--placeholder {
+        color: #D1D5DB;
     }
 </style>

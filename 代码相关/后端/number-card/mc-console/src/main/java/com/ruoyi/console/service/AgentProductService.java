@@ -1,6 +1,4 @@
 package com.ruoyi.console.service;
-
-
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.PageResult;
@@ -9,7 +7,8 @@ import com.ruoyi.common.order.bo.*;
 import com.ruoyi.common.order.entity.AgentAccount;
 import com.ruoyi.common.order.entity.AgentProduct;
 import com.ruoyi.common.order.entity.Product;
-import com.ruoyi.common.order.vo.AgentOrderSelectVO;
+import com.ruoyi.common.order.vo.AgentProductCardFeeChildVO;
+import com.ruoyi.common.order.vo.AgentProductCardFeeOverrideVO;
 import com.ruoyi.common.order.vo.AgentProductVO;
 
 import java.util.List;
@@ -70,6 +69,31 @@ public interface AgentProductService extends IService<AgentProduct> {
      * @throws BizException
      */
     void updateAgentProduct(AgentProductUpdateBO agentProductUpdateBO, LoginUser loginUser) throws BizException;
+
+    /**
+     * 调整下级提卡费
+     */
+    AgentProduct updateAgentProductCardFee(AgentProductUpdateCardFeeBO request, LoginUser loginUser) throws BizException;
+
+    /**
+     * 获取提卡费特例列表
+     */
+    List<AgentProductCardFeeOverrideVO> listAgentProductCardFeeOverrides(AgentProductCardFeeOverrideQueryBO request, LoginUser loginUser) throws BizException;
+
+    /**
+     * 查询直属下级提卡费数据
+     */
+    List<AgentProductCardFeeChildVO> listAgentProductCardFeeChildren(AgentProductCardFeeChildrenQueryBO request, LoginUser loginUser) throws BizException;
+
+    /**
+     * 新增或更新提卡费特例
+     */
+    void upsertAgentProductCardFeeOverride(AgentProductCardFeeOverrideCreateBO request, LoginUser loginUser) throws BizException;
+
+    /**
+     * 撤销提卡费特例
+     */
+    void cancelAgentProductCardFeeOverride(AgentProductCardFeeOverrideCancelBO request, LoginUser loginUser) throws BizException;
 
 
     /**

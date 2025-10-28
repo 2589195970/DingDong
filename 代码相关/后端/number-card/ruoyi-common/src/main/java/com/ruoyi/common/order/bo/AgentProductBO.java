@@ -40,6 +40,18 @@ public class AgentProductBO {
     @ApiModelProperty("产品类型")
     private Integer productType;
 
+    /**
+     * 基础提卡费(元)
+     */
+    @ApiModelProperty("基础提卡费(元)")
+    private Integer baseCardFee;
+
+    /**
+     * 初始话费余额(元)
+     */
+    @ApiModelProperty("初始话费余额(元)")
+    private Integer productInitialBalance;
+
 
     /**
      * 产品模板其他参数 json格式
@@ -83,6 +95,24 @@ public class AgentProductBO {
      */
     @ApiModelProperty("产品分销佣金")
     private Integer distributionProductCommission;
+
+    /**
+     * 上级给当前代理的提卡费成本(元)
+     */
+    @ApiModelProperty("上级给当前代理的提卡费成本(元)")
+    private Integer incomingCardFee;
+
+    /**
+     * 当前代理留存的提卡费差价(元)
+     */
+    @ApiModelProperty("当前代理留存的提卡费差价(元)")
+    private Integer cardFeeProfit;
+
+    /**
+     * 当前代理对下级的提卡费售价(元)
+     */
+    @ApiModelProperty("当前代理对下级的提卡费售价(元)")
+    private Integer downstreamCardFee;
 
     /**
      * 产品展示排序

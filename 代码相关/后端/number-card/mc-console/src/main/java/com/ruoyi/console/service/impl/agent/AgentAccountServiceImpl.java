@@ -163,7 +163,8 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         agentAccount.setParentAgentCode(parentAgent.getAgentCode());
         agentAccount.setAgentCode(RandomUtil.randomString(BaseConstant.EIGHT_INT));
         agentAccount.setAgentName(sysUser.getUserName());
-        agentAccount.setLevel(parentAgent.getLevel() + 1);
+        // 默认新注册代理商处于 1 级，保持与 VIP 初始等级一致
+        agentAccount.setLevel(BaseConstant.ONE_INT);
         agentAccount.setIsRealName(BaseConstant.ZERO_INT);
         agentAccount.setPhone(agentAccountAddBO.getPhone());
         agentAccount.setIsEnabled(BaseConstant.ZERO_INT);

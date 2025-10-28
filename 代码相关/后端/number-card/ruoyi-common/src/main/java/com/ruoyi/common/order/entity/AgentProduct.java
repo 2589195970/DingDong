@@ -77,6 +77,30 @@ public class AgentProduct {
     private Integer distributionProductCommission;
 
     /**
+     * 上级给当前代理的提卡费成本(元)
+     */
+    @ApiModelProperty("上级给当前代理的提卡费成本(元)")
+    private Integer incomingCardFee;
+
+    /**
+     * 当前代理留存的提卡费差价(元)
+     */
+    @ApiModelProperty("当前代理留存的提卡费差价(元)")
+    private Integer cardFeeProfit;
+
+    /**
+     * 当前代理对下级的提卡费售价(元)
+     */
+    @ApiModelProperty("当前代理对下级的提卡费售价(元)")
+    private Integer downstreamCardFee;
+
+    /**
+     * 是否存在提卡费特例 0-否 1-是
+     */
+    @ApiModelProperty("是否存在提卡费特例 0-否 1-是")
+    private Integer hasOverride;
+
+    /**
      * 产品展示排序
      */
     private Integer productSort;

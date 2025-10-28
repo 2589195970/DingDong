@@ -109,6 +109,7 @@ export default {
         productFafs: '',
         productAgeMin: null,
         productAgeMax: null,
+        productInitialBalance: 0,
         h5Url: '',
         agentCodeList: []
       }

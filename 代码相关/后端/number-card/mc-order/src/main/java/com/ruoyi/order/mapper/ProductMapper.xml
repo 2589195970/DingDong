@@ -18,6 +18,11 @@
             p.product_commission as productCommission,
             p.sfyjfx as sfyjfx,
             p.sffftk as sffftk,
+            p.base_card_fee as baseCardFee,
+            p.product_initial_balance as productInitialBalance,
+            p.base_card_fee as incomingCardFee,
+            0 as cardFeeProfit,
+            p.base_card_fee as downstreamCardFee,
             p.product_commission as distributionProductCommission,
             0 as revenueProductCommission,
             p.product_sort as productSort
@@ -37,6 +42,7 @@
             p.operator_type AS operatorType,
             p.product_type AS productType,
             p.product_template_json AS productTemplateJson,
+            p.base_card_fee AS baseCardFee,
             p.upstream_api_code AS upstreamApiCode,
             p.upstream_api_name AS upstreamApiName,
             p.upstream_product_code AS upstreamProductCode,
@@ -47,8 +53,12 @@
             a.product_commission AS productCommission,
             p.sfyjfx as sfyjfx,
             p.sffftk as sffftk,
+            p.product_initial_balance as productInitialBalance,
             a.distribution_product_commission AS distributionProductCommission,
             a.revenue_product_commission AS revenueProductCommission,
+            a.incoming_card_fee AS incomingCardFee,
+            a.card_fee_profit AS cardFeeProfit,
+            a.downstream_card_fee AS downstreamCardFee,
             a.product_sort AS productSort,
             c.parent_agent_list AS parentAgentList
 

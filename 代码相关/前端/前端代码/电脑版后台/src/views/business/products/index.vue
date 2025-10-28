@@ -102,6 +102,7 @@
                 </template>
             </el-table-column>
             <el-table-column label="佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
+            <el-table-column label="初始话费(元)" align="center" prop="productInitialBalance" :show-overflow-tooltip="true" />
             <!--<el-table-column label="佣金返现" align="center" prop="sfyjfx">-->
             <!--    <template slot-scope="scope">-->
             <!--        <span v-if="scope.row.sfyjfx == 1">是</span>-->
@@ -249,6 +250,9 @@
                     <el-form-item label="余额配置" prop="name">
                         <el-input v-model="ruleForm.balanceConfig"></el-input>
                     </el-form-item>
+                    <el-form-item label="初始话费余额(元)">
+                        <el-input-number v-model="ruleForm.productInitialBalance" :min="0" :precision="0" />
+                    </el-form-item>
                 </div>
                 <!-- 销售配置 -->
                 <div class="topss">
@@ -265,6 +269,9 @@
                             <el-radio :label="0">否</el-radio>
                             <el-radio :label="1">是</el-radio>
                         </el-radio-group>
+                    </el-form-item>
+                    <el-form-item label="基础提卡费(元)" v-if="Number(ruleForm.sffftk) === 1">
+                        <el-input-number v-model="ruleForm.baseCardFee" :min="0" :precision="0" />
                     </el-form-item>
                 </div>
                 <!-- 接口对接 -->
@@ -603,6 +610,12 @@
                 }
                 if (this.ruleForm.sffftk === undefined || this.ruleForm.sffftk === null) {
                     this.ruleForm.sffftk = 0;
+                }
+                if (this.ruleForm.productInitialBalance === undefined || this.ruleForm.productInitialBalance === null) {
+                    this.ruleForm.productInitialBalance = 0;
+                }
+                if (this.ruleForm.baseCardFee === undefined || this.ruleForm.baseCardFee === null) {
+                    this.ruleForm.baseCardFee = 0;
                 }
                 console.log(this.ruleForm.isAllAgent);
 

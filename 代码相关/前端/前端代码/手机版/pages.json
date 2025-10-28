@@ -150,6 +150,13 @@
 			}
 		},
 		{
+			"path": "pages/ProductPaid/index",
+			"style": {
+				"navigationBarTitleText": "付费品",
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/Order/orderxiangqing",
 			"style": {
 				"navigationBarTitleText": "订单详情",
@@ -261,6 +268,12 @@
 				"iconPath": "static/images/tabbar/work.png",
 				"selectedIconPath": "static/images/tabbar/work-1.png",
 				"text": "秒产品"
+			},
+			{
+				"pagePath": "pages/ProductPaid/index",
+				"iconPath": "static/images/tabbar/work.png",
+				"selectedIconPath": "static/images/tabbar/work-1.png",
+				"text": "付费品"
 			},
 			{
 				"pagePath": "pages/mine/index",

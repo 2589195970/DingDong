@@ -109,6 +109,26 @@
             </div>
         </el-dialog>
 
+        <card-fee-dialog
+            :visible.sync="openCardFee"
+            :loading="cardFeeSubmitting"
+            :context-loading="cardFeeContextLoading"
+            :removing-override="cardFeeRemovingOverride"
+            :card-fee="cardFeeForm"
+            :mode="cardFeeForm.mode"
+            :available-agents="availableTargetAgents"
+            :selected-agent-id="cardFeeForm.targetAgentProductId"
+            :overrides="cardFeeOverrides"
+            :search-keyword="cardFeeSearchKeyword"
+            @mode-change="handleCardFeeModeChange"
+            @target-change="handleTargetAgentChange"
+            @change="handleCardFeeChange"
+            @search="handleCardFeeSearch"
+            @cancel-override="cancelCardFeeOverrideItem"
+            @cancel="handleCardFeeClose"
+            @confirm="submitCardFee"
+        />
+
         <el-dialog :visible.sync="openbianji" width="350px" append-to-body :close-on-click-modal="false">
             <el-form ref="form" v-model="form1" label-width="100px">
                 <el-row>
@@ -146,9 +166,15 @@
         selectUpstreamProductListPage,
         selectUpstreamApiListPage
     } from "@/api/monitor/business";
-    import { agentSelectProductListPage,updateAgentProduct, updateProductCommission, } from "@/api/monitor/daili"
+    import { agentSelectProductListPage, updateAgentProduct, updateProductCommission, } from "@/api/monitor/daili";
+    import cardFeeMixin from '../mixins/cardFee';
+    import CardFeeDialog from '../components/CardFeeDialog.vue';
     export default {
         name: "Products",
+        components: {
+            CardFeeDialog
+        },
+        mixins: [cardFeeMixin],
         dicts: ['sys_oper_type', 'sys_common_status'],
         data() {
             return {
@@ -351,6 +377,7 @@
     }
 </script>
 
-<style>
+<style lang="scss">
+@import "../styles/cardFee.scss";
 
 </style>

@@ -1,6 +1,4 @@
 package com.ruoyi.console.service.impl.agent;
-
-
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -11,11 +9,19 @@ import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.core.page.PageResultFactory;
 import com.ruoyi.common.exception.BizException;
+import com.ruoyi.common.order.bo.AgentProductCardFeeChildrenQueryBO;
+import com.ruoyi.common.order.bo.AgentProductCardFeeOverrideCancelBO;
+import com.ruoyi.common.order.bo.AgentProductCardFeeOverrideCreateBO;
+import com.ruoyi.common.order.bo.AgentProductCardFeeOverrideQueryBO;
 import com.ruoyi.common.order.bo.AgentProductSelectBO;
 import com.ruoyi.common.order.bo.AgentProductUpdateBO;
+import com.ruoyi.common.order.bo.AgentProductUpdateCardFeeBO;
 import com.ruoyi.common.order.entity.*;
+import com.ruoyi.common.order.vo.AgentProductCardFeeChildVO;
+import com.ruoyi.common.order.vo.AgentProductCardFeeOverrideVO;
 import com.ruoyi.common.order.vo.AgentProductVO;
 import com.ruoyi.common.utils.CacheUtils;
+import com.ruoyi.console.mapper.AgentProductCardFeeOverrideMapper;
 import com.ruoyi.console.mapper.AgentProductMapper;
 import com.ruoyi.console.mapper.ProductMapper;
 import com.ruoyi.console.service.*;
@@ -30,9 +36,10 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -61,10 +68,15 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
     @Resource
     PictureService pictureService;
 
+    @Resource
+    AgentProductCardFeeOverrideMapper cardFeeOverrideMapper;
+
     @Value(value = "${submit.h5}")
     private String h5url;
 
     private static final int BATCH_INSERT_SIZE = 500;
+    private static final int OVERRIDE_ACTIVE = 1;
+    private static final int OVERRIDE_INACTIVE = 0;
 
     
     @Resource
@@ -86,13 +98,26 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         //获取代理账户信息
         AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
         //查询总数
-        Integer totalRows = productMapper.selectAgentProductListCount(agentProductSelectBO.getOperatorType(), agentProductSelectBO.getProductStatus(), agentProductSelectBO.getProductType(), agentProductSelectBO.getProductName(), agentAccount.getAgentCode());
+        Integer totalRows = productMapper.selectAgentProductListCount(
+                agentProductSelectBO.getOperatorType(),
+                agentProductSelectBO.getProductStatus(),
+                agentProductSelectBO.getProductType(),
+                agentProductSelectBO.getProductName(),
+                agentProductSelectBO.getSffftk(),
+                agentAccount.getAgentCode());
         if (totalRows == null || totalRows == BaseConstant.ZERO_INT) {
             return PageResultFactory.createPageResult(new ArrayList<>(), 0L, agentProductSelectBO.getPageSize(), agentProductSelectBO.getPageNo());
         }
         //分页查询代理商产品
-        List<AgentProductVO> agentProductSelectVOS = productMapper.selectAgentProductList(agentProductSelectBO.getOperatorType(), agentProductSelectBO.getProductStatus(), agentProductSelectBO.getProductType(),
-                agentProductSelectBO.getProductName(), agentAccount.getAgentCode(), (agentProductSelectBO.getPageNo() - 1) * agentProductSelectBO.getPageSize(), agentProductSelectBO.getPageSize());
+        List<AgentProductVO> agentProductSelectVOS = productMapper.selectAgentProductList(
+                agentProductSelectBO.getOperatorType(),
+                agentProductSelectBO.getProductStatus(),
+                agentProductSelectBO.getProductType(),
+                agentProductSelectBO.getProductName(),
+                agentProductSelectBO.getSffftk(),
+                agentAccount.getAgentCode(),
+                (agentProductSelectBO.getPageNo() - 1) * agentProductSelectBO.getPageSize(),
+                agentProductSelectBO.getPageSize());
         for (AgentProductVO agentProductVO : agentProductSelectVOS) {
             agentProductVO.setH5Url(h5url + "?productCode=" + agentProductVO.getProductCode() + "&agentCode=" + agentAccount.getAgentCode());
             List<AgentProduct> agentProductList = baseMapper.selectList(new LambdaQueryWrapper<AgentProduct>()
@@ -107,12 +132,27 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             int upstreamAmount = agentProductVO.getProductCommission() == null ? BaseConstant.ZERO_INT : Math.max(agentProductVO.getProductCommission(), BaseConstant.ZERO_INT);
             int retainAmount = agentProductVO.getRevenueProductCommission() == null ? BaseConstant.ZERO_INT : Math.max(agentProductVO.getRevenueProductCommission(), BaseConstant.ZERO_INT);
             int downstreamAmount = agentProductVO.getDistributionProductCommission() == null ? BaseConstant.ZERO_INT : Math.max(agentProductVO.getDistributionProductCommission(), BaseConstant.ZERO_INT);
-            int vipBonus = BaseConstant.ZERO_INT;
+
+            // VIP佣金计算逻辑
+            // 1. 获取VIP固定加成（已从SQL查询获取，若为null则默认0）
+            int vipFixed = agentProductVO.getVipFixedCommission() == null ? BaseConstant.ZERO_INT : Math.max(agentProductVO.getVipFixedCommission(), BaseConstant.ZERO_INT);
+
+            // 2. 计算实际可得的VIP加成（不能超过上游可分配余额）
+            // 公式：min(VIP固定加成, 上游佣金 - 基础保留佣金)
+            int availableForVip = upstreamAmount - retainAmount;
+            int vipBonus = Math.min(vipFixed, availableForVip);
+            vipBonus = Math.max(vipBonus, BaseConstant.ZERO_INT); // 确保非负
+
+            // 3. 重新计算各项佣金
+            int actualSelfCommission = retainAmount + vipBonus;           // 本级收益 = 基础保留 + VIP加成
+            int actualDownstream = upstreamAmount - actualSelfCommission; // 下游可分配 = 上游总额 - 本级收益
+
+            // 4. 设置到VO中
             agentProductVO.setUpstreamCommission(upstreamAmount);
-            agentProductVO.setVipFixedCommission(BaseConstant.ZERO_INT);
-            agentProductVO.setVipBonusCommission(vipBonus);
-            agentProductVO.setSelfCommission(retainAmount);
-            agentProductVO.setDownstreamCommission(downstreamAmount);
+            agentProductVO.setVipFixedCommission(vipFixed);                                    // VIP配置的固定加成
+            agentProductVO.setVipBonusCommission(vipBonus);                                   // 实际预估加成
+            agentProductVO.setSelfCommission(actualSelfCommission);                           // 本级收益（含VIP）
+            agentProductVO.setDownstreamCommission(Math.max(actualDownstream, BaseConstant.ZERO_INT)); // 下游可分配
         }
         return PageResultFactory.createPageResult(agentProductSelectVOS, Long.valueOf(totalRows), agentProductSelectBO.getPageSize(), agentProductSelectBO.getPageNo());
     }
@@ -142,6 +182,14 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         if (agentProduct.getIsAllAgent() == null) {
             agentProduct.setIsAllAgent(BaseConstant.ZERO_INT);
         }
+        Product product = productMapper.selectOne(new LambdaQueryWrapper<Product>().eq(Product::getProductCode, agentProduct.getParentProductCode()));
+        if (product == null) {
+            throw new BizException("产品不存在");
+        }
+        int incomingCardFee = computeIncomingCardFee(product, agentProduct.getParentAgentCode());
+        agentProduct.setIncomingCardFee(incomingCardFee);
+        agentProduct.setDownstreamCardFee(incomingCardFee);
+        agentProduct.setCardFeeProfit(BaseConstant.ZERO_INT);
         agentProduct.setProductSort(BaseConstant.ZERO_INT);
         agentProduct.setCreateTime(System.currentTimeMillis());
         baseMapper.insert(agentProduct);
@@ -296,6 +344,261 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
     }
 
 
+    @Override
+    public AgentProduct updateAgentProductCardFee(AgentProductUpdateCardFeeBO request, LoginUser loginUser) throws BizException {
+        if (request == null || request.getAgentProductId() == null) {
+            throw new BizException("参数不能为空");
+        }
+        AgentProduct agentProduct = baseMapper.selectById(request.getAgentProductId());
+        if (agentProduct == null) {
+            throw new BizException("代理产品不存在");
+        }
+        Product product = productMapper.selectOne(new LambdaQueryWrapper<Product>().eq(Product::getProductCode, agentProduct.getParentProductCode()));
+        if (!isCardFeeEnabled(product)) {
+            throw new BizException("当前产品未开启提卡费");
+        }
+
+
+        int targetDownstream = safeCardFee(request.getDownstreamCardFee());
+        long now = System.currentTimeMillis();
+
+        LambdaQueryWrapper<AgentProduct> childrenWrapper = new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getParentProductCode, agentProduct.getParentProductCode());
+        String parentAgentCode = agentProduct.getParentAgentCode();
+        if (StringUtils.hasLength(parentAgentCode)) {
+            childrenWrapper.eq(AgentProduct::getParentAgentCode, parentAgentCode);
+        } else {
+            childrenWrapper.nested(wrapper -> wrapper.isNull(AgentProduct::getParentAgentCode)
+                    .or().eq(AgentProduct::getParentAgentCode, ""));
+        }
+
+        List<AgentProduct> directChildren = baseMapper.selectList(childrenWrapper);
+        if (CollectionUtils.isEmpty(directChildren)) {
+            directChildren = Collections.singletonList(agentProduct);
+        }
+
+        for (AgentProduct child : directChildren) {
+            int childIncoming = safeCardFee(child.getIncomingCardFee());
+            if (targetDownstream < childIncoming) {
+                throw new BizException("对下提卡费不能低于当前成本" + childIncoming + "元");
+            }
+        }
+
+        for (AgentProduct child : directChildren) {
+            int childIncoming = safeCardFee(child.getIncomingCardFee());
+            int childProfit = targetDownstream - childIncoming;
+            baseMapper.update(null, new LambdaUpdateWrapper<AgentProduct>()
+                    .set(AgentProduct::getDownstreamCardFee, targetDownstream)
+                    .set(AgentProduct::getCardFeeProfit, childProfit)
+                    .set(AgentProduct::getUpdateTime, now)
+                    .eq(AgentProduct::getAgentProductId, child.getAgentProductId()));
+
+            child.setDownstreamCardFee(targetDownstream);
+            child.setCardFeeProfit(childProfit);
+            child.setUpdateTime(now);
+
+            refreshChildCardFee(child.getParentProductCode(), child.getAgentCode(), targetDownstream, now);
+        }
+
+        agentProduct.setDownstreamCardFee(targetDownstream);
+        agentProduct.setCardFeeProfit(targetDownstream - safeCardFee(agentProduct.getIncomingCardFee()));
+        agentProduct.setUpdateTime(now);
+        return agentProduct;
+    }
+
+    @Override
+    public List<AgentProductCardFeeChildVO> listAgentProductCardFeeChildren(AgentProductCardFeeChildrenQueryBO request, LoginUser loginUser) throws BizException {
+        if (request == null || request.getAgentProductId() == null) {
+            throw new BizException("代理产品ID不能为空");
+        }
+        AgentAccount parentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+        AgentProduct parentAgentProduct = baseMapper.selectById(request.getAgentProductId());
+        if (parentAgentProduct == null) {
+            throw new BizException("代理产品不存在");
+        }
+
+        String loginAgentCode = normalizeAgentCode(parentAgentAccount.getAgentCode());
+        if (!Objects.equals(normalizeAgentCode(parentAgentProduct.getAgentCode()), loginAgentCode)) {
+            throw new BizException("仅可查看自身产品的下级数据");
+        }
+
+        List<AgentProduct> children = baseMapper.selectList(new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getParentProductCode, parentAgentProduct.getParentProductCode())
+                .eq(AgentProduct::getParentAgentCode, loginAgentCode)
+                .orderByAsc(AgentProduct::getAgentName));
+        if (CollectionUtils.isEmpty(children)) {
+            return Collections.emptyList();
+        }
+        return children.stream().map(child -> {
+            AgentProductCardFeeChildVO vo = new AgentProductCardFeeChildVO();
+            vo.setAgentProductId(child.getAgentProductId());
+            vo.setAgentCode(child.getAgentCode());
+            vo.setAgentName(child.getAgentName());
+            vo.setIncomingCardFee(safeCardFee(child.getIncomingCardFee()));
+            vo.setDownstreamCardFee(safeCardFee(child.getDownstreamCardFee()));
+            vo.setCardFeeProfit(safeCardFee(child.getCardFeeProfit()));
+            vo.setHasOverride((child.getHasOverride() != null && child.getHasOverride() == BaseConstant.ONE_INT)
+                    ? BaseConstant.ONE_INT
+                    : BaseConstant.ZERO_INT);
+            return vo;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AgentProductCardFeeOverrideVO> listAgentProductCardFeeOverrides(AgentProductCardFeeOverrideQueryBO request, LoginUser loginUser) throws BizException {
+        if (request == null || !StringUtils.hasLength(request.getProductCode())) {
+            throw new BizException("商品编码不能为空");
+        }
+        AgentAccount parentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+        String parentAgentCode = normalizeAgentCode(parentAgentAccount.getAgentCode());
+        List<AgentProductCardFeeOverride> overrides = cardFeeOverrideMapper.selectList(new LambdaQueryWrapper<AgentProductCardFeeOverride>()
+                .eq(AgentProductCardFeeOverride::getProductCode, request.getProductCode())
+                .eq(AgentProductCardFeeOverride::getParentAgentCode, parentAgentCode)
+                .orderByDesc(AgentProductCardFeeOverride::getStatus)
+                .orderByDesc(AgentProductCardFeeOverride::getUpdateTime));
+        if (CollectionUtils.isEmpty(overrides)) {
+            return Collections.emptyList();
+        }
+        Map<String, String> agentNameMap = buildAgentNameMap(overrides.stream()
+                .map(AgentProductCardFeeOverride::getTargetAgentCode)
+                .collect(Collectors.toSet()));
+        return overrides.stream()
+                .map(item -> buildOverrideVO(item, agentNameMap))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void upsertAgentProductCardFeeOverride(AgentProductCardFeeOverrideCreateBO request, LoginUser loginUser) throws BizException {
+        if (request == null || request.getAgentProductId() == null) {
+            throw new BizException("目标代理产品不能为空");
+        }
+        AgentAccount parentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+        AgentProduct targetAgentProduct = baseMapper.selectById(request.getAgentProductId());
+        if (targetAgentProduct == null) {
+            throw new BizException("代理产品不存在");
+        }
+        String parentAgentCode = normalizeAgentCode(parentAgentAccount.getAgentCode());
+        if (!Objects.equals(normalizeAgentCode(targetAgentProduct.getParentAgentCode()), parentAgentCode)) {
+            throw new BizException("仅可操作直属下级提卡费");
+        }
+        Product product = productMapper.selectOne(new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductCode, targetAgentProduct.getParentProductCode()));
+        if (product == null) {
+            throw new BizException("产品不存在");
+        }
+        if (!isCardFeeEnabled(product)) {
+            throw new BizException("当前产品未开启提卡费");
+        }
+        AgentProduct parentAgentProduct = baseMapper.selectOne(new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getAgentCode, parentAgentCode)
+                .eq(AgentProduct::getParentProductCode, targetAgentProduct.getParentProductCode())
+                .last("LIMIT 1"));
+        int incoming = safeCardFee(targetAgentProduct.getIncomingCardFee());
+        int parentIncoming = parentAgentProduct != null
+                ? safeCardFee(parentAgentProduct.getIncomingCardFee())
+                : resolveBaseCardFee(product);
+        int overrideFee = safeCardFee(request.getOverrideFee());
+        if (overrideFee < parentIncoming) {
+            throw new BizException("特例售价不能低于当前成本" + parentIncoming + "元");
+        }
+        long now = System.currentTimeMillis();
+        String operator = loginUser.getUsername();
+
+        AgentProductCardFeeOverride activeOverride = cardFeeOverrideMapper.selectOne(new LambdaQueryWrapper<AgentProductCardFeeOverride>()
+                .eq(AgentProductCardFeeOverride::getProductCode, targetAgentProduct.getParentProductCode())
+                .eq(AgentProductCardFeeOverride::getParentAgentCode, parentAgentCode)
+                .eq(AgentProductCardFeeOverride::getTargetAgentCode, targetAgentProduct.getAgentCode())
+                .eq(AgentProductCardFeeOverride::getStatus, OVERRIDE_ACTIVE));
+        if (activeOverride == null) {
+            AgentProductCardFeeOverride newOverride = new AgentProductCardFeeOverride();
+            newOverride.setProductCode(targetAgentProduct.getParentProductCode());
+            newOverride.setParentAgentCode(parentAgentCode);
+            newOverride.setTargetAgentCode(targetAgentProduct.getAgentCode());
+            newOverride.setOverrideFee(overrideFee);
+            newOverride.setIncomingCardFee(parentIncoming);
+            newOverride.setStatus(OVERRIDE_ACTIVE);
+            newOverride.setEffectiveTime(now);
+            newOverride.setExpireTime(request.getExpireTime());
+            newOverride.setMemo(request.getMemo());
+            newOverride.setOperator(operator);
+            newOverride.setCreateTime(now);
+            newOverride.setUpdateTime(now);
+            cardFeeOverrideMapper.insert(newOverride);
+        } else {
+            cardFeeOverrideMapper.update(null, new LambdaUpdateWrapper<AgentProductCardFeeOverride>()
+                    .set(AgentProductCardFeeOverride::getOverrideFee, overrideFee)
+                    .set(AgentProductCardFeeOverride::getIncomingCardFee, parentIncoming)
+                    .set(AgentProductCardFeeOverride::getExpireTime, request.getExpireTime())
+                    .set(AgentProductCardFeeOverride::getMemo, request.getMemo())
+                    .set(AgentProductCardFeeOverride::getOperator, operator)
+                    .set(AgentProductCardFeeOverride::getUpdateTime, now)
+                    .eq(AgentProductCardFeeOverride::getOverrideId, activeOverride.getOverrideId()));
+        }
+
+        cardFeeOverrideMapper.update(null, new LambdaUpdateWrapper<AgentProductCardFeeOverride>()
+                .set(AgentProductCardFeeOverride::getStatus, OVERRIDE_ACTIVE)
+                .set(AgentProductCardFeeOverride::getEffectiveTime, now)
+                .set(AgentProductCardFeeOverride::getOperator, operator)
+                .set(AgentProductCardFeeOverride::getUpdateTime, now)
+                .eq(AgentProductCardFeeOverride::getProductCode, targetAgentProduct.getParentProductCode())
+                .eq(AgentProductCardFeeOverride::getParentAgentCode, parentAgentCode)
+                .eq(AgentProductCardFeeOverride::getTargetAgentCode, targetAgentProduct.getAgentCode())
+                .eq(AgentProductCardFeeOverride::getStatus, OVERRIDE_ACTIVE));
+
+        baseMapper.update(null, new LambdaUpdateWrapper<AgentProduct>()
+                .set(AgentProduct::getDownstreamCardFee, overrideFee)
+                .set(AgentProduct::getCardFeeProfit, overrideFee - incoming)
+                .set(AgentProduct::getHasOverride, BaseConstant.ONE_INT)
+                .set(AgentProduct::getUpdateTime, now)
+                .eq(AgentProduct::getAgentProductId, targetAgentProduct.getAgentProductId()));
+    }
+
+    @Override
+    public void cancelAgentProductCardFeeOverride(AgentProductCardFeeOverrideCancelBO request, LoginUser loginUser) throws BizException {
+        if (request == null || request.getOverrideId() == null) {
+            throw new BizException("特例ID不能为空");
+        }
+        AgentAccount parentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+        AgentProductCardFeeOverride override = cardFeeOverrideMapper.selectById(request.getOverrideId());
+        if (override == null || !Objects.equals(normalizeAgentCode(override.getParentAgentCode()), normalizeAgentCode(parentAgentAccount.getAgentCode()))) {
+            throw new BizException("提卡费特例不存在或无操作权限");
+        }
+        if (Objects.equals(override.getStatus(), OVERRIDE_INACTIVE)) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        cardFeeOverrideMapper.update(null, new LambdaUpdateWrapper<AgentProductCardFeeOverride>()
+                .set(AgentProductCardFeeOverride::getStatus, OVERRIDE_INACTIVE)
+                .set(AgentProductCardFeeOverride::getExpireTime, now)
+                .set(AgentProductCardFeeOverride::getOperator, loginUser.getUsername())
+                .set(AgentProductCardFeeOverride::getUpdateTime, now)
+                .eq(AgentProductCardFeeOverride::getOverrideId, override.getOverrideId()));
+
+        AgentProduct targetAgentProduct = baseMapper.selectOne(new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getParentProductCode, override.getProductCode())
+                .eq(AgentProduct::getAgentCode, override.getTargetAgentCode())
+                .last("LIMIT 1"));
+        if (targetAgentProduct == null) {
+            return;
+        }
+        Product product = productMapper.selectOne(new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductCode, override.getProductCode()));
+        if (product == null) {
+            return;
+        }
+        int parentDownstream = resolveParentDownstreamCardFee(parentAgentAccount, product);
+        int newDownstream = Math.max(parentDownstream, BaseConstant.ZERO_INT);
+        int incoming = safeCardFee(targetAgentProduct.getIncomingCardFee());
+        int newProfit = newDownstream - incoming;
+        baseMapper.update(null, new LambdaUpdateWrapper<AgentProduct>()
+                .set(AgentProduct::getDownstreamCardFee, newDownstream)
+                .set(AgentProduct::getCardFeeProfit, newProfit)
+                .set(AgentProduct::getHasOverride, BaseConstant.ZERO_INT)
+                .set(AgentProduct::getUpdateTime, now)
+                .eq(AgentProduct::getAgentProductId, targetAgentProduct.getAgentProductId()));
+    }
+
+
     /**
      * 批量创建代理商产品（包含所有下级）
      *
@@ -312,8 +615,9 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         }
         List<AgentProduct> pendingInsert = new ArrayList<>();
         Set<String> visited = new HashSet<>();
+        int parentDownstreamCardFee = resolveParentDownstreamCardFee(parentAgentAccount, product);
         for (AgentAccount agentAccount : agentAccounts) {
-            collectAgentProducts(agentAccount, parentAgentAccount, product, productCommission, pendingInsert, visited);
+            collectAgentProducts(agentAccount, parentAgentAccount, product, productCommission, parentDownstreamCardFee, pendingInsert, visited);
         }
         batchInsertAgentProducts(pendingInsert);
 
@@ -343,6 +647,7 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
                                       AgentAccount parentAgentAccount,
                                       Product product,
                                       Integer parentCommission,
+                                      Integer parentDownstreamCardFee,
                                       List<AgentProduct> pendingInsert,
                                       Set<String> visited) throws BizException {
         if (agentAccount == null || parentAgentAccount == null || product == null) {
@@ -360,12 +665,15 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
                 .eq(AgentProduct::getParentAgentCode, parentAgentAccount.getAgentCode()));
 
         int currentCommission;
+        int downstreamForChildren;
         if (agentProduct == null) {
-            agentProduct = buildAgentProduct(agentAccount, parentAgentAccount, product, parentCommission);
+            agentProduct = buildAgentProduct(agentAccount, parentAgentAccount, product, parentCommission, parentDownstreamCardFee);
             pendingInsert.add(agentProduct);
             currentCommission = agentProduct.getProductCommission() == null ? resolveCommission(parentCommission) : agentProduct.getProductCommission();
+            downstreamForChildren = safeCardFee(agentProduct.getDownstreamCardFee());
         } else {
             currentCommission = agentProduct.getProductCommission() == null ? resolveCommission(parentCommission) : agentProduct.getProductCommission();
+            downstreamForChildren = determineDownstream(agentProduct, product, parentDownstreamCardFee);
         }
 
         List<AgentAccount> childAgentAccountList = agentAccountService.list(
@@ -374,14 +682,15 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             return;
         }
         for (AgentAccount childAgentAccount : childAgentAccountList) {
-            collectAgentProducts(childAgentAccount, agentAccount, product, currentCommission, pendingInsert, visited);
+            collectAgentProducts(childAgentAccount, agentAccount, product, currentCommission, downstreamForChildren, pendingInsert, visited);
         }
     }
 
     private AgentProduct buildAgentProduct(AgentAccount agentAccount,
                                            AgentAccount parentAgentAccount,
                                            Product product,
-                                           Integer parentCommission) {
+                                           Integer parentCommission,
+                                           Integer parentDownstreamCardFee) {
         AgentProduct agentProduct = new AgentProduct();
         agentProduct.setParentProductCode(product.getProductCode());
         agentProduct.setParentProductName(product.getProductName());
@@ -395,11 +704,124 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         agentProduct.setProductCommission(commission);
         agentProduct.setDistributionProductCommission(BaseConstant.ZERO_INT);
         agentProduct.setRevenueProductCommission(commission);
+        int incomingCardFee = resolveIncomingForChild(product, parentDownstreamCardFee);
+        agentProduct.setIncomingCardFee(incomingCardFee);
+        agentProduct.setDownstreamCardFee(incomingCardFee);
+        agentProduct.setCardFeeProfit(BaseConstant.ZERO_INT);
         agentProduct.setProductSort(BaseConstant.ZERO_INT);
         agentProduct.setCreateTime(System.currentTimeMillis());
         agentProduct.setUpdateTime(null);
         agentProduct.setProductQrcodeMap(null);
         return agentProduct;
+    }
+
+    private int resolveIncomingForChild(Product product, Integer parentDownstreamCardFee) {
+        if (!isCardFeeEnabled(product)) {
+            return BaseConstant.ZERO_INT;
+        }
+        if (parentDownstreamCardFee != null) {
+            return Math.max(parentDownstreamCardFee, BaseConstant.ZERO_INT);
+        }
+        return resolveBaseCardFee(product);
+    }
+
+    private int computeIncomingCardFee(Product product, String parentAgentCode) {
+        if (!isCardFeeEnabled(product)) {
+            return BaseConstant.ZERO_INT;
+        }
+        if (!StringUtils.hasLength(parentAgentCode)) {
+            return resolveBaseCardFee(product);
+        }
+        AgentProduct parentAgentProduct = baseMapper.selectOne(new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getAgentCode, parentAgentCode)
+                .eq(AgentProduct::getParentProductCode, product.getProductCode()));
+        if (parentAgentProduct != null && parentAgentProduct.getDownstreamCardFee() != null) {
+            return Math.max(parentAgentProduct.getDownstreamCardFee(), BaseConstant.ZERO_INT);
+        }
+        return resolveBaseCardFee(product);
+    }
+
+    private int resolveParentDownstreamCardFee(AgentAccount parentAgentAccount, Product product) {
+        if (!isCardFeeEnabled(product) || parentAgentAccount == null) {
+            return BaseConstant.ZERO_INT;
+        }
+        AgentProduct parentProduct = baseMapper.selectOne(new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getAgentCode, parentAgentAccount.getAgentCode())
+                .eq(AgentProduct::getParentProductCode, product.getProductCode()));
+        if (parentProduct != null && parentProduct.getDownstreamCardFee() != null) {
+            return Math.max(parentProduct.getDownstreamCardFee(), BaseConstant.ZERO_INT);
+        }
+        return resolveBaseCardFee(product);
+    }
+
+    private int determineDownstream(AgentProduct agentProduct, Product product, Integer parentDownstreamCardFee) {
+        if (!isCardFeeEnabled(product)) {
+            return BaseConstant.ZERO_INT;
+        }
+        if (agentProduct != null && agentProduct.getDownstreamCardFee() != null) {
+            return Math.max(agentProduct.getDownstreamCardFee(), BaseConstant.ZERO_INT);
+        }
+        if (parentDownstreamCardFee != null) {
+            return Math.max(parentDownstreamCardFee, BaseConstant.ZERO_INT);
+        }
+        return resolveBaseCardFee(product);
+    }
+
+    private int resolveBaseCardFee(Product product) {
+        if (product == null || product.getBaseCardFee() == null) {
+            return BaseConstant.ZERO_INT;
+        }
+        return Math.max(product.getBaseCardFee(), BaseConstant.ZERO_INT);
+    }
+
+    private boolean isCardFeeEnabled(Product product) {
+        return product != null && Objects.equals(product.getSffftk(), BaseConstant.ONE_INT);
+    }
+
+    private String normalizeAgentCode(String agentCode) {
+        return agentCode == null ? "" : agentCode.trim();
+    }
+
+    private Map<String, String> buildAgentNameMap(Set<String> agentCodes) {
+        if (CollectionUtils.isEmpty(agentCodes)) {
+            return Collections.emptyMap();
+        }
+        List<AgentAccount> accounts = agentAccountService.list(new LambdaQueryWrapper<AgentAccount>()
+                .in(AgentAccount::getAgentCode, agentCodes));
+        if (CollectionUtils.isEmpty(accounts)) {
+            return Collections.emptyMap();
+        }
+        return accounts.stream()
+                .collect(Collectors.toMap(
+                        AgentAccount::getAgentCode,
+                        account -> {
+                            String name = account.getAgentName();
+                            return StringUtils.hasLength(name) ? name : account.getAgentCode();
+                        },
+                        (existing, replacement) -> existing));
+    }
+
+    private AgentProductCardFeeOverrideVO buildOverrideVO(AgentProductCardFeeOverride override, Map<String, String> agentNameMap) {
+        AgentProductCardFeeOverrideVO vo = new AgentProductCardFeeOverrideVO();
+        vo.setOverrideId(override.getOverrideId());
+        vo.setProductCode(override.getProductCode());
+        vo.setParentAgentCode(override.getParentAgentCode());
+        vo.setTargetAgentCode(override.getTargetAgentCode());
+        vo.setTargetAgentName(agentNameMap.getOrDefault(override.getTargetAgentCode(), override.getTargetAgentCode()));
+        vo.setOverrideFee(safeCardFee(override.getOverrideFee()));
+        vo.setIncomingCardFee(safeCardFee(override.getIncomingCardFee()));
+        vo.setStatus(override.getStatus());
+        vo.setEffectiveTime(override.getEffectiveTime());
+        vo.setExpireTime(override.getExpireTime());
+        vo.setMemo(override.getMemo());
+        vo.setOperator(override.getOperator());
+        vo.setCreateTime(override.getCreateTime());
+        vo.setUpdateTime(override.getUpdateTime());
+        return vo;
+    }
+
+    private int safeCardFee(Integer fee) {
+        return fee == null ? BaseConstant.ZERO_INT : Math.max(fee, BaseConstant.ZERO_INT);
     }
 
     private int resolveCommission(Integer commission) {
@@ -428,6 +850,27 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         String parent = parentAgentCode == null ? "" : parentAgentCode;
         String product = productCode == null ? "" : productCode;
         return agent + "#" + parent + "#" + product;
+    }
+
+    private void refreshChildCardFee(String productCode, String parentAgentCode, int newIncoming, long updateTime) {
+        if (!StringUtils.hasLength(productCode) || !StringUtils.hasLength(parentAgentCode)) {
+            return;
+        }
+        List<AgentProduct> children = baseMapper.selectList(new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getParentProductCode, productCode)
+                .eq(AgentProduct::getParentAgentCode, parentAgentCode));
+        if (CollectionUtils.isEmpty(children)) {
+            return;
+        }
+        for (AgentProduct child : children) {
+            baseMapper.update(null, new LambdaUpdateWrapper<AgentProduct>()
+                    .set(AgentProduct::getIncomingCardFee, newIncoming)
+                    .set(AgentProduct::getDownstreamCardFee, newIncoming)
+                    .set(AgentProduct::getCardFeeProfit, BaseConstant.ZERO_INT)
+                    .set(AgentProduct::getUpdateTime, updateTime)
+                    .eq(AgentProduct::getAgentProductId, child.getAgentProductId()));
+            refreshChildCardFee(productCode, child.getAgentCode(), newIncoming, updateTime);
+        }
     }
 
     private void clearCommissionCache(String agentCode, String productCode) {

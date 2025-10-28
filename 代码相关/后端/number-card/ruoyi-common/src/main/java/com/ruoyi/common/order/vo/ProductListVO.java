@@ -144,6 +144,36 @@ public class ProductListVO {
     private Integer sffftk;
 
     /**
+     * 基础提卡费(元)
+     */
+    @ApiModelProperty("基础提卡费(元)")
+    private Integer baseCardFee;
+
+    /**
+     * 初始话费余额(元)
+     */
+    @ApiModelProperty("初始话费余额(元)")
+    private Integer productInitialBalance;
+
+    /**
+     * 上级给当前代理的提卡费成本(元)
+     */
+    @ApiModelProperty("上级给当前代理的提卡费成本(元)")
+    private Integer incomingCardFee;
+
+    /**
+     * 当前代理留存的提卡费差价(元)
+     */
+    @ApiModelProperty("当前代理留存的提卡费差价(元)")
+    private Integer cardFeeProfit;
+
+    /**
+     * 当前代理对下级的提卡费售价(元)
+     */
+    @ApiModelProperty("当前代理对下级的提卡费售价(元)")
+    private Integer downstreamCardFee;
+
+    /**
      * 照片上传配置 JSON格式
      */
     @ApiModelProperty("照片上传配置 JSON格式")

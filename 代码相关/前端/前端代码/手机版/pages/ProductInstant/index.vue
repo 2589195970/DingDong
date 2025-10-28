@@ -172,11 +172,11 @@ export default {
         id: 3
       },],
       list2: [{
-        name: '全部',
-        id: null
-      }, {
         name: '上架中',
         id: 1
+      }, {
+        name: '全部',
+        id: null
       }, {
         name: '已下架',
         id: 0
@@ -190,6 +190,7 @@ export default {
         pageNo: 1,
         pageSize: 10000,
         productType: 0, // 固定为秒结产品
+        productStatus: 1, // 默认查询上架中
       },
       commissionopen: false,
       frme: {},

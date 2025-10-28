@@ -75,8 +75,11 @@
                 </template>
             </el-table-column>
             <el-table-column label="产品佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
-          <el-table-column label="VIP固定加成(元)" align="center" prop="vipFixedCommission"
-                           :show-overflow-tooltip="true" />
+            <el-table-column label="VIP固定加成(元)" align="center" :show-overflow-tooltip="true">
+                <template slot-scope="scope">
+                    <span>{{ Number(scope.row.sfyjfx) === 0 ? 0 : scope.row.vipFixedCommission }}</span>
+                </template>
+            </el-table-column>
             <!--<el-table-column label="下游分销佣金" align="center" prop="distributionProductCommission"-->
             <!--    :show-overflow-tooltip="true" />-->
             <!--<el-table-column label="收入佣金" align="center" prop="revenueProductCommission"-->
@@ -85,6 +88,8 @@
 
             <el-table-column align="center" label="操作">
                 <template slot-scope="scope">
+                    <el-button @click="showDetail(scope.row)" type="text" size="small">详情</el-button>
+                    <br>
                     <el-button @click="share(scope.row)" type="text" size="small">产品海报</el-button>
                     <!--<br>-->
                     <!--<el-button @click="handleCommission(scope.row)" type="text" size="small">下游佣金</el-button>-->
@@ -112,6 +117,30 @@
                 <el-button type="primary" @click="submitForm">确 定</el-button>
             </div>
         </el-dialog>
+
+        <card-fee-dialog
+            :visible.sync="openCardFee"
+            :loading="cardFeeSubmitting"
+            :context-loading="cardFeeContextLoading"
+            :removing-override="cardFeeRemovingOverride"
+            :card-fee="cardFeeForm"
+            :mode="cardFeeForm.mode"
+            :available-agents="availableTargetAgents"
+            :selected-agent-id="cardFeeForm.targetAgentProductId"
+            :overrides="cardFeeOverrides"
+            :search-keyword="cardFeeSearchKeyword"
+            @mode-change="handleCardFeeModeChange"
+            @target-change="handleTargetAgentChange"
+            @change="handleCardFeeChange"
+            @search="handleCardFeeSearch"
+            @cancel-override="cancelCardFeeOverrideItem"
+            @cancel="handleCardFeeClose"
+            @confirm="submitCardFee"
+        />
+
+        <product-detail-dialog
+            :visible.sync="detailVisible"
+            :product="detailRecord" />
 
         <el-dialog :visible.sync="openbianji" width="350px" append-to-body :close-on-click-modal="false">
             <el-form ref="form" v-model="form1" label-width="100px">
@@ -156,9 +185,17 @@
         selectUpstreamProductListPage,
         selectUpstreamApiListPage
     } from "@/api/monitor/business";
-   import { agentSelectProductListPage,updateAgentProduct, updateProductCommission, } from "@/api/monitor/daili"
+    import { agentSelectProductListPage, updateAgentProduct, updateProductCommission, } from "@/api/monitor/daili";
+    import cardFeeMixin from '../mixins/cardFee';
+    import CardFeeDialog from '../components/CardFeeDialog.vue';
+    import ProductDetailDialog from '../components/ProductDetailDialog.vue';
     export default {
         name: "Products",
+        components: {
+            CardFeeDialog,
+            ProductDetailDialog
+        },
+        mixins: [cardFeeMixin],
         dicts: ['sys_oper_type', 'sys_common_status'],
         data() {
             return {
@@ -202,6 +239,8 @@
                 sharedata:{},
                 shareOpen:false,
                 tableMaxHeight: 500,
+                detailVisible: false,
+                detailRecord: null,
                 queryParams: {
                     pageNo: 1,
                     pageSize: 10,
@@ -352,6 +391,10 @@
                     });
 
             },
+            showDetail(row) {
+                this.detailRecord = row ? { ...row } : null;
+                this.detailVisible = true;
+            },
 
             updateTableMaxHeight() {
                 this.$nextTick(() => {
@@ -382,6 +425,7 @@
     }
 </script>
 
-<style>
+<style lang="scss">
+@import "../styles/cardFee.scss";
 
 </style>
