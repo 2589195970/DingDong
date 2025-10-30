@@ -48,10 +48,10 @@
             <view class="commission-area-left">
               <view class="commission-combo">
                 <text class="commission-label">佣金</text>
-                <text class="commission-base">¥{{ formatCommission(dict.productCommission) }}</text>
-                <template v-if="hasVipCommission(dict.vipFixedCommission)">
+                <text class="commission-base">¥{{ formatCommission(resolveBaseCommission(dict)) }}</text>
+                <template v-if="shouldShowVipCommission(dict)">
                   <text class="commission-plus">+</text>
-                  <text class="commission-vip">¥{{ formatCommission(dict.vipFixedCommission) }}</text>
+                  <text class="commission-vip">¥{{ formatCommission(resolveVipCommission(dict)) }}</text>
                   <text class="vip-chip">VIP</text>
                 </template>
               </view>
@@ -260,8 +260,22 @@ export default {
       }
       return Math.round(num).toString()
     },
-    hasVipCommission(amount) {
-      return amount !== null && amount !== undefined
+    resolveBaseCommission(product) {
+      if (!product || Number(product.sfyjfx) === 0) {
+        return 0
+      }
+      return product.productCommission
+    },
+    resolveVipCommission(product) {
+      if (!product || Number(product.sfyjfx) === 0) {
+        return 0
+      }
+      return product.vipFixedCommission
+    },
+    shouldShowVipCommission(product) {
+      const vip = this.resolveVipCommission(product)
+      const value = vip === '' || vip === null || vip === undefined ? 0 : Number(vip)
+      return value > 0
     },
 
     handleewma() {

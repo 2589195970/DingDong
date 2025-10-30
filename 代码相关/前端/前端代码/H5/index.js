@@ -4,6 +4,7 @@ Vue.use(vant.Checkbox);
 Vue.use(vant.Dialog);
 Vue.use(vant.Popup);
 Vue.use(vant.Area);
+Vue.use(vant.NoticeBar);
 
 axios.interceptors.request.use(
   (config) => {
@@ -68,6 +69,7 @@ new Vue({
 
       // 用户协议
       protocolChecked: false,
+      paidCardConfirmed: false,
       protocolVisible1: false,
       protocolVisible2: false,
       protocolVisible: false,
@@ -240,6 +242,7 @@ new Vue({
         this.productList = res.data;
         this.productList.productTemplateJson = JSON.parse(this.productList.productTemplateJson);
         document.body.style.setProperty('--bgThemeColor', this.productList.productTemplateJson.bgThemeColor);
+        this.paidCardConfirmed = this.productList.sffftk != 1;
 
         // 解析照片配置
         if (this.productList.photoRequired == 1 && this.productList.photoConfig) {
@@ -639,6 +642,11 @@ new Vue({
         return;
       }
 
+      if (this.productList.sffftk == 1 && !this.paidCardConfirmed) {
+        vant.Toast('请确认已知晓提卡费用');
+        return;
+      }
+
       this.ageLimit();
     },
     fillData() {
@@ -792,7 +800,6 @@ new Vue({
     },
   }
 });
-
 
 
 

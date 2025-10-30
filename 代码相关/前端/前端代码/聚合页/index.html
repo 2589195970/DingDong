@@ -129,99 +129,117 @@
 								</div>
 								<button
 									style="width: 120px; height: 30px; font-size: 14px; background-color: red; color: #fff; border-radius: 23px; flex-shrink: 0;"
-									@click="Receive(dict.h5Url)">免费领取</button>
+									@click="Receive(dict.h5Url)">{{ Number(dict.sffftk) === 1 ? '付费提卡' : '免费领取' }}</button>
 							</div>
 						</div>
 					</li>
 				</ul>
 			</div>
 		</div>
-		<div class="container" v-if="xianshi=='1'">
-			<img src="./img/ordertitle.png" alt="" style="width: 100%; height: auto;margin-top: -100px">
-			<div class="search-form">
-				<input type="text" class="search-input" id="phone" placeholder="请输入手机号" v-model="phone">
-				<input type="text" class="search-input" id="idCard" placeholder="请输入身份证号" v-model="certId">
+			<div class="container" v-if="xianshi=='1'">
+				<div class="order-nav">
+					<van-button size="small" type="default" plain @click="goHome">
+						<van-icon name="arrow-left" style="margin-right: 4px;" />返回首页
+					</van-button>
+				</div>
+				<img src="./img/ordertitle.png" alt="" style="width: 100%; height: auto;margin-top: -100px">
+				<div class="search-form">
+					<input type="text" class="search-input" id="phone" placeholder="请输入手机号" v-model="phone">
+					<input type="text" class="search-input" id="idCard" placeholder="请输入身份证号" v-model="certId">
+				</div>
+				<button class="search-button" @click="search">查询</button>
 			</div>
-			<button class="search-button" @click="search">查询</button>
-		</div>
 
-		<div v-if="xianshi=='2'">
-			<h3
-				style="color: #fff; background-color: #007bff; height: 50px; text-align: center; line-height: 50px; margin: 0;">
-				订单信息
-			</h3>
-			<div v-if="ddxx==[]">暂无订单信息</div>
-			<div v-else id="resultTable" v-for="order in ddxx" :key="order.orderId">
-				<div class="orderinfonav">
-					<div class="ordertitle01">
-						<div class="ordertitleright" @click="xiangxidingdan(order)">
-							<a class="orderfail" v-if="order.orderStatus === -1">已撤单</a>
-							<a class="orderfail" v-if="order.orderStatus === 1"
-								style="background-color: red;color: #ffff;">下单成功</a>
-							<a class="orderfail" v-if="order.orderStatus === 2"
-								style="background-color: rebeccapurple;color: #ffff;">已发货</a>
-							<a class="orderfail" v-if="order.orderStatus === 4"
-								style="background-color: #007bff;color: #ffff;">已激活</a>
+			<div v-if="xianshi=='2'">
+				<div class="order-nav">
+					<van-button size="small" type="default" plain @click="goHome">
+						<van-icon name="arrow-left" style="margin-right: 4px;" />返回首页
+					</van-button>
+				</div>
+				<h3
+					style="color: #fff; background-color: #007bff; height: 50px; text-align: center; line-height: 50px; margin: 0;">
+					订单信息
+				</h3>
+				<div v-if="!ddxx || ddxx.length === 0">暂无订单信息</div>
+				<div v-else id="resultTable" v-for="order in ddxx" :key="order.orderId">
+					<div class="orderinfonav">
+						<div class="ordertitle01">
+							<div class="ordertitleright" @click="xiangxidingdan(order)">
+								<a class="orderfail" v-if="order.orderStatus === -1">已撤单</a>
+								<a class="orderfail" v-if="order.orderStatus === 1"
+									style="background-color: red;color: #ffff;">下单成功</a>
+								<a class="orderfail" v-if="order.orderStatus === 2"
+									style="background-color: rebeccapurple;color: #ffff;">已发货</a>
+								<a class="orderfail" v-if="order.orderStatus === 4"
+									style="background-color: #007bff;color: #ffff;">已激活</a>
+							</div>
+							<div class="ordertitleleft" style="display: flex;">
+								<img src="./img/order_icon01.png" />
+								<span v-if="order.operatorType==0"
+									style="font-size: 0.6rem;color: red; font-weight: 700;">移动</span>
+								<span v-if="order.operatorType==1"
+									style="font-size: 0.6rem;color: red; font-weight: 700;">电信</span>
+								<span v-if="order.operatorType==2"
+									style="font-size: 0.6rem;color: red; font-weight: 700;">联通</span>
+							</div>
+							<div class="clear">
+								<span>下单时间: {{timestampToDateString(order.createTime)}}</span>
+								<br>
+								<span>订单编号：{{order.orderId}}</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div v-if="xianshi=='3'">
+				<div class="order-nav">
+					<van-button size="small" type="default" plain @click="backToOrderList">
+						<van-icon name="arrow-left" style="margin-right: 4px;" />返回订单列表
+					</van-button>
+					<van-button size="small" type="default" plain @click="goHome" style="margin-left: 8px;">
+						<van-icon name="home-o" style="margin-right: 4px;" />返回首页
+					</van-button>
+				</div>
+				<h3
+					style="color: #fff; background-color: #007bff; height: 50px; text-align: center; line-height: 50px; margin: 0;">
+					订单信息
+				</h3>
+				<div class="orderjh">请在号卡发货起20天内激活，超时未开通号卡将自动销户，请您尽快完成激活认证，开启新体验哦！</div>
+				<div class="orderinfonav topnum">
+					<div class="ordertitle01 topline">
+						<div class="ordertitleright">
+							<a class="orderfail" v-if="ddxx1.orderStatus === -1">已撤单</a>
+							<a class="orderfail" v-if="ddxx1.orderStatus === 1"
+								style="background-color: red;color: #ffff;">成功</a>
+							<a class="orderfail" v-if="ddxx1.orderStatus === 2"
+								style="background-color: rebeccapurple;color: #ffff;">发货</a>
+							<a class="orderfail" v-if="ddxx1.orderStatus === 4"
+								style="background-color: #007bff; color: #ffff;">激活</a>
 						</div>
 						<div class="ordertitleleft" style="display: flex;">
-							<img src="./img/order_icon01.png" />
-							<span v-if="order.operatorType==0"
+							<img src="./img/order_icon01.png">
+							<span v-if="ddxx1.operatorType==0"
 								style="font-size: 0.6rem;color: red; font-weight: 700;">移动</span>
-							<span v-if="order.operatorType==1"
+							<span v-if="ddxx1.operatorType==1"
 								style="font-size: 0.6rem;color: red; font-weight: 700;">电信</span>
-							<span v-if="order.operatorType==2"
+							<span v-if="ddxx1.operatorType==2"
 								style="font-size: 0.6rem;color: red; font-weight: 700;">联通</span>
 						</div>
-						<div class="clear">
-							<span>下单时间: {{timestampToDateString(order.createTime)}}</span>
-							<br>
-							<span>订单编号：{{order.orderId}}</span>
-						</div>
+						<div class="clear"></div>
 					</div>
+					<ul>
+						<li>下单时间：{{timestampToDateString(ddxx1.createTime)}}</li>
+						<li>订单编号：{{ddxx1.orderId}}</li>
+						<!-- <li>联系号码：15695288139</li> -->
+						<li>收货地址：{{ ddxx1.provinceName }}{{ ddxx1.cityName }}{{ ddxx1.countyName }} {{ ddxx1.cardAddress }}
+						</li>
+						<li>物流单号： {{ddxx1.trackingNumber}}</li>
+					</ul>
 				</div>
+				<p class="float">注：”重新选号”成功后将为您再生成一张订单，但由于原订单已经生成，系统无法取消，会正常派送，如果您实在不满意原订单号码，请您告知快递小哥，拒签快递。新号码收到后，一定要进行激活操作
+				</p>
 			</div>
-		</div>
-
-		<div v-if="xianshi=='3'">
-			<h3
-				style="color: #fff; background-color: #007bff; height: 50px; text-align: center; line-height: 50px; margin: 0;">
-				订单信息
-			</h3>
-			<div class="orderjh">请在号卡发货起20天内激活，超时未开通号卡将自动销户，请您尽快完成激活认证，开启新体验哦！</div>
-			<div class="orderinfonav topnum">
-				<div class="ordertitle01 topline">
-					<div class="ordertitleright">
-						<a class="orderfail" v-if="ddxx1.orderStatus === -1">已撤单</a>
-						<a class="orderfail" v-if="ddxx1.orderStatus === 1"
-							style="background-color: red;color: #ffff;">成功</a>
-						<a class="orderfail" v-if="ddxx1.orderStatus === 2"
-							style="background-color: rebeccapurple;color: #ffff;">发货</a>
-						<a class="orderfail" v-if="ddxx1.orderStatus === 4"
-							style="background-color: #007bff; color: #ffff;">激活</a>
-					</div>
-					<div class="ordertitleleft" style="display: flex;">
-						<img src="./img/order_icon01.png">
-						<span v-if="ddxx1.operatorType==0"
-							style="font-size: 0.6rem;color: red; font-weight: 700;">移动</span>
-						<span v-if="ddxx1.operatorType==1"
-							style="font-size: 0.6rem;color: red; font-weight: 700;">电信</span>
-						<span v-if="ddxx1.operatorType==2"
-							style="font-size: 0.6rem;color: red; font-weight: 700;">联通</span>
-					</div>
-					<div class="clear"></div>
-				</div>
-				<ul>
-					<li>下单时间：{{timestampToDateString(ddxx1.createTime)}}</li>
-					<li>订单编号：{{ddxx1.orderId}}</li>
-					<!-- <li>联系号码：15695288139</li> -->
-					<li>收货地址：{{ ddxx1.provinceName }}{{ ddxx1.cityName }}{{ ddxx1.countyName }} {{ ddxx1.cardAddress }}
-					</li>
-					<li>物流单号： {{ddxx1.trackingNumber}}</li>
-				</ul>
-			</div>
-			<p class="float">注：”重新选号”成功后将为您再生成一张订单，但由于原订单已经生成，系统无法取消，会正常派送，如果您实在不满意原订单号码，请您告知快递小哥，拒签快递。新号码收到后，一定要进行激活操作
-			</p>
-		</div>
 		
 		<van-popup v-model="shareStoreopon" class="success-popup" :close-on-click-overlay="false"
 			:overlay-style="{ backgroundColor: 'rgba(0,0,0,.5)' }" :closeable="true">

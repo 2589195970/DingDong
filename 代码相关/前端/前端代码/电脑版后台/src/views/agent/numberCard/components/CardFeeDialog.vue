@@ -83,7 +83,7 @@
               class="metric-card metric-card--accent"
               :class="{ 'is-negative': profit < 0 }"
             >
-              <p class="metric-label">计划对下售价</p>
+              <p class="metric-label">计划供货价</p>
               <p class="metric-value">{{ formatAmount(localDownstream) }} 元</p>
               <p class="metric-tip">
                 预估利润
@@ -97,7 +97,7 @@
 
         <el-divider />
 
-        <el-form-item label="对下售价">
+        <el-form-item label="特例供货价">
           <div class="card-fee-input">
             <el-input-number
               :value="localDownstream"
@@ -118,14 +118,14 @@
             </el-button>
           </div>
           <p class="card-fee-tip">
-            最低售价不能低于当前成本 {{ formatAmount(minValue) }} 元
+            特例供货价需 ≥ 当前成本 {{ formatAmount(minValue) }} 元
           </p>
         </el-form-item>
       </el-form>
 
       <div v-if="overrideRows.length" class="card-fee-overrides">
         <el-divider />
-        <h4 class="card-fee-overrides__title">已设置的提卡费特例</h4>
+        <h4 class="card-fee-overrides__title">已设置的成本特例</h4>
         <el-table
           :data="overrideRows"
           size="mini"
@@ -135,7 +135,7 @@
         >
           <el-table-column prop="targetAgentName" label="代理" min-width="140" />
           <el-table-column
-            label="特例售价"
+            label="特例供货价"
             min-width="100"
             :formatter="formatOverrideFee"
           />
@@ -272,7 +272,7 @@ export default {
     scopeAlertText() {
       return this.mode === 'ALL'
         ? '调整后的价格将同步给全部下级代理，请确认后再操作'
-        : '仅对所选下级代理生效，其他下级仍沿用默认提卡费';
+        : '仅对所选下级代理生效，其他下级仍沿用默认供货价';
     },
     overrideRows() {
       return Array.isArray(this.overrides) ? this.overrides : [];
@@ -370,15 +370,32 @@ export default {
         return '';
       }
       const fallback = this.cardFee?.parentDownstreamCardFee;
+      const isSelected =
+        this.mode === CARD_FEE_MODE_PARTIAL &&
+        Number(agent.agentProductId) === Number(this.selectedAgentProxy);
+      const preferredFee =
+        isSelected && this.localDownstream !== '' && this.localDownstream !== null
+          ? this.localDownstream
+          : null;
       const rawFee =
-        agent.overrideFee != null ? agent.overrideFee : agent.downstreamCardFee;
-      const resolvedFee = Number.isFinite(Number(rawFee))
-        ? Number(rawFee)
-        : Number(fallback);
-      const profit = resolvedFee - toSafeNumber(agent.incomingCardFee);
+        preferredFee != null
+          ? preferredFee
+          : agent.overrideFee != null
+            ? agent.overrideFee
+            : agent.downstreamCardFee;
+      const resolvedCandidate = Number(rawFee);
+      const fallbackCandidate = Number(fallback);
+      const resolvedFee = Number.isFinite(resolvedCandidate)
+        ? resolvedCandidate
+        : Number.isFinite(fallbackCandidate)
+          ? fallbackCandidate
+          : toSafeNumber(agent.incomingCardFee);
+      const parentCost = toSafeNumber(this.incomingFee);
+      const profit = resolvedFee - parentCost;
       const displayFee = this.formatAmount(resolvedFee);
-      const profitText = profit >= 0 ? `+${profit}` : `${profit}`;
-      return `${agent.agentName || agent.agentCode}（当前 ${displayFee} 元，利润 ${profitText} 元）`;
+      const profitValue = this.formatAmount(profit);
+      const profitText = profit >= 0 ? `+${profitValue}` : `${profitValue}`;
+      return `${agent.agentName || agent.agentCode}（供货 ${displayFee} 元，利润 ${profitText} 元）`;
     },
     formatOverrideFee(row) {
       if (!row) {

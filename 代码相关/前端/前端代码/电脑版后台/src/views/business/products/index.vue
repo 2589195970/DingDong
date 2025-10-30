@@ -1,24 +1,28 @@
 <template>
     <div class="app-container">
         <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch"
-            label-width="100px">
-            <el-form-item prop="responsiblePeople">
+            label-width="100px" class="search-form">
+            <el-form-item prop="responsiblePeople" class="search-item">
                 <el-input v-model="queryParams.productName" placeholder="请输入号卡名称"></el-input>
             </el-form-item>
-            <el-form-item prop="businessType">
+            <el-form-item prop="businessType" class="search-item">
                 <el-select v-model="queryParams.operatorType" placeholder="请选择运营商" clearable filterable>
                     <el-option v-for="dict in ydl" :key="dict.id" :label="dict.name" :value="dict.id" />
                 </el-select>
             </el-form-item>
-            <el-form-item prop="businessType">
-                <el-select v-model="queryParams.productStatus" placeholder="请选择状态" clearable filterable
-                    style="width: 240px">
+            <el-form-item prop="businessType" class="search-item">
+                <el-select v-model="queryParams.productStatus" placeholder="请选择状态" clearable filterable>
                     <el-option v-for="dict in productStatus" :key="dict.id" :label="dict.name" :value="dict.id" />
                 </el-select>
             </el-form-item>
-            <el-form-item prop="businessType">
+            <el-form-item prop="businessType" class="search-item">
                 <el-select v-model="queryParams.productType" placeholder="请选择结算模式" clearable filterable>
                     <el-option v-for="dict in productType" :key="dict.id" :label="dict.name" :value="dict.id" />
+                </el-select>
+            </el-form-item>
+            <el-form-item prop="sffftk" class="search-item">
+                <el-select v-model="queryParams.sffftk" placeholder="请选择是否需要付费提卡" clearable>
+                    <el-option v-for="option in booleanOptions" :key="option.value" :label="option.label" :value="option.value" />
                 </el-select>
             </el-form-item>
             <!-- <el-form-item prop="responsiblePeople">
@@ -101,7 +105,11 @@
                     <span v-else style="color: #999;">---</span>
                 </template>
             </el-table-column>
-            <el-table-column label="佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
+            <el-table-column label="佣金" align="center" :show-overflow-tooltip="true">
+                <template slot-scope="scope">
+                    {{ Number(scope.row.sfyjfx) === 0 ? 0 : scope.row.productCommission }}
+                </template>
+            </el-table-column>
             <el-table-column label="初始话费(元)" align="center" prop="productInitialBalance" :show-overflow-tooltip="true" />
             <!--<el-table-column label="佣金返现" align="center" prop="sfyjfx">-->
             <!--    <template slot-scope="scope">-->
@@ -451,10 +459,10 @@
                 queryParams: {
                     pageNo: 1,
                     pageSize: 10,
+                    sffftk: null,
                 },
                 sharedata:{},
                 productType: [
-
                     {
                         name: '日结秒返',
                         id: 0
@@ -463,18 +471,18 @@
                         name: '月结产品',
                         id: 1
                     },
-                    {
-                        name: '长期产品',
-                        id: 2
-                    },
-                    {
-                        name: '其它',
-                        id: 3
-                    },
-                    {
-                        name: '组合返佣',
-                        id: 4
-                    },
+                    // {
+                    //     name: '长期产品',
+                    //     id: 2
+                    // },
+                    // {
+                    //     name: '其它',
+                    //     id: 3
+                    // },
+                    // {
+                    //     name: '组合返佣',
+                    //     id: 4
+                    // },
                 ],
                 ydl: [
                     {
@@ -686,19 +694,40 @@
 
             },
             submitForm() {
-                updateProductCommission(this.form).then((res) => {
+                const rawValue = this.form && this.form.productCommission;
+                const commission = rawValue === '' || rawValue === null || rawValue === undefined ? 0 : Number(rawValue);
+                if (Number.isNaN(commission) || commission < 0) {
+                    this.$message.error('请输入不小于0的佣金金额');
+                    return;
+                }
+                if (Number(this.form.sfyjfx) === 0 && commission > 0) {
+                    this.$message.error('当前产品未开启佣金返现，佣金必须保持为0');
+                    return;
+                }
+                const payload = {
+                    productId: this.form.productId,
+                    productCommission: commission
+                };
+                updateProductCommission(payload).then(() => {
                     this.$message({
                         type: 'success',
                         message: '修改成功!'
                     });
                     this.openCommission = false;
                     this.getList();
-                })
+                });
 
             },
             handleCommission(data) {
                 this.openCommission = true;
-                this.form = data;
+                this.form = {
+                    productId: data.productId,
+                    sfyjfx: data.sfyjfx,
+                    productCommission: data.productCommission
+                };
+                if (Number(data.sfyjfx) === 0) {
+                    this.$message.warning('该产品未开启佣金返现，佣金必须保持为0');
+                }
             },
             handleImport() { },
             handleAdd() { },
@@ -726,6 +755,7 @@
 
             /** 搜索按钮操作 */
             handleQuery() {
+                this.queryParams.pageNo = 1;
                 this.getList();
             },
             handlexiajia(data) {
@@ -868,13 +898,24 @@
             },
 
             getList() {
-                selectProductListPage(this.queryParams).then((res) => {
+                this.loading = true;
+                const params = { ...this.queryParams };
+                if (params.sffftk === '' || params.sffftk === undefined) {
+                    params.sffftk = null;
+                } else if (params.sffftk !== null) {
+                    params.sffftk = Number(params.sffftk);
+                }
+                selectProductListPage(params).then((res) => {
                     if (res.data.rows) {
                         this.list = res.data.rows
                     } else {
                         this.list = []
                     }
                     this.total = res.data.totalRows
+                }).catch(() => {
+                    this.list = [];
+                }).finally(() => {
+                    this.loading = false;
                 })
             },
 
@@ -932,6 +973,19 @@
     }
 
     .el-input--suffix {
-        width: 202px;
+        width: 220px;
+    }
+
+    .search-form .search-item {
+        margin-right: 16px;
+    }
+
+    .search-form .search-item .el-input,
+    .search-form .search-item .el-select {
+        width: 220px;
+    }
+
+    .search-form .el-form-item:last-child {
+        margin-right: 0;
     }
 </style>

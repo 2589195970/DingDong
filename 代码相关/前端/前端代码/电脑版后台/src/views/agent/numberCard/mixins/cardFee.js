@@ -389,6 +389,11 @@ export default {
       if (!overrideId || this.cardFeeRemovingOverride) {
         return;
       }
+      const parsedId = Number(overrideId);
+      if (!Number.isFinite(parsedId) || parsedId <= 0) {
+        this.$message.error('无法识别的特例ID，无法取消');
+        return;
+      }
       this.$confirm('确认要取消该提卡费特例吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -396,7 +401,7 @@ export default {
       })
         .then(() => {
           this.cardFeeRemovingOverride = true;
-          return cancelCardFeeOverride({ overrideId });
+          return cancelCardFeeOverride({ overrideId: parsedId });
         })
         .then(() => {
           this.$message.success('特例已取消');

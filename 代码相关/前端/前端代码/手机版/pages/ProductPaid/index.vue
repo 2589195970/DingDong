@@ -48,10 +48,10 @@
             <view class="commission-area-left">
               <view class="commission-combo">
                 <text class="commission-label">佣金</text>
-                <text class="commission-base">¥{{ formatCommission(dict.productCommission) }}</text>
-                <template v-if="hasVipCommission(dict.vipFixedCommission)">
+                <text class="commission-base">¥{{ formatCommission(resolveBaseCommission(dict)) }}</text>
+                <template v-if="shouldShowVipCommission(dict)">
                   <text class="commission-plus">+</text>
-                  <text class="commission-vip">¥{{ formatCommission(dict.vipFixedCommission) }}</text>
+                  <text class="commission-vip">¥{{ formatCommission(resolveVipCommission(dict)) }}</text>
                   <text class="vip-chip">VIP</text>
                 </template>
               </view>
@@ -89,8 +89,8 @@
 
           <!-- 标签区域 -->
           <view class="tags-area">
-            <view class="product-tag" :class="getProductTypeClass(dict.productType)">
-              <text class="tag-text">{{ getProductTypeText(dict.productType) }}</text>
+            <view class="product-tag paid-tag">
+              <text class="tag-text">付费产品</text>
             </view>
             <view class="product-tag" :class="getProductStatusClass(dict.productStatus)">
               <text class="tag-text">{{ getProductStatusText(dict.productStatus) }}</text>
@@ -221,30 +221,6 @@ export default {
     this.soplist();
   },
   methods: {
-    // 获取产品类型文字
-    getProductTypeText(type) {
-      const typeMap = {
-        0: '日结秒返',
-        1: '月结产品',
-        2: '长期产品',
-        3: '其它',
-        4: '组合返佣'
-      }
-      return typeMap[type] || '未知'
-    },
-
-    // 获取产品类型样式类
-    getProductTypeClass(type) {
-      const classMap = {
-        0: 'type-instant',
-        1: 'type-monthly',
-        2: 'type-long',
-        3: 'type-other',
-        4: 'type-combo'
-      }
-      return classMap[type] || 'type-default'
-    },
-
     // 获取产品状态文字
     getProductStatusText(status) {
       const statusMap = {
@@ -272,8 +248,22 @@ export default {
       }
       return Math.round(num).toString()
     },
-    hasVipCommission(amount) {
-      return amount !== null && amount !== undefined
+    resolveBaseCommission(product) {
+      if (!product || Number(product.sfyjfx) === 0) {
+        return 0
+      }
+      return product.productCommission
+    },
+    resolveVipCommission(product) {
+      if (!product || Number(product.sfyjfx) === 0) {
+        return 0
+      }
+      return product.vipFixedCommission
+    },
+    shouldShowVipCommission(product) {
+      const vip = this.resolveVipCommission(product)
+      const value = vip === '' || vip === null || vip === undefined ? 0 : Number(vip)
+      return value > 0
     },
     formatMoney(amount) {
       if (amount === null || amount === undefined || amount === '') {
@@ -726,12 +716,12 @@ page {
   }
 
   .fee-label {
-    font-size: 24rpx;
+    font-size: 28rpx;
     color: #999;
   }
 
   .fee-value {
-    font-size: 30rpx;
+    font-size: 29rpx;
     color: #333;
     font-weight: 600;
   }
@@ -774,25 +764,8 @@ page {
       font-weight: 500;
     }
 
-    // 产品类型样式
-    &.type-instant {
-      background-color: #f5222d;
-    }
-
-    &.type-monthly {
-      background-color: #52c41a;
-    }
-
-    &.type-long {
-      background-color: #f5222d;
-    }
-
-    &.type-other {
-      background-color: #52c41a;
-    }
-
-    &.type-combo {
-      background-color: #f5222d;
+    &.paid-tag {
+      background-color: #f09b7f;
     }
 
     // 产品状态样式
@@ -993,11 +966,11 @@ page {
     gap: 10rpx 24rpx;
 
     .fee-label {
-      font-size: 22rpx;
+      font-size: 28rpx;
     }
 
     .fee-value {
-      font-size: 26rpx;
+      font-size: 29rpx;
     }
   }
 
@@ -1087,11 +1060,11 @@ page {
     gap: 8rpx 20rpx;
 
     .fee-label {
-      font-size: 20rpx;
+      font-size: 28rpx;
     }
 
     .fee-value {
-      font-size: 24rpx;
+      font-size: 29rpx;
     }
   }
 

@@ -366,9 +366,24 @@ body {
 .checkbox .van-checkbox__icon {
   font-size: 18px;
 }
+/* 付费提卡确认勾选 - 与协议框相同样式 */
+.form .paid-tip {
+  font-size: 12px;
+  color: #717171;
+  width: calc(100% - 40px);
+  margin: 12px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .form .protocol {
   font-size: 12px;
-  color: #fff;
+  color: #717171;
+  width: calc(100% - 40px);
+  margin: 12px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .form a {
   color: #4EAAEF;
@@ -436,7 +451,7 @@ footer a {
   bottom: 50px;
 }
 
-/*提交成功弹窗*/
+/*提交成功弹窗 - 温暖友好设计*/
 .success-popup {
   background-color: transparent;
 }
@@ -447,27 +462,65 @@ footer a {
   align-items: center;
 }
 .success-modal {
-  background-color: #F8F9FF;
-  border-radius: 10px;
-  /* padding: 20px 50px 40px 50px; */
+  background-color: #FFF;
+  border-radius: 16px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   line-height: 1.5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 .success-modal img {
   width: 100%;
-  border-radius: 10px;
+  border-radius: 16px 16px 0 0;
+  display: block;
 }
 .success-modal .tip1 {
-  color: #666666;
-  font-size: 29px;
+  color: #333;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 20px 0 10px;
+  padding: 0 20px;
 }
 .success-modal .tip2 {
-  color: #FA7268;
-  font-size: 18px;
-  margin-top: 20px;
+  color: #666;
+  font-size: 15px;
+  margin: 0 0 20px;
+  padding: 0 20px;
+  line-height: 1.6;
+}
+.success-modal .tip3 {
+  color: #FF9500;
+  font-size: 14px;
+  margin: 0;
+  padding: 12px 20px 20px;
+  background: linear-gradient(135deg, #FFF8F0 0%, #FFF5E8 100%);
+  width: 100%;
+  border-radius: 0 0 16px 16px;
+  font-weight: 500;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+/* 付费提卡顶部提示 - 简洁优雅设计 */
+.paid-notice {
+  width: calc(100% - 40px);
+  margin: 0 auto 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.15);
+  border: none;
+  overflow: hidden;
+}
+.paid-notice .van-notice-bar__wrap {
+  padding: 12px 15px;
+}
+.paid-notice .van-notice-bar__content {
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 .success-modal-con .icon {

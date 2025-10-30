@@ -95,33 +95,36 @@
       </el-table-column>
       <el-table-column label="订单状态" align="left" prop="companySimpleName" :show-overflow-tooltip="true">
         <template slot-scope="scope">
-                    <span>结算模式:
-                        <span v-if="scope.row.productType==0">日结秒返</span>
-                        <span v-if="scope.row.productType==1">月结产品</span>
-                        <span v-if="scope.row.productType==2">长期产品</span>
-                        <span v-if="scope.row.productType==3">其它</span>
-                        <span v-if="scope.row.productType==4">组合返佣</span>
-                    </span><br>
-          <span>订单状态：
-                        <span v-if="scope.row.orderStatus==-1">失败</span>
-                        <span v-if="scope.row.orderStatus==0">申请成功</span>
-                        <span v-if="scope.row.orderStatus==1">申请中</span>
-                        <span v-if="scope.row.orderStatus==2">发货</span>
-                        <span v-if="scope.row.orderStatus==4">激活</span>
-                    </span><br>
-          <span>是否首充：
-                        <span v-if="scope.row.isRecharged==0">未充值</span>
-                        <span v-if="scope.row.isRecharged==1">已充值</span>
-                    </span><br>
-          <span>首充金额：{{scope.row.rechargeAmount}}</span><br>
-          <span>佣金状态：
-                        <span v-if="scope.row.orderCommissionStatus==0">未到结算状态</span>
-                        <span v-if="scope.row.orderCommissionStatus==1">待结算</span>
-                        <span v-if="scope.row.orderCommissionStatus==3">已结算</span>
-                        <span v-if="scope.row.orderCommissionStatus==4">无法结算</span>
-                    </span><br>
-          <span>佣金说明：{{scope.row.orderCommissionMessage}}</span><br>
-          <span>下单时间：{{formatTimestamp(scope.row.createTime)}}</span><br>
+          <div class="order-status-grid">
+            <div class="order-status-item">
+              <span class="order-status-label">结算模式：</span>
+              <span class="order-status-value">{{ formatProductType(scope.row.productType) }}</span>
+            </div>
+            <div class="order-status-item">
+              <span class="order-status-label">订单状态：</span>
+              <span class="order-status-value">{{ mapDictLabel(orderStatus, scope.row.orderStatus) }}</span>
+            </div>
+            <div class="order-status-item">
+              <span class="order-status-label">是否首充：</span>
+              <span class="order-status-value">{{ mapDictLabel(isRecharged, scope.row.isRecharged) }}</span>
+            </div>
+            <div class="order-status-item">
+              <span class="order-status-label">首充金额：</span>
+              <span class="order-status-value">{{ formatDisplay(scope.row.rechargeAmount) }}</span>
+            </div>
+            <div class="order-status-item">
+              <span class="order-status-label">佣金状态：</span>
+              <span class="order-status-value">{{ mapDictLabel(orderCommissionStatus, scope.row.orderCommissionStatus) }}</span>
+            </div>
+            <div class="order-status-item order-status-item--full">
+              <span class="order-status-label">佣金说明：</span>
+              <span class="order-status-value">{{ formatDisplay(scope.row.orderCommissionMessage) }}</span>
+            </div>
+            <div class="order-status-item order-status-item--full">
+              <span class="order-status-label">下单时间：</span>
+              <span class="order-status-value">{{ formatTimestamp(scope.row.createTime) }}</span>
+            </div>
+          </div>
         </template>
       </el-table-column>
       <el-table-column label="生产信息" align="left" prop="companySimpleName" :show-overflow-tooltip="true">
@@ -409,7 +412,13 @@ export default {
   methods: {
     // 时间戳转换
     formatTimestamp(timestamp) {
+      if (timestamp === null || timestamp === undefined) {
+        return "--";
+      }
       const date = new Date(timestamp);
+      if (Number.isNaN(date.getTime())) {
+        return "--";
+      }
       const year = date.getFullYear();
       const month = ("0" + (date.getMonth() + 1)).slice(-2);
       const day = ("0" + date.getDate()).slice(-2);
@@ -417,6 +426,26 @@ export default {
       const minutes = ("0" + date.getMinutes()).slice(-2);
       const seconds = ("0" + date.getSeconds()).slice(-2);
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    formatDisplay(value) {
+      return value === 0 ? 0 : (value || "--");
+    },
+    mapDictLabel(list, value) {
+      if (!Array.isArray(list)) {
+        return "--";
+      }
+      const match = list.find((item) => Number(item.id) === Number(value));
+      return match ? match.name : "--";
+    },
+    formatProductType(type) {
+      const mapping = {
+        0: "日结秒返",
+        1: "月结产品",
+        2: "长期产品",
+        3: "其它",
+        4: "组合返佣"
+      };
+      return mapping[type] || "--";
     },
     submitFormUpdata() {
       updateOrderStatus(this.cambiareform).then((res) => {
@@ -554,5 +583,33 @@ export default {
 
 .el-table .success-row2 {
   color: #409EFF;
+}
+
+.order-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 6px;
+}
+
+.order-status-item {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.order-status-label {
+  color: #606266;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.order-status-value {
+  word-break: break-word;
+}
+
+.order-status-item--full {
+  grid-column: 1 / -1;
 }
 </style>

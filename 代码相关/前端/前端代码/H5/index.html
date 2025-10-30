@@ -37,6 +37,16 @@
 
 			<div class="form-con">
 				<div class="form">
+					<van-notice-bar
+						v-if="productList.sffftk == 1"
+						class="paid-notice"
+						color="#8B4513"
+						background="#FFF8F0"
+						left-icon="info-o"
+						wrapable
+					>
+						温馨提示:该产品需支付提卡费用,请您确认后再提交订单
+					</van-notice-bar>
 					<van-form class="van-form" style="width: calc(100% - 0.7rem);border-radius: 10px;">
 						<!-- 需要照片上传时的分步显示 -->
 						<template v-if="productList.photoRequired == 1">
@@ -169,6 +179,12 @@
 								<span>和</span>
 								<a @click="protocolVisible2=true">《信息收集公告》</a>
 							</p>
+
+							<p class="paid-tip" v-if="productList.sffftk == 1 && currentStep === 2">
+								<van-checkbox v-model="paidCardConfirmed" checked-color="#4EAAEF"
+									class="checkbox"></van-checkbox>
+								<span>我已了解该产品需支付提卡费用</span>
+							</p>
 						</template>
 
 						<!-- 不需要照片上传时的单步显示 -->
@@ -211,6 +227,12 @@
 								<span>和</span>
 								<a @click="protocolVisible2=true">《信息收集公告》</a>
 							</p>
+
+							<p class="paid-tip" v-if="productList.sffftk == 1">
+								<van-checkbox v-model="paidCardConfirmed" checked-color="#4EAAEF"
+									class="checkbox"></van-checkbox>
+								<span>我已了解该产品需支付提卡费用</span>
+							</p>
 						</template>
 					</van-form>
 				</div>
@@ -246,10 +268,8 @@
 			<van-popup v-model="successModalVisible" class="success-popup" :close-on-click-overlay="false"
 				:overlay-style="{ backgroundColor: 'rgba(0,0,0,.5)' }">
 				<div class="success-modal-con">
-					<div class="success-modal">
-						<img src="./img/cg.jpg" alt="">
-						<p class="tip1">办理成功</p>
-						<p class="tip2">请保持电话畅通，稍后工作人员将与您联系！</p>
+						<div class="success-modal">
+							<img :src="productList.sffftk == 1 ? './img/fwtk.png' : './img/cg.jpg'" alt="">
 					</div>
 					<van-icon class="icon" name="close" @click="successModalVisible=false" />
 				</div>

@@ -55,6 +55,8 @@ new Vue({
       arrow: 'arrow-down',
       xianshi: '0',
       productList: {},
+      ddxx: [],
+      ddxx1: {},
       phone: '',
       certId: '',
       productStatus:'1',
@@ -62,7 +64,6 @@ new Vue({
       agentCode: '',
       ShopQrcodeMap: '',
       visitorId: '', // 访客标识
-
     };
   },
   computed: {
@@ -98,6 +99,14 @@ new Vue({
     },
     orderdata() {
       this.xianshi = "1";
+    },
+    goHome() {
+      this.xianshi = "0";
+      this.ddxx = [];
+      this.ddxx1 = {};
+    },
+    backToOrderList() {
+      this.xianshi = "2";
     },
     search() {
       var postData = {
@@ -272,10 +281,6 @@ new Vue({
     }
   }
 });
-
-
-
-
 
 
 

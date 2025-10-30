@@ -271,7 +271,7 @@
 						this.$modal.msgError("复制失败，请手动复制");
 					}
 				} catch (err) {
-					this.$modal.msgError("复制失败，请手动复制");
+					this.$modal.msgError("复制失败,请手动复制");
 				} finally {
 					// 清理DOM
 					document.body.removeChild(textArea);
@@ -637,8 +637,8 @@
   margin: 0;
   padding: 0;
   max-width: 440px;
- 
-  
+
+
 } */
 
 	.container {

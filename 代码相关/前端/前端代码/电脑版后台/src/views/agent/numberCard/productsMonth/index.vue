@@ -79,10 +79,16 @@
             </el-table-column>
             <!--<el-table-column label="上游分配(元)" align="center" prop="upstreamCommission" :show-overflow-tooltip="true" />-->
             <!--<el-table-column label="本级收益(元)" align="center" prop="selfCommission" :show-overflow-tooltip="true" />-->
-            <el-table-column label="产品佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
-            <el-table-column label="VIP固定加成(元)" align="center" :show-overflow-tooltip="true">
+            <el-table-column label="预计佣金" align="center" :show-overflow-tooltip="true">
                 <template slot-scope="scope">
-                    <span>{{ Number(scope.row.sfyjfx) === 0 ? 0 : scope.row.vipFixedCommission }}</span>
+                    <div class="commission-cell">
+                        <div>产品佣金：{{ formatCommissionValue(scope.row, 'productCommission') }} 元</div>
+                        <div>VIP佣金：{{ formatCommissionValue(scope.row, 'vipFixedCommission') }} 元</div>
+                        <div>
+                            总佣金：
+                            <span class="commission-total-amount">{{ formatTotalCommission(scope.row) }} 元</span>
+                        </div>
+                    </div>
                 </template>
             </el-table-column>
             <!--<el-table-column label="VIP实际加成(元)" align="center" prop="vipBonusCommission"-->
@@ -288,6 +294,20 @@
             this.getList();
         },
         methods: {
+            formatCommissionValue(row, field) {
+                if (Number(row.sfyjfx) === 0) {
+                    return 0;
+                }
+                return Number(row[field]) || 0;
+            },
+            formatTotalCommission(row) {
+                if (Number(row.sfyjfx) === 0) {
+                    return 0;
+                }
+                const product = Number(row.productCommission) || 0;
+                const vip = Number(row.vipFixedCommission) || 0;
+                return product + vip;
+            },
             // 分享
             share(data) {
                 this.sharedata = data;
@@ -367,9 +387,13 @@
                     this.$message.error('请输入不小于0的上游分配金额');
                     return;
                 }
+                if (Number(this.commissionSnapshot && this.commissionSnapshot.sfyjfx) === 0 && upstream > 0) {
+                    this.$message.error('当前产品未开启佣金返现，佣金必须保持为0');
+                    return;
+                }
                 const payload = {
                     productCode: this.form.productCode,
-                    productCommission: upstream
+                    productCommission: Number(this.commissionSnapshot && this.commissionSnapshot.sfyjfx) === 0 ? 0 : upstream
                 };
                 updateProductCommission(payload).then((res) => {
                     this.$message({
@@ -382,10 +406,19 @@
 
             },
             handleCommission(data) {
-                this.commissionSnapshot = { ...data };
+                const snapshot = { ...data };
+                if (Number(snapshot.sfyjfx) === 0) {
+                    snapshot.productCommission = 0;
+                    snapshot.vipFixedCommission = 0;
+                    snapshot.vipBonusCommission = 0;
+                    snapshot.selfCommission = 0;
+                    snapshot.downstreamCommission = 0;
+                    this.$message.warning('该产品未开启佣金返现，佣金必须保持为0');
+                }
+                this.commissionSnapshot = snapshot;
                 this.form = {
                     productCode: data.productCode,
-                    upstreamCommission: data.upstreamCommission
+                    upstreamCommission: snapshot.upstreamCommission === undefined ? 0 : snapshot.upstreamCommission
                 };
                 this.openCommission = true;
             },

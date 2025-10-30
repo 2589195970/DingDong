@@ -24,7 +24,7 @@
             0 as cardFeeProfit,
             p.base_card_fee as downstreamCardFee,
             p.product_commission as distributionProductCommission,
-            0 as revenueProductCommission,
+            p.product_commission as revenueProductCommission,
             p.product_sort as productSort
         FROM
             t_product p

@@ -23,6 +23,9 @@
           </view>
         </view>
 
+        <view class="notice-bell" @click="goToNoticeList">
+          <image src="@/static/images/icon/bell.svg" class="bell-icon" mode="aspectFit"></image>
+        </view>
       </view>
       <view style="display: flex; text-align: center; background-color: #f09b7f; padding-bottom: 20px;">
         <view style="flex: 1 1 0%; line-height: 1rem;">
@@ -979,6 +982,25 @@ page {
   border-radius: 10px;
   margin-left: 8px;
   border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.notice-bell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  .bell-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
 }
 
 

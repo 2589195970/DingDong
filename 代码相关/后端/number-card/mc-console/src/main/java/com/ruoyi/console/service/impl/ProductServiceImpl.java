@@ -98,6 +98,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 .eq(productSelectBO.getProductType()!=null,Product::getProductType,productSelectBO.getProductType())
                 .eq(StringUtils.isNotEmpty(productSelectBO.getProductGsdq()),Product::getProductGsdq,productSelectBO.getProductGsdq())
                 .eq(productSelectBO.getProductStatus()!=null,Product::getProductStatus,productSelectBO.getProductStatus())
+                .eq(productSelectBO.getSffftk()!=null,Product::getSffftk,productSelectBO.getSffftk())
                 .orderByDesc(Product::getProductSort).orderByDesc(Product::getCreateTime)
         );
         Page<ProductSelectVO> productSelectVOPage  = new Page<>();
@@ -165,6 +166,12 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         }
         List<AgentAccount> agentAccountList = new ArrayList<>();
         //查询代理商 如果选择全部代理 列表进行查询
+        if (Objects.equals(productAddAndUpdateBO.getSfyjfx(), BaseConstant.ZERO_INT)
+                && product.getProductCommission() != null
+                && product.getProductCommission() > 0) {
+            throw new BizException("当前产品未开启佣金返现，请先将基础佣金调整为0");
+        }
+
         if(productAddAndUpdateBO.getIsAllAgent()!=null&&productAddAndUpdateBO.getIsAllAgent()==BaseConstant.ONE_INT){
             //查询所有有效子代理
             agentAccountList = agentAccountService.selectChildAgentList(loginUser,BaseConstant.ZERO_INT);
@@ -248,6 +255,11 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         Product product = baseMapper.selectById(productAddAndUpdateBO.getProductId());
         if(product==null){
             throw new BizException("产品{}不存在",productAddAndUpdateBO.getProductId());
+        }
+        if (Objects.equals(productAddAndUpdateBO.getSfyjfx(), BaseConstant.ZERO_INT)
+                && product.getProductCommission() != null
+                && product.getProductCommission() > 0) {
+            throw new BizException("当前产品未开启佣金返现，请先将基础佣金调整为0");
         }
         Product updateProduct = new Product();
         BeanUtil.copyProperties(productAddAndUpdateBO,updateProduct);
@@ -544,6 +556,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if(product==null){
             throw new BizException("产品不存在:{}",productUpdateStatusBO.getProductId());
         }
+        validateCommissionSetting(product, productUpdateStatusBO.getProductCommission());
         //更新产品状态
         product.setProductCommission(productUpdateStatusBO.getProductCommission());
         product.setUpdateTime(System.currentTimeMillis());
@@ -941,5 +954,17 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         String agent = agentCode == null ? "" : agentCode;
         String parent = parentAgentCode == null ? "" : parentAgentCode;
         return agent + "#" + parent;
+    }
+
+    private void validateCommissionSetting(Product product, Integer targetCommission) throws BizException {
+        if (product == null) {
+            return;
+        }
+        if (Objects.equals(product.getSfyjfx(), BaseConstant.ZERO_INT)) {
+            int commission = targetCommission == null ? BaseConstant.ZERO_INT : targetCommission;
+            if (commission > BaseConstant.ZERO_INT) {
+                throw new BizException("当前产品未开启佣金返现，请将基础佣金调整为0");
+            }
+        }
     }
 }

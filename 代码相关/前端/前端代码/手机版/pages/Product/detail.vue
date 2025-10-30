@@ -57,7 +57,7 @@
       </view>
 
       <!-- 产品详情图卡片 -->
-      <view class="info-card" v-if="xqdata.productDetailMap">
+      <view class="info-card detail-card" v-if="xqdata.productDetailMap">
         <view class="card-header">
           <u-icon name="star-fill" color="#f09b7f"></u-icon>
           <text class="card-title">产品详情</text>
@@ -218,15 +218,28 @@ page {
   .detail-image-container {
     border-radius: 12rpx;
     overflow: hidden;
-    display: flex;
-    justify-content: center;
+    width: 100%;
 
     .detail-image {
-      width: 512rpx;
+      width: 100%;
       height: auto;
       display: block;
       border-radius: 12rpx;
     }
+  }
+}
+
+.detail-card {
+  .card-content {
+    padding: 30rpx 0;
+  }
+
+  .detail-image-container {
+    border-radius: 0;
+  }
+
+  .detail-image {
+    border-radius: 0;
   }
 }
 
@@ -271,12 +284,26 @@ page {
       }
     }
   }
+
+  .detail-card {
+    .card-content {
+      padding: 24rpx 0;
+    }
+
+    .detail-image-container {
+      border-radius: 0;
+    }
+
+    .detail-image {
+      border-radius: 0;
+    }
+  }
 }
 
 // 特殊样式适配
 // 修复某些情况下图片显示问题
 .detail-image {
-  width: 512rpx;
+  width: 100%;
   max-width: 100%;
   height: auto;
 }

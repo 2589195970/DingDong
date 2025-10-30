@@ -77,7 +77,6 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
     private static final int BATCH_INSERT_SIZE = 500;
     private static final int OVERRIDE_ACTIVE = 1;
     private static final int OVERRIDE_INACTIVE = 0;
-
     
     @Resource
     ToolConfigService toolConfigService;
@@ -128,6 +127,16 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
                 agentProductVO.setAgentCodeList(agentCodeList);
             } else {
                 agentProductVO.setAgentCodeList(new ArrayList<>());
+            }
+            boolean commissionDisabled = Objects.equals(agentProductVO.getSfyjfx(), BaseConstant.ZERO_INT);
+            if (commissionDisabled) {
+                agentProductVO.setProductCommission(BaseConstant.ZERO_INT);
+                agentProductVO.setDistributionProductCommission(BaseConstant.ZERO_INT);
+                agentProductVO.setRevenueProductCommission(BaseConstant.ZERO_INT);
+                agentProductVO.setVipFixedCommission(BaseConstant.ZERO_INT);
+                agentProductVO.setVipBonusCommission(BaseConstant.ZERO_INT);
+                agentProductVO.setSelfCommission(BaseConstant.ZERO_INT);
+                agentProductVO.setDownstreamCommission(BaseConstant.ZERO_INT);
             }
             int upstreamAmount = agentProductVO.getProductCommission() == null ? BaseConstant.ZERO_INT : Math.max(agentProductVO.getProductCommission(), BaseConstant.ZERO_INT);
             int retainAmount = agentProductVO.getRevenueProductCommission() == null ? BaseConstant.ZERO_INT : Math.max(agentProductVO.getRevenueProductCommission(), BaseConstant.ZERO_INT);
@@ -270,13 +279,25 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
      */
     public void updateAgentProductCommission(String productCode, String agentCode, Integer commission) throws BizException {
         AgentAccount agentAccount = agentAccountService.getAgentAccountByCode(agentCode, true);
+        Product product = productMapper.selectOne(new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductCode, productCode));
+        if (product == null) {
+            throw new BizException("产品不存在");
+        }
+        int safeCommission = commission == null ? BaseConstant.ZERO_INT : Math.max(commission, BaseConstant.ZERO_INT);
+        if (Objects.equals(product.getSfyjfx(), BaseConstant.ZERO_INT) && safeCommission > BaseConstant.ZERO_INT) {
+            throw new BizException("当前产品未开启佣金返现，请将基础佣金调整为0");
+        }
+
         AgentProduct agentProduct = baseMapper.selectOne(new LambdaQueryWrapper<AgentProduct>()
                 .eq(AgentProduct::getParentProductCode, productCode)
                 .eq(AgentProduct::getAgentCode, agentAccount.getAgentCode()));
         if (agentProduct == null) {
             return;
         }
-        int incomingAmount = commission == null ? BaseConstant.ZERO_INT : Math.max(commission, BaseConstant.ZERO_INT);
+        int incomingAmount = Objects.equals(product.getSfyjfx(), BaseConstant.ZERO_INT)
+                ? BaseConstant.ZERO_INT
+                : safeCommission;
         agentProduct.setProductCommission(incomingAmount);
         agentProduct.setRevenueProductCommission(incomingAmount);
         agentProduct.setDistributionProductCommission(BaseConstant.ZERO_INT);
@@ -493,7 +514,7 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
                 .eq(AgentProduct::getAgentCode, parentAgentCode)
                 .eq(AgentProduct::getParentProductCode, targetAgentProduct.getParentProductCode())
                 .last("LIMIT 1"));
-        int incoming = safeCardFee(targetAgentProduct.getIncomingCardFee());
+        int currentDownstream = safeCardFee(targetAgentProduct.getDownstreamCardFee());
         int parentIncoming = parentAgentProduct != null
                 ? safeCardFee(parentAgentProduct.getIncomingCardFee())
                 : resolveBaseCardFee(product);
@@ -545,9 +566,10 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
                 .eq(AgentProductCardFeeOverride::getTargetAgentCode, targetAgentProduct.getAgentCode())
                 .eq(AgentProductCardFeeOverride::getStatus, OVERRIDE_ACTIVE));
 
+        int newProfit = currentDownstream - overrideFee;
         baseMapper.update(null, new LambdaUpdateWrapper<AgentProduct>()
-                .set(AgentProduct::getDownstreamCardFee, overrideFee)
-                .set(AgentProduct::getCardFeeProfit, overrideFee - incoming)
+                .set(AgentProduct::getIncomingCardFee, overrideFee)
+                .set(AgentProduct::getCardFeeProfit, newProfit)
                 .set(AgentProduct::getHasOverride, BaseConstant.ONE_INT)
                 .set(AgentProduct::getUpdateTime, now)
                 .eq(AgentProduct::getAgentProductId, targetAgentProduct.getAgentProductId()));
@@ -567,6 +589,13 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             return;
         }
         long now = System.currentTimeMillis();
+        // 清理历史的失效记录，避免唯一索引冲突
+        cardFeeOverrideMapper.delete(new LambdaQueryWrapper<AgentProductCardFeeOverride>()
+                .eq(AgentProductCardFeeOverride::getProductCode, override.getProductCode())
+                .eq(AgentProductCardFeeOverride::getParentAgentCode, override.getParentAgentCode())
+                .eq(AgentProductCardFeeOverride::getTargetAgentCode, override.getTargetAgentCode())
+                .eq(AgentProductCardFeeOverride::getStatus, OVERRIDE_INACTIVE)
+                .ne(AgentProductCardFeeOverride::getOverrideId, override.getOverrideId()));
         cardFeeOverrideMapper.update(null, new LambdaUpdateWrapper<AgentProductCardFeeOverride>()
                 .set(AgentProductCardFeeOverride::getStatus, OVERRIDE_INACTIVE)
                 .set(AgentProductCardFeeOverride::getExpireTime, now)
@@ -587,11 +616,11 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             return;
         }
         int parentDownstream = resolveParentDownstreamCardFee(parentAgentAccount, product);
-        int newDownstream = Math.max(parentDownstream, BaseConstant.ZERO_INT);
-        int incoming = safeCardFee(targetAgentProduct.getIncomingCardFee());
-        int newProfit = newDownstream - incoming;
+        int newIncoming = Math.max(parentDownstream, BaseConstant.ZERO_INT);
+        int currentDownstream = safeCardFee(targetAgentProduct.getDownstreamCardFee());
+        int newProfit = currentDownstream - newIncoming;
         baseMapper.update(null, new LambdaUpdateWrapper<AgentProduct>()
-                .set(AgentProduct::getDownstreamCardFee, newDownstream)
+                .set(AgentProduct::getIncomingCardFee, newIncoming)
                 .set(AgentProduct::getCardFeeProfit, newProfit)
                 .set(AgentProduct::getHasOverride, BaseConstant.ZERO_INT)
                 .set(AgentProduct::getUpdateTime, now)

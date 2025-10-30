@@ -72,7 +72,11 @@
                     <p v-if="scope.row.productStatus==1" style="color:green;">上架中</p>
                 </template>
             </el-table-column>
-            <el-table-column label="产品佣金" align="center" prop="productCommission" :show-overflow-tooltip="true" />
+            <el-table-column label="产品佣金" align="center" :show-overflow-tooltip="true">
+                <template slot-scope="scope">
+                    {{ Number(scope.row.sfyjfx) === 0 ? 0 : scope.row.productCommission }}
+                </template>
+            </el-table-column>
             <el-table-column label="下游分销佣金" align="center" prop="distributionProductCommission"
                 :show-overflow-tooltip="true" />
             <el-table-column label="收入佣金" align="center" prop="revenueProductCommission"
@@ -307,9 +311,13 @@
                     this.$message.error('请输入不小于0的产品佣金');
                     return;
                 }
+                if (Number(this.form.sfyjfx) === 0 && amount > 0) {
+                    this.$message.error('当前产品未开启佣金返现，佣金必须保持为0');
+                    return;
+                }
                 const payload = {
                     productCode: this.form.productCode,
-                    productCommission: amount
+                    productCommission: Number(this.form.sfyjfx) === 0 ? 0 : amount
                 };
                 updateProductCommission(payload).then((res) => {
                     this.$message({
@@ -325,8 +333,12 @@
                 this.openCommission = true;
                 this.form = {
                     productCode: data.productCode,
-                    productCommission: data.productCommission
+                    productCommission: data.productCommission,
+                    sfyjfx: data.sfyjfx
                 };
+                if (Number(data.sfyjfx) === 0) {
+                    this.$message.warning('该产品未开启佣金返现，佣金必须保持为0');
+                }
             },
             handleImport() { },
             handleAdd() { },

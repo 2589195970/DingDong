@@ -30,7 +30,7 @@
 
     <div class="product-detail-dialog__section">
       <el-descriptions title="销售配置" :column="2" size="small" border>
-        <el-descriptions-item label="产品佣金(元)">{{ formatAmount(effectiveProduct.productCommission) }}</el-descriptions-item>
+        <el-descriptions-item label="产品佣金(元)">{{ Number(effectiveProduct.sfyjfx) === 0 ? 0 : formatAmount(effectiveProduct.productCommission) }}</el-descriptions-item>
         <el-descriptions-item label="VIP固定加成(元)">
           {{ effectiveProduct.sfyjfx ? formatAmount(effectiveProduct.vipFixedCommission) : 0 }}
         </el-descriptions-item>
