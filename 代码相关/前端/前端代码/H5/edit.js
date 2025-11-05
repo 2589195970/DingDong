@@ -467,6 +467,7 @@ new Vue({
           }
 
           // 编辑模式成功提示
+          this.resetForm();
           this.successModalVisible = true;
         }).catch(error => {
           vant.Toast.clear();
@@ -486,6 +487,13 @@ new Vue({
         // 或者跳转到订单查询页面
         // window.location.href = 'order-query.html';
       }
+    },
+
+    // 重置表单状态
+    resetForm() {
+      this.uploadedPhotos = {};
+      this.previewImageUrl = '';
+      this.imagePreviewVisible = false;
     }
   }
 });

@@ -64,6 +64,7 @@ new Vue({
       agentCode: '',
       ShopQrcodeMap: '',
       visitorId: '', // 访客标识
+      homeRedirectUrl: '', // 来源回退地址
     };
   },
   computed: {
@@ -73,6 +74,7 @@ new Vue({
   created() {
     this.agentCode= getQueryString('agentCode')
     this.initializeVisitor();
+    this.homeRedirectUrl = this.resolveHomeRedirect();
 
     // 检查URL参数，如果mode=order-query则直接进入订单查询页面
     const mode = getQueryString('mode');
@@ -101,6 +103,15 @@ new Vue({
       this.xianshi = "1";
     },
     goHome() {
+      const redirectTarget = this.homeRedirectUrl || this.resolveHomeRedirect();
+      if (redirectTarget) {
+        window.location.href = redirectTarget;
+        return;
+      }
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
       this.xianshi = "0";
       this.ddxx = [];
       this.ddxx1 = {};
@@ -278,11 +289,38 @@ new Vue({
         console.error('获取页面访问统计时发生错误:', error.message || error);
         return null;
       }
+    },
+    resolveHomeRedirect() {
+      const mode = getQueryString('mode');
+      if (mode !== 'order-query') {
+        return '';
+      }
+      const redirectParam = getQueryString('redirect');
+      if (redirectParam) {
+        try {
+          const decodedUrl = decodeURIComponent(redirectParam);
+          if (!this.isSamePage(decodedUrl)) {
+            return decodedUrl;
+          }
+        } catch (error) {
+          console.warn('Failed to decode redirect parameter:', error);
+        }
+      }
+      if (document.referrer && !this.isSamePage(document.referrer)) {
+        return document.referrer;
+      }
+      return '';
+    },
+    isSamePage(url) {
+      try {
+        const target = new URL(url, window.location.href);
+        const current = new URL(window.location.href);
+        const stripHash = (value) => value.replace(/#.*$/, '');
+        return stripHash(target.origin + target.pathname + target.search)
+          === stripHash(current.origin + current.pathname + current.search);
+      } catch (error) {
+        return false;
+      }
     }
   }
 });
-
-
-
-
-

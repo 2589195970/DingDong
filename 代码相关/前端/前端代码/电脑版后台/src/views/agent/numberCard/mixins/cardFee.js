@@ -82,7 +82,7 @@ export default {
       return toSafeNumber(value);
     },
     supportsCardFee(row) {
-      return Number(row && row.sffftk) === 1;
+      return Number(row && row.productType) === 5;
     },
     handleCardFee(row) {
       if (!row || !this.supportsCardFee(row)) {

@@ -396,11 +396,7 @@ public class Order {
         //上游信息
         order.upstreamApi = upstreamApi.getUpstreamApiCode();
         order.upstreamApiName = upstreamApi.getUpstreamApiName();
-        //照片信息
-        order.idCardFrontUrl = request.getIdCardFrontUrl();
-        order.idCardBackUrl = request.getIdCardBackUrl();
-        order.personPhotoUrl = request.getPersonPhotoUrl();
-        order.customPhotoUrl = request.getCustomPhotoUrl();
+
         //照片审核状态初始化 - 只有当商品需要照片审核时才设置状态
         if (product != null && product.getPhotoRequired() != null && product.getPhotoRequired() == 1) {
             // 根据订单来源设置不同的初始状态
@@ -408,10 +404,21 @@ public class Order {
                 // 导入订单初始化为代理商待提交
                 order.photoStatus = OrderEnum.PhotoAuditEnum.AGENT_PENDING.getStatus();
             } else {
-                // H5下单（信息流等）初始化为管理员待审核
-                order.photoStatus = OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus();
+                //需要提交照片,但是不需要审核
+                if(product.getSfxysh() == 0){
+                    //照片信息
+                    order.idCardFrontUrl = request.getIdCardFrontUrl();
+                    order.idCardBackUrl = request.getIdCardBackUrl();
+                    order.personPhotoUrl = request.getPersonPhotoUrl();
+                    order.customPhotoUrl = request.getCustomPhotoUrl();
+                }else {
+                    //需要提交照片,但是需要审核,所以暂不提交照片
+                    // H5下单（信息流等）初始化为管理员待审核
+                    order.photoStatus = OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus();
+                }
             }
         } else {
+            //无需审核,也不需要提交身份证照片
             order.photoStatus = OrderEnum.PhotoAuditEnum.NONE.getStatus(); // 无需审核
         }
         return order;

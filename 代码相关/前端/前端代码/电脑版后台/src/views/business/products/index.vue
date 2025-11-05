@@ -20,11 +20,6 @@
                     <el-option v-for="dict in productType" :key="dict.id" :label="dict.name" :value="dict.id" />
                 </el-select>
             </el-form-item>
-            <el-form-item prop="sffftk" class="search-item">
-                <el-select v-model="queryParams.sffftk" placeholder="请选择是否需要付费提卡" clearable>
-                    <el-option v-for="option in booleanOptions" :key="option.value" :label="option.label" :value="option.value" />
-                </el-select>
-            </el-form-item>
             <!-- <el-form-item prop="responsiblePeople">
                 <el-input v-model="queryParams.productGsdq" placeholder="请输入归属地"></el-input>
             </el-form-item> -->
@@ -85,6 +80,7 @@
                     <p v-if="scope.row.productType==2" style="color: red;">长期产品</p>
                     <p v-if="scope.row.productType==3" style="color:green;">其它</p>
                     <p v-if="scope.row.productType==4" style="color: red;">组合返佣</p>
+                    <p v-if="scope.row.productType==5" style="color:#ff8c00;">付费提卡</p>
                 </template>
             </el-table-column>
             <el-table-column label="推广要求" align="center" prop="productDemand" width="200" />
@@ -114,12 +110,6 @@
             <!--<el-table-column label="佣金返现" align="center" prop="sfyjfx">-->
             <!--    <template slot-scope="scope">-->
             <!--        <span v-if="scope.row.sfyjfx == 1">是</span>-->
-            <!--        <span v-else>否</span>-->
-            <!--    </template>-->
-            <!--</el-table-column>-->
-            <!--<el-table-column label="付费提卡" align="center" prop="sffftk">-->
-            <!--    <template slot-scope="scope">-->
-            <!--        <span v-if="scope.row.sffftk == 1">是</span>-->
             <!--        <span v-else>否</span>-->
             <!--    </template>-->
             <!--</el-table-column>-->
@@ -228,18 +218,18 @@
 
                     </el-form-item>
                     <br>
-                    <el-form-item label="优惠月租" prop="delivery">
-                        <el-input placeholder="请输入内容" v-model="ruleForm.productYhyz" :min="1">
-                            <template slot="append">元</template>
-                        </el-input>
-                        <!-- <el-input-number v-model="ruleForm.productYhyz" controls-position="right" :min="1"></el-input-number> -->
-                    </el-form-item>
-                    <el-form-item label="原始月租" prop="delivery">
-                        <el-input placeholder="请输入内容" v-model="ruleForm.productYsyz" :min="1">
-                            <template slot="append">元</template>
-                        </el-input>
-                        <!-- <el-input-number v-model="ruleForm.productYsyz" controls-position="right" :min="1"></el-input-number> -->
-                    </el-form-item>
+<!--                    <el-form-item label="优惠月租" prop="delivery">-->
+<!--                        <el-input placeholder="请输入内容" v-model="ruleForm.productYhyz" :min="1">-->
+<!--                            <template slot="append">元</template>-->
+<!--                        </el-input>-->
+<!--                        &lt;!&ndash; <el-input-number v-model="ruleForm.productYhyz" controls-position="right" :min="1"></el-input-number> &ndash;&gt;-->
+<!--                    </el-form-item>-->
+<!--                    <el-form-item label="原始月租" prop="delivery">-->
+<!--                        <el-input placeholder="请输入内容" v-model="ruleForm.productYsyz" :min="1">-->
+<!--                            <template slot="append">元</template>-->
+<!--                        </el-input>-->
+<!--                        &lt;!&ndash; <el-input-number v-model="ruleForm.productYsyz" controls-position="right" :min="1"></el-input-number> &ndash;&gt;-->
+<!--                    </el-form-item>-->
                     <el-form-item label="首充说明" prop="name">
                         <el-input v-model="ruleForm.productScsm"></el-input>
                     </el-form-item>
@@ -249,9 +239,9 @@
                     <el-form-item label="发货方式" prop="name">
                         <el-input v-model="ruleForm.productFafs"></el-input>
                     </el-form-item>
-                    <el-form-item label="套餐介绍" prop="name">
-                        <el-input v-model="ruleForm.productTcjs"></el-input>
-                    </el-form-item>
+<!--                    <el-form-item label="套餐介绍" prop="name">-->
+<!--                        <el-input v-model="ruleForm.productTcjs"></el-input>-->
+<!--                    </el-form-item>-->
                     <el-form-item label="推广要求" prop="name">
                         <el-input v-model="ruleForm.productDemand"></el-input>
                     </el-form-item>
@@ -272,13 +262,7 @@
                             <el-radio :label="1">是</el-radio>
                         </el-radio-group>
                     </el-form-item>
-                    <el-form-item label="是否需要付费提卡" prop="sffftk">
-                        <el-radio-group v-model="ruleForm.sffftk">
-                            <el-radio :label="0">否</el-radio>
-                            <el-radio :label="1">是</el-radio>
-                        </el-radio-group>
-                    </el-form-item>
-                    <el-form-item label="基础提卡费(元)" v-if="Number(ruleForm.sffftk) === 1">
+                    <el-form-item label="基础提卡费(元)" v-if="Number(ruleForm.productType) === paidCardProductType">
                         <el-input-number v-model="ruleForm.baseCardFee" :min="0" :precision="0" />
                     </el-form-item>
                 </div>
@@ -452,14 +436,10 @@
                     photoRequired: 0,
                     photoConfig: null
                 },
-                booleanOptions: [
-                    { label: '否', value: 0 },
-                    { label: '是', value: 1 }
-                ],
                 queryParams: {
                     pageNo: 1,
                     pageSize: 10,
-                    sffftk: null,
+                    productType: null,
                 },
                 sharedata:{},
                 productType: [
@@ -471,19 +451,12 @@
                         name: '月结产品',
                         id: 1
                     },
-                    // {
-                    //     name: '长期产品',
-                    //     id: 2
-                    // },
-                    // {
-                    //     name: '其它',
-                    //     id: 3
-                    // },
-                    // {
-                    //     name: '组合返佣',
-                    //     id: 4
-                    // },
+                    {
+                        name: '付费提卡',
+                        id: 5
+                    },
                 ],
+                paidCardProductType: 5,
                 ydl: [
                     {
                         name: '中国移动',
@@ -531,6 +504,14 @@
                 }
                 if (Number(val) !== 1) {
                     this.ruleForm.sfxysh = 0;
+                }
+            },
+            'ruleForm.productType'(val) {
+                if (!this.ruleForm) {
+                    return;
+                }
+                if (Number(val) !== this.paidCardProductType) {
+                    this.ruleForm.baseCardFee = 0;
                 }
             }
         },
@@ -610,15 +591,6 @@
                 if (this.ruleForm.sfyjfx === undefined || this.ruleForm.sfyjfx === null) {
                     this.ruleForm.sfyjfx = 0;
                 }
-                if (this.ruleForm.sffftk === undefined || this.ruleForm.sffftk === null) {
-                    this.ruleForm.sffftk = 0;
-                }
-                if (this.ruleForm.sfyjfx === undefined || this.ruleForm.sfyjfx === null) {
-                    this.ruleForm.sfyjfx = 0;
-                }
-                if (this.ruleForm.sffftk === undefined || this.ruleForm.sffftk === null) {
-                    this.ruleForm.sffftk = 0;
-                }
                 if (this.ruleForm.productInitialBalance === undefined || this.ruleForm.productInitialBalance === null) {
                     this.ruleForm.productInitialBalance = 0;
                 }
@@ -653,6 +625,9 @@
                     this.ruleForm.upstreamApiId = foundObject.upstreamApiId;
                     this.ruleForm.upstreamApiCode = foundObject.upstreamApiCode;
 
+                }
+                if (Number(this.ruleForm.productType) !== this.paidCardProductType) {
+                    this.ruleForm.baseCardFee = 0;
                 }
                 updateProduct(this.ruleForm).then((res) => {
                     this.$message({
@@ -900,10 +875,10 @@
             getList() {
                 this.loading = true;
                 const params = { ...this.queryParams };
-                if (params.sffftk === '' || params.sffftk === undefined) {
-                    params.sffftk = null;
-                } else if (params.sffftk !== null) {
-                    params.sffftk = Number(params.sffftk);
+                if (params.productType === '' || params.productType === undefined) {
+                    params.productType = null;
+                } else if (params.productType !== null) {
+                    params.productType = Number(params.productType);
                 }
                 selectProductListPage(params).then((res) => {
                     if (res.data.rows) {

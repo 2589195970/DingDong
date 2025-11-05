@@ -62,9 +62,10 @@
                     <p v-if="scope.row.productType==2" style="color: red;">长期产品</p>
                     <p v-if="scope.row.productType==3" style="color:green;">其它</p>
                     <p v-if="scope.row.productType==4" style="color: red;">组合返佣</p>
+                    <p v-if="scope.row.productType==5" style="color:#ff8c00;">付费提卡</p>
                 </template>
             </el-table-column>
-            <el-table-column label="付费提卡" align="center" prop="sffftk">
+            <el-table-column label="付费提卡" align="center">
                 <template slot-scope="scope">
                     <span v-if="supportsCardFee(scope.row)">是</span>
                     <span v-else>否</span>
@@ -295,10 +296,11 @@
                 groupCode: [],
                 ruleForm: [],
                 searchType: [],
+                paidCardProductType: 5,
                 queryParams: {
                     pageNo: 1,
                     pageSize: 10,
-                    sffftk: 1,
+                    productType: 5,
                 },
                 sharedata:{},
                 shareOpen:false,
@@ -512,6 +514,7 @@
             getList() {
                 this.loading = true;
                 const payload = { ...this.queryParams };
+                payload.productType = this.paidCardProductType;
                 agentSelectProductListPage(payload)
                     .then((res) => {
                         const rows = (res.data && res.data.rows) || [];

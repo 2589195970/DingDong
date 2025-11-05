@@ -45,10 +45,4 @@ public class ProductSelectBO extends BaseBO{
     @ApiModelProperty("产品状态 0 下架 1上架")
     private Integer productStatus;
 
-    /**
-     * 是否需要付费提卡：0-否 1-是
-     */
-    @ApiModelProperty("是否需要付费提卡：0-否 1-是")
-    private Integer sffftk;
-
 }

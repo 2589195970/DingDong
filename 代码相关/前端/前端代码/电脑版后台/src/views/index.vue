@@ -1033,6 +1033,7 @@ export default {
         { value: productTypeCount.monthlyStatement, name: '月结产品' },
         { value: productTypeCount.longTime, name: '长期产品' },
         { value: productTypeCount.other, name: '其他产品' },
+        { value: productTypeCount.paidCard, name: '付费提卡' },
         { value: productTypeCount.combination, name: '组合返佣' }
       ].filter(item => item.value > 0) // 过滤掉数量为0的产品类型
 

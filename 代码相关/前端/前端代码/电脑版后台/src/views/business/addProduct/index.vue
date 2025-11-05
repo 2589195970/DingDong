@@ -23,6 +23,7 @@
                 <el-select v-model="ruleForm.productType" placeholder="请选择结算模式">
                     <el-option label="日结秒返" value="0"></el-option>
                     <el-option label="月结产品" value="1"></el-option>
+                    <el-option label="付费提卡" value="5"></el-option>
                     <!--<el-option label="长期产品" value="2"></el-option>-->
                     <!--<el-option label="其它" value="3"></el-option>-->
                     <!--<el-option label="组合返佣" value="4"></el-option>-->
@@ -107,13 +108,7 @@
                     <el-radio :label="1">是</el-radio>
                 </el-radio-group>
             </el-form-item>
-            <el-form-item label="是否需要付费提卡" prop="sffftk">
-                <el-radio-group v-model="ruleForm.sffftk">
-                    <el-radio :label="0">否</el-radio>
-                    <el-radio :label="1">是</el-radio>
-                </el-radio-group>
-            </el-form-item>
-            <el-form-item label="基础提卡费(元)" v-if="Number(ruleForm.sffftk) === 1">
+            <el-form-item label="基础提卡费(元)" v-if="Number(ruleForm.productType) === paidCardProductType">
                 <el-input-number v-model="ruleForm.baseCardFee" :min="0" :precision="0" />
             </el-form-item>
         </div>
@@ -228,6 +223,7 @@
                 imageUrl1: false,
                 upstreamApiCode: [],
                 upstreamProductCode: [],
+                paidCardProductType: 5,
                 submitLoading: false, // 提交loading状态
                 ruleForm: {
                     isAllAgent: '1',
@@ -245,7 +241,6 @@
                     photoConfig: null, // 照片配置
                     sfxysh: 0, // 默认不需要审核
                     sfyjfx: 1, // 默认参与佣金返现
-                    sffftk: 0, // 默认不需要付费提卡
                     // 接口相关字段
                     upstreamApiId: '',
                     upstreamApiName: '',
@@ -293,6 +288,11 @@
             'ruleForm.photoRequired'(val) {
                 if (Number(val) !== 1) {
                     this.ruleForm.sfxysh = 0;
+                }
+            },
+            'ruleForm.productType'(val) {
+                if (Number(val) !== this.paidCardProductType) {
+                    this.ruleForm.baseCardFee = 0;
                 }
             }
         },
@@ -375,6 +375,9 @@
                             this.submitLoading = false;
                             this.$message.error("请选择结算模式");
                         } else {
+                            if (Number(this.ruleForm.productType) !== this.paidCardProductType) {
+                                this.ruleForm.baseCardFee = 0;
+                            }
                             addProduct(this.ruleForm).then(() => {
                                 this.submitLoading = false;
                                 this.$modal.msgSuccess("新增成功");
@@ -402,7 +405,6 @@
                 this.ruleForm.photoConfig = null;
                 this.ruleForm.sfxysh = 0;
                 this.ruleForm.sfyjfx = 0;
-                this.ruleForm.sffftk = 0;
                 this.ruleForm.baseCardFee = 0;
                 this.ruleForm.productInitialBalance = 0;
             }

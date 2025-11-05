@@ -234,12 +234,6 @@ public class ProductSelectVO {
     private Integer sfyjfx;
 
     /**
-     * 是否需要付费提卡 0 否 1 是
-     */
-    @ApiModelProperty("是否需要付费提卡 0 否 1 是")
-    private Integer sffftk;
-
-    /**
      * 基础提卡费(元)
      */
     @ApiModelProperty("基础提卡费(元)")

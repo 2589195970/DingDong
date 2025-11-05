@@ -9,7 +9,7 @@ WHERE TABLE_SCHEMA = @current_schema
 
 SET @ddl = IF(
         @col_exists = 0,
-        'ALTER TABLE t_product ADD COLUMN base_card_fee INT NOT NULL DEFAULT 0 COMMENT ''基础提卡费(元，admin对一级成本)'' AFTER sffftk',
+        'ALTER TABLE t_product ADD COLUMN base_card_fee INT NOT NULL DEFAULT 0 COMMENT ''基础提卡费(元，admin对一级成本)'' AFTER sfyjfx',
         'SELECT ''t_product.base_card_fee already exists'''
     );
 PREPARE stmt FROM @ddl;
@@ -65,10 +65,10 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- 3. 初始化历史数据
--- 3.1 基础提卡费：仅对 sffftk = 1 的商品生效，禁止负值
+-- 3.1 基础提卡费：仅对 product_type = 5 (付费提卡) 的商品生效，禁止负值
 UPDATE t_product
 SET base_card_fee = GREATEST(COALESCE(base_card_fee, 0), 0)
-WHERE sffftk = 1;
+WHERE product_type = 5;
 
 -- 3.2 代理商品卡费字段兜底为 0
 UPDATE t_agent_product
@@ -90,7 +90,7 @@ BEGIN
         ap.downstream_card_fee = p.base_card_fee,
         ap.card_fee_profit     = 0
     WHERE (ap.parent_agent_code IS NULL OR ap.parent_agent_code = '')
-      AND p.sffftk = 1;
+      AND p.product_type = 5;
 
     -- 逐层遍历，将父级的对下售价同步为子级成本，初始差价拉平
     WHILE rows_affected > 0 DO
@@ -103,7 +103,7 @@ BEGIN
         SET child.incoming_card_fee   = parent.downstream_card_fee,
             child.downstream_card_fee = parent.downstream_card_fee,
             child.card_fee_profit     = 0
-        WHERE p.sffftk = 1
+        WHERE p.product_type = 5
           AND child.parent_agent_code IS NOT NULL
           AND child.parent_agent_code <> ''
           AND (

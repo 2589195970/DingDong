@@ -202,8 +202,9 @@ export default {
         pageNo: 1,
         pageSize: 10000,
         productStatus: 1, // 默认查询上架中
-        sffftk: 1, // 仅查询需付费提卡的产品
+        productType: 5, // 仅查询付费提卡产品
       },
+      paidCardProductType: 5,
       commissionopen: false,
       frme: {},
     }

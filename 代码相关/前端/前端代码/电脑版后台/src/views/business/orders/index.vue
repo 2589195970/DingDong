@@ -58,7 +58,13 @@
                 </el-select>
             </el-form-item>
             <el-form-item>
-                <el-select v-model="queryParams.isNotNullOrderUpstreamId" placeholder="上游单号是否为空" clearable filterable>
+                <el-select
+                    v-model="queryParams.isNotNullOrderUpstreamId"
+                    placeholder="上游订单是否存在"
+                    :clearable="!onlyNullSystemOrder"
+                    filterable
+                    :disabled="onlyNullSystemOrder"
+                >
                     <el-option v-for="dict in isNotNullOrderUpstreamId" :key="dict.id" :label="dict.name"
                         :value="dict.id" />
                 </el-select>
@@ -88,22 +94,35 @@
             @selection-change="handleSelectionChange">
             <el-table-column label="订单信息" align="left" prop="companyName" :show-overflow-tooltip="true">
                 <template slot-scope="scope">
-                    <span>来源：
-                        <span v-if="scope.row.orderSource==0">信息流</span>
-                        <span v-if="scope.row.orderSource==1">合作方API进单</span>
-                        <span v-if="scope.row.orderSource==2">导单</span>
-                        <span v-if="scope.row.orderSource==2">重推</span>
-                    </span><br>
-                    <span>订单ID：{{ scope.row.orderId}}</span><br>
-                    <span>系统订单号：{{scope.row.orderUpstreamId}}</span><br>
-                    <span>产品名称：{{scope.row.productName}}</span><br>
-                    <span>运营商：
-                        <span v-if="scope.row.operatorType==0">中国移动</span>
-                        <span v-if="scope.row.operatorType==1">中国电信</span>
-                        <span v-if="scope.row.operatorType==2">中国联通</span>
-                        <span v-if="scope.row.operatorType==3">中国广电</span>
-                    </span><br>
-                    <span>代理商名称：{{ scope.row.showDownstreamName}}</span><br>
+                    <div class="order-info">
+                        <div class="order-info__row order-info__row--two-cols">
+                            <span>
+                                来源：
+                                <span v-if="scope.row.orderSource==0">信息流</span>
+                                <span v-if="scope.row.orderSource==1">合作方API进单</span>
+                                <span v-if="scope.row.orderSource==2">导单</span>
+                                <span v-if="scope.row.orderSource==2">重推</span>
+                            </span>
+                            <span>代理商名称：{{ scope.row.showDownstreamName }}</span>
+                        </div>
+                        <div class="order-info__row">
+                            <span>订单ID：{{ scope.row.orderId }}</span>
+                        </div>
+                        <div class="order-info__row">
+                            <span>系统订单号：{{ scope.row.orderUpstreamId }}</span>
+                        </div>
+                        <div class="order-info__row">
+                            <span>产品名称：{{ scope.row.productName }}</span>
+                        </div>
+                        <div class="order-info__row">
+                            <span>运营商：
+                                <span v-if="scope.row.operatorType==0">中国移动</span>
+                                <span v-if="scope.row.operatorType==1">中国电信</span>
+                                <span v-if="scope.row.operatorType==2">中国联通</span>
+                                <span v-if="scope.row.operatorType==3">中国广电</span>
+                            </span>
+                        </div>
+                    </div>
                 </template>
             </el-table-column>
             <el-table-column label="开卡人信息" align="left" prop="companySimpleName" :show-overflow-tooltip="true">
@@ -123,6 +142,7 @@
                         <span v-if="scope.row.productType==2">长期产品</span>
                         <span v-if="scope.row.productType==3">其它</span>
                         <span v-if="scope.row.productType==4">组合返佣</span>
+                        <span v-if="scope.row.productType==5">付费提卡</span>
                     </span><br>
                     <span>订单状态：
                         <span v-if="scope.row.orderStatus==-1">失败</span>
@@ -559,6 +579,13 @@
     export default {
         name: "Operlog",
         dicts: ['sys_oper_type', 'sys_common_status'],
+        props: {
+            // When true, force the list to only show orders without a system order number.
+            onlyNullSystemOrder: {
+                type: Boolean,
+                default: false
+            }
+        },
         data() {
             return {
                 // 用户导入参数
@@ -614,11 +641,11 @@
                 },
                 isNotNullOrderUpstreamId: [
                     {
-                        name: "上游单号为空",
+                        name: "否",
                         id: 0
                     },
                     {
-                        name: "不为空",
+                        name: "是",
                         id: 1
                     },
                 ],
@@ -701,7 +728,7 @@
                 queryParams: {
                     pageNo: 1,
                     pageSize: 10,
-
+                    isNotNullOrderUpstreamId: this.onlyNullSystemOrder ? 0 : undefined,
                 },
 
                 // 照片审核状态选项
@@ -788,6 +815,9 @@
             };
         },
         created() {
+            if (this.onlyNullSystemOrder) {
+                this.queryParams.isNotNullOrderUpstreamId = 0;
+            }
             this.getList();
             selectUpstreamApiListPage({}).then((res) => {
                 console.log(res.data);
@@ -953,6 +983,9 @@
                 this.getList();
             },
             getList() {
+                if (this.onlyNullSystemOrder) {
+                    this.queryParams.isNotNullOrderUpstreamId = 0;
+                }
                 this.queryParams.starTime = undefined;
                 this.queryParams.endTime = undefined;
                 if (this.dateRange) {
@@ -1477,5 +1510,24 @@
     .remark-content strong {
         color: #303133;
         font-size: 15px;
+    }
+
+    .order-info__row {
+        margin-bottom: 4px;
+    }
+
+    .order-info__row:last-child {
+        margin-bottom: 0;
+    }
+
+    .order-info__row--two-cols {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .order-info__row--two-cols > span {
+        flex: 1 1 45%;
     }
 </style>

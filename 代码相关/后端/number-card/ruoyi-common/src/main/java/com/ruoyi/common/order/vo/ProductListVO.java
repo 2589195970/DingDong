@@ -80,6 +80,12 @@ public class ProductListVO {
     private Integer operatorType;
 
     /**
+     * 产品类型 0-日结秒返 1-月结产品
+     */
+    @ApiModelProperty("产品类型 0-日结秒返 1-月结产品")
+    private Integer productType;
+
+    /**
      * '产品通用流量'
      */
     @ApiModelProperty(value = "'产品通用流量'")
@@ -136,12 +142,6 @@ public class ProductListVO {
      */
     @ApiModelProperty("是否参与佣金返现 0 否 1 是")
     private Integer sfyjfx;
-
-    /**
-     * 是否需要付费提卡 0 否 1 是
-     */
-    @ApiModelProperty("是否需要付费提卡 0 否 1 是")
-    private Integer sffftk;
 
     /**
      * 基础提卡费(元)

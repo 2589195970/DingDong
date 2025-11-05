@@ -148,6 +148,21 @@ public class GthServiceImpl extends BaseServiceImpl implements GthService {
         afterCallback(order,null);
     }
 
+    /**
+     * 商品上下架回调
+     *
+     * @param notifyRequest
+     * @throws Exception
+     */
+    public void updateProductStatus(BaseNotifyRequest notifyRequest) throws Exception {
+        GthCallbackRequest request = (GthCallbackRequest) notifyRequest;
+        log.info("感叹号商品上下架回调信息处理:{}", JSONObject.toJSONString(request));
+        productService.updateProductStatus(request.getProduct_status(), request.getProduct_code());
+
+    }
+
+
+
 
     /**
      * 订单处理

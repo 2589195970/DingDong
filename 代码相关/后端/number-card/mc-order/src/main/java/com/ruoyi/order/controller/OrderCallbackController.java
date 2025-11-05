@@ -93,7 +93,11 @@ public class OrderCallbackController {
     @ApiOperation("感叹号回调信息处理")
     public String gthCallback(@ModelAttribute GthCallbackRequest request) {
         try {
-            gthService.callback(request);
+            if(request.getEvent_type().equals("product_status")){
+                gthService.updateProductStatus(request);
+            }else {
+                gthService.callback(request);
+            }
             return "SUCCESS";
         } catch (BizException e) {
             log.info("{}方法异常:{}", "gthCallback", e.getMessage());

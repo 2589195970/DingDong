@@ -22,9 +22,6 @@
         <if test="productType != null">
             AND p.product_type = #{productType}
         </if>
-        <if test="sffftk != null">
-            AND p.sffftk = #{sffftk}
-        </if>
         ORDER BY a.product_sort,a.create_time desc
     </select>
 
@@ -57,7 +54,6 @@
             p.product_age_max as productAgeMax,
             p.product_detail_map as productDetailMap,
             p.sfyjfx as sfyjfx,
-            p.sffftk as sffftk,
             a.agent_product_id as agentProductId,
             a.product_status as productStatus,
             a.product_commission AS productCommission,
@@ -88,9 +84,6 @@
         </if>
         <if test="productType != null">
             AND p.product_type = #{productType}
-        </if>
-        <if test="sffftk != null">
-            AND p.sffftk = #{sffftk}
         </if>
         ORDER BY a.product_sort,a.create_time desc
         limit #{offset},#{pageSize}

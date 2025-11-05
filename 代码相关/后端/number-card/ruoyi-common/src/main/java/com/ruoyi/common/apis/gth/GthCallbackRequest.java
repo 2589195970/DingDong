@@ -1,24 +1,39 @@
 package com.ruoyi.common.apis.gth;
 
 import com.ruoyi.common.order.reuqest.BaseNotifyRequest;
+import com.ruoyi.common.order.reuqest.ProductStatusNotifyRequest;
 import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 @Data
 @ApiModel("感叹号回调信息")
-public class GthCallbackRequest extends BaseNotifyRequest {
+public class GthCallbackRequest extends BaseNotifyRequest implements ProductStatusNotifyRequest {
+
+    /**
+     * 回调事件类型
+     */
+    private String event_type;
+    /**
+     * 商品编码
+     */
+    private String product_code;
 
     /**
      * 合作方id
      */
     private String outer_id;
+
+    /**
+     * 商品状态
+     */
+    private String product_status;
     /**
      * 生产号码
      */
     private String plan_mobile_produced;
 
     /**
-     * 状态	待发货 已发货 开卡失败 身份证审核失败 订单终止 其余状态不会回调
+     * 状态 待发货 已发货 开卡失败 身份证审核失败 订单终止 其余状态不会回调
      */
     private String status;
 
@@ -48,7 +63,7 @@ public class GthCallbackRequest extends BaseNotifyRequest {
     private String reason;
 
     /**
-     * 激活	1 已激活
+     * 激活 1 已激活
      */
     private String is_activated;
 
@@ -58,7 +73,7 @@ public class GthCallbackRequest extends BaseNotifyRequest {
     private String activated_at;
 
     /**
-     * 首充	1 已首充
+     * 首充 1 已首充
      */
     private String is_recharged;
 
@@ -71,5 +86,15 @@ public class GthCallbackRequest extends BaseNotifyRequest {
      * 首充金额
      */
     private String recharge_amount;
+
+    @Override
+    public String getCallbackProductStatus() {
+        return this.product_status;
+    }
+
+    @Override
+    public String getCallbackProductCode() {
+        return this.product_code;
+    }
 
 }

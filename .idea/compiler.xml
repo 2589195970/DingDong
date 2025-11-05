@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Annotation profile for ruoyi" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.24/lombok-1.18.24.jar" />
+        </processorPath>
+        <module name="ruoyi-framework" />
+        <module name="ruoyi-system" />
+        <module name="mc-order" />
+        <module name="number-card" />
+        <module name="mc-console" />
+        <module name="ruoyi-common" />
+        <module name="ruoyi-generator" />
+        <module name="ruoyi-quartz" />
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>

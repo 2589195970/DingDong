@@ -24,7 +24,7 @@ public interface ProductMapper extends BaseMapper<Product> {
      */
     Integer selectAgentProductListCount(@Param(value = "operatorType") Integer operatorType,@Param(value = "productStatus") Integer productStatus,
                                         @Param(value = "productType") Integer productType,
-                                        @Param(value = "productName") String productName,@Param(value = "sffftk") Integer sffftk,
+                                        @Param(value = "productName") String productName,
                                         @Param(value = "agentCode") String agentCode);
 
     /**
@@ -34,7 +34,7 @@ public interface ProductMapper extends BaseMapper<Product> {
      */
     List<AgentProductVO> selectAgentProductList(@Param(value = "operatorType") Integer operatorType,@Param(value = "productStatus") Integer productStatus,
                                                 @Param(value = "productType") Integer productType,
-                                                @Param(value = "productName") String productName,@Param(value = "sffftk") Integer sffftk,
+                                                @Param(value = "productName") String productName,
                                                 @Param(value = "agentCode") String agentCode,
                                                 @Param(value = "offset") Integer offset,@Param(value = "pageSize") Integer pageSize);
 

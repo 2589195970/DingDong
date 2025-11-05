@@ -262,12 +262,6 @@ public class ProductAddAndUpdateBO {
     private Integer sfyjfx = 0;
 
     /**
-     * 是否需要付费提卡 0 否 1 是
-     */
-    @ApiModelProperty("是否需要付费提卡 0 否 1 是")
-    private Integer sffftk = 0;
-
-    /**
      * 基础提卡费(元)
      */
     @ApiModelProperty("基础提卡费(元)")

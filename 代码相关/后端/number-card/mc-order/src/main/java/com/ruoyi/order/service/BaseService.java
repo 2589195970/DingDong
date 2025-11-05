@@ -14,6 +14,7 @@ import java.util.Map;
 
 /**
  * 订单处理流程基类
+ * 
  * @Description
  * @Author 陈思伟
  * @Date 2024/08/13 17:11
@@ -45,7 +46,8 @@ public interface BaseService {
      * @return
      * @throws Exception
      */
-    Order syncSubmitOrder(Long orderId, BaseSubmitOrderRequest request, Product product, UpstreamApi upstreamApi) throws Exception;
+    Order syncSubmitOrder(Long orderId, BaseSubmitOrderRequest request, Product product, UpstreamApi upstreamApi)
+            throws Exception;
 
     /**
      * 同步提交订单
@@ -55,7 +57,6 @@ public interface BaseService {
      * @throws Exception
      */
     Order syncSubmitOrder(BaseSubmitOrderRequest request, Product product, UpstreamApi upstreamApi) throws Exception;
-
 
     /**
      * 回调处理
@@ -68,13 +69,19 @@ public interface BaseService {
     /**
      * 更新订单照片信息
      *
-     * @param order 订单信息
-     * @param product 产品信息
+     * @param order       订单信息
+     * @param product     产品信息
      * @param upstreamApi 上游API信息
      * @throws Exception
      */
     void updateOrderPhotos(Order order, Product product, UpstreamApi upstreamApi) throws Exception;
 
-
+    /**
+     * 商品上下架回调
+     *
+     * @param request
+     * @throws Exception
+     */
+    void updateProductStatus(BaseNotifyRequest request) throws Exception;
 
 }

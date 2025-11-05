@@ -50,12 +50,21 @@ public interface ProductService extends IService<Product> {
 
 
      /**
-      * 根据代理商code 获取产品列表
-      *
-      * @param
-      * @return
-      */
+     * 根据代理商code 获取产品列表
+     *
+     * @param
+     * @return
+     */
      List<ProductListVO> getAgentProductList(ProductListBO productListBO) throws BizException;
+
+     /**
+      * 根据产品编码更新上下架状态
+      *
+      * @param productStatus 上下架状态（0 下架 1 上架）
+      * @param productCode   产品编码
+      * @throws BizException 业务异常
+      */
+     void updateProductStatus(String productStatus, String productCode) throws BizException;
 
 
 }

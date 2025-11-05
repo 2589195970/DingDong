@@ -13,7 +13,8 @@ public enum ProductEnum {
     MONTHLY_STATEMENT(1, "月结产品"),
     LONG_TIME(2, "长期产品"),
     OTHER(3, "其他产品"),
-    COMBINATION(4, "组合返佣");
+    COMBINATION(4, "组合返佣"),
+    PAID_CARD(5, "付费提卡");
 
     ProductEnum(Integer status, String message) {
         this.status = status;

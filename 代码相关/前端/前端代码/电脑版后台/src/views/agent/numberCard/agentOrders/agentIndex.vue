@@ -67,22 +67,35 @@
               @selection-change="handleSelectionChange">
       <el-table-column label="订单信息" align="left" prop="companyName" :show-overflow-tooltip="true">
         <template slot-scope="scope">
-                    <span>来源：
-                        <span v-if="scope.row.orderSource==0">信息流</span>
-                        <span v-if="scope.row.orderSource==1">合作方API进单</span>
-                        <span v-if="scope.row.orderSource==2">导单</span>
-                        <span v-if="scope.row.orderSource==2">重推</span>
-                    </span><br>
-          <span>订单ID：{{ scope.row.orderId}}</span><br>
-          <span>系统订单号：{{scope.row.orderUpstreamId}}</span><br>
-          <span>产品名称：{{scope.row.productName}}</span><br>
-          <span>运营商：
-                        <span v-if="scope.row.operatorType==0">中国移动</span>
-                        <span v-if="scope.row.operatorType==1">中国电信</span>
-                        <span v-if="scope.row.operatorType==2">中国联通</span>
-                        <span v-if="scope.row.operatorType==3">中国广电</span>
-                    </span><br>
-          <span>代理商名称：{{ scope.row.showDownstreamName}}</span><br>
+          <div class="order-info">
+            <div class="order-info__row order-info__row--two-cols">
+              <span>
+                来源：
+                <span v-if="scope.row.orderSource==0">信息流</span>
+                <span v-if="scope.row.orderSource==1">合作方API进单</span>
+                <span v-if="scope.row.orderSource==2">导单</span>
+                <span v-if="scope.row.orderSource==2">重推</span>
+              </span>
+              <span>代理商名称：{{ scope.row.showDownstreamName }}</span>
+            </div>
+            <div class="order-info__row">
+              <span>订单ID：{{ scope.row.orderId }}</span>
+            </div>
+            <div class="order-info__row">
+              <span>系统订单号：{{ scope.row.orderUpstreamId }}</span>
+            </div>
+            <div class="order-info__row">
+              <span>产品名称：{{ scope.row.productName }}</span>
+            </div>
+            <div class="order-info__row">
+              <span>运营商：
+                <span v-if="scope.row.operatorType==0">中国移动</span>
+                <span v-if="scope.row.operatorType==1">中国电信</span>
+                <span v-if="scope.row.operatorType==2">中国联通</span>
+                <span v-if="scope.row.operatorType==3">中国广电</span>
+              </span>
+            </div>
+          </div>
         </template>
       </el-table-column>
       <el-table-column label="开卡人信息" align="left" prop="companySimpleName" :show-overflow-tooltip="true">
@@ -443,7 +456,8 @@ export default {
         1: "月结产品",
         2: "长期产品",
         3: "其它",
-        4: "组合返佣"
+        4: "组合返佣",
+        5: "付费提卡"
       };
       return mapping[type] || "--";
     },
@@ -611,5 +625,24 @@ export default {
 
 .order-status-item--full {
   grid-column: 1 / -1;
+}
+
+.order-info__row {
+  margin-bottom: 4px;
+}
+
+.order-info__row:last-child {
+  margin-bottom: 0;
+}
+
+.order-info__row--two-cols {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.order-info__row--two-cols > span {
+  flex: 1 1 45%;
 }
 </style>

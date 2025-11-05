@@ -4,11 +4,13 @@ package com.ruoyi.order.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ruoyi.common.enums.ProductEnum;
 import com.ruoyi.common.order.bo.ProductH5BO;
 import com.ruoyi.common.order.bo.ProductListBO;
 import com.ruoyi.common.order.entity.AgentAccount;
+import com.ruoyi.common.order.entity.AgentProduct;
 import com.ruoyi.common.order.vo.ProductH5VO;
 import com.ruoyi.common.order.vo.ProductListVO;
 import com.ruoyi.order.mapper.AgentProductMapper;
@@ -21,6 +23,7 @@ import com.ruoyi.common.order.bo.AgentProductBO;
 import com.ruoyi.common.order.entity.Product;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
@@ -137,7 +140,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             productListVOList = agentProductMapper.selectAdminAgentProductList(productListBO.getOperatorType());
             for (ProductListVO productListVO:productListVOList){
                 productListVO.setAgentCode(agentAccount.getAgentCode());
-                agentAccount.setAgentName(agentAccount.getAgentName());
+                productListVO.setAgentName(agentAccount.getAgentName());
             }
         }else {
             productListVOList = agentProductMapper.selectAgentProductList(productListBO.getAgentCode(),productListBO.getOperatorType());
@@ -153,6 +156,54 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             productListVO.setH5Url(stringBuffer.toString());
         }
         return productListVOList;
+    }
+
+    /**
+     * 根据产品编码更新上下架状态
+     *
+     * @param productStatus 上下架状态（0 下架 1 上架）
+     * @param productCode   产品编码
+     * @throws BizException 业务异常
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateProductStatus(String productStatus, String productCode) throws BizException {
+        if (StrUtil.isBlankIfStr(productCode) || StrUtil.isBlankIfStr(productStatus)) {
+            throw new BizException("productCode或productStatus不存在:{},{}", productCode, productStatus);
+        }
+        String statusStr = StrUtil.trim(productStatus);
+        Integer status;
+        try {
+            status = Integer.valueOf(statusStr);
+        } catch (NumberFormatException e) {
+            throw new BizException("商品状态不合法:{}", productStatus);
+        }
+        Integer finalStatus;
+        if (Objects.equals(status, BaseConstant.ZERO_INT) || Objects.equals(status, BaseConstant.ONE_INT)) {
+            finalStatus = status;
+        } else if (Objects.equals(status, BaseConstant.TWO_INT)) {
+            finalStatus = BaseConstant.ZERO_INT;
+        } else {
+            throw new BizException("商品状态不支持:{}", status);
+        }
+
+        Product product = getProduct(productCode);
+        long now = System.currentTimeMillis();
+
+        Product updateProduct = new Product();
+        updateProduct.setProductId(product.getProductId());
+        updateProduct.setProductStatus(finalStatus);
+        updateProduct.setUpdateTime(now);
+        if (Objects.equals(finalStatus, BaseConstant.ONE_INT)) {
+            updateProduct.setShelfTime(now);
+        }
+        baseMapper.updateById(updateProduct);
+
+        AgentProduct agentProduct = new AgentProduct();
+        agentProduct.setProductStatus(finalStatus);
+        agentProduct.setUpdateTime(now);
+        agentProductMapper.update(agentProduct,
+            new LambdaUpdateWrapper<AgentProduct>().eq(AgentProduct::getParentProductCode, productCode));
     }
 
 

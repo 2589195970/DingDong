@@ -16,6 +16,7 @@ import com.ruoyi.common.order.bo.AgentProductBO;
 import com.ruoyi.common.order.entity.*;
 import com.ruoyi.common.order.response.GetNumberListResponse;
 import com.ruoyi.common.order.reuqest.BaseNotifyRequest;
+import com.ruoyi.common.order.reuqest.ProductStatusNotifyRequest;
 import com.ruoyi.common.order.reuqest.BaseSubmitOrderRequest;
 import com.ruoyi.common.order.reuqest.GetNumberListRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -311,5 +312,25 @@ public abstract class BaseServiceImpl implements BaseService {
     public void updateOrderPhotos(Order order, Product product, UpstreamApi upstreamApi) throws Exception {
         log.info("{} 订单{} 暂不需要向上游更新照片信息", getServiceName(), order.getOrderId());
         // 默认不做任何操作，由具体子类实现
+    }
+
+    /**
+     * 商品上下架回调默认实现
+     *
+     * @param notifyRequest 回调请求
+     * @throws Exception 业务异常
+     */
+    @Override
+    public void updateProductStatus(BaseNotifyRequest notifyRequest) throws Exception {
+        if (!(notifyRequest instanceof ProductStatusNotifyRequest)) {
+            String requestType = notifyRequest == null ? "null" : notifyRequest.getClass().getName();
+            log.warn("{} 未实现商品上下架回调处理, requestType: {}", getServiceName(), requestType);
+            throw new BizException("当前上游不支持商品上下架回调");
+        }
+        ProductStatusNotifyRequest statusNotifyRequest = (ProductStatusNotifyRequest) notifyRequest;
+        String productCode = statusNotifyRequest.getCallbackProductCode();
+        String productStatus = statusNotifyRequest.getCallbackProductStatus();
+        log.info("{} 商品上下架回调处理, productCode:{}, productStatus:{}", getServiceName(), productCode, productStatus);
+        productService.updateProductStatus(productStatus, productCode);
     }
 }

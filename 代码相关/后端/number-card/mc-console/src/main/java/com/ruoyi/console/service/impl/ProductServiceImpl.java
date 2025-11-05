@@ -98,7 +98,6 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 .eq(productSelectBO.getProductType()!=null,Product::getProductType,productSelectBO.getProductType())
                 .eq(StringUtils.isNotEmpty(productSelectBO.getProductGsdq()),Product::getProductGsdq,productSelectBO.getProductGsdq())
                 .eq(productSelectBO.getProductStatus()!=null,Product::getProductStatus,productSelectBO.getProductStatus())
-                .eq(productSelectBO.getSffftk()!=null,Product::getSffftk,productSelectBO.getSffftk())
                 .orderByDesc(Product::getProductSort).orderByDesc(Product::getCreateTime)
         );
         Page<ProductSelectVO> productSelectVOPage  = new Page<>();
@@ -144,10 +143,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if(product.getSfyjfx() == null){
             product.setSfyjfx(BaseConstant.ZERO_INT);
         }
-        if(product.getSffftk() == null){
-            product.setSffftk(BaseConstant.ZERO_INT);
-        }
         if (product.getBaseCardFee() == null || product.getBaseCardFee() < 0) {
+            product.setBaseCardFee(BaseConstant.ZERO_INT);
+        }
+        if (!Objects.equals(product.getProductType(), ProductEnum.PAID_CARD.getStatus())) {
             product.setBaseCardFee(BaseConstant.ZERO_INT);
         }
         if (product.getProductInitialBalance() == null || product.getProductInitialBalance() < 0) {
@@ -268,10 +267,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if(updateProduct.getSfyjfx() == null){
             updateProduct.setSfyjfx(BaseConstant.ZERO_INT);
         }
-        if(updateProduct.getSffftk() == null){
-            updateProduct.setSffftk(BaseConstant.ZERO_INT);
-        }
         if (updateProduct.getBaseCardFee() == null || updateProduct.getBaseCardFee() < 0) {
+            updateProduct.setBaseCardFee(BaseConstant.ZERO_INT);
+        }
+        if (!Objects.equals(updateProduct.getProductType(), ProductEnum.PAID_CARD.getStatus())) {
             updateProduct.setBaseCardFee(BaseConstant.ZERO_INT);
         }
         if (updateProduct.getProductInitialBalance() == null || updateProduct.getProductInitialBalance() < 0) {
@@ -408,44 +407,48 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
         // 获取当前操作用户的代理商信息
         AgentAccount currentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+        boolean isAdmin = loginUser.getUser().isAdmin();
+        Integer targetStatus = productUpdateStatusBO.getProductStatus();
 
         // 如果是上架操作，检查上级代理商的产品状态
-        if(productUpdateStatusBO.getProductStatus() == 1) {
+        if(targetStatus == 1) {
             checkParentAgentProductStatus(product, currentAgentAccount, loginUser);
         }
 
         // 保存原状态，用于后续公告创建
         Integer oldStatus = product.getProductStatus();
 
-        // 更新产品状态
-        product.setProductStatus(productUpdateStatusBO.getProductStatus());
-        product.setUpdateTime(System.currentTimeMillis());
+        if (isAdmin) {
+            // 更新产品状态
+            product.setProductStatus(targetStatus);
+            product.setUpdateTime(System.currentTimeMillis());
 
-        // 如果是上架操作，设置上架时间
-        if(productUpdateStatusBO.getProductStatus() == 1) {
-            product.setShelfTime(System.currentTimeMillis());
-        }
+            // 如果是上架操作，设置上架时间
+            if(targetStatus == 1) {
+                product.setShelfTime(System.currentTimeMillis());
+            }
 
-        baseMapper.updateById(product);
+            baseMapper.updateById(product);
 
-        // 【新增】创建产品状态变更公告
-        try {
-            productNoticeService.createProductStatusNotice(product, oldStatus, productUpdateStatusBO.getProductStatus(), loginUser.getUsername());
-        } catch (Exception e) {
-            log.warn("创建产品状态变更公告失败，产品ID：{}, 错误：{}", product.getProductId(), e.getMessage());
-            // 公告创建失败不影响主流程，只记录警告日志
+            // 【新增】创建产品状态变更公告
+            try {
+                productNoticeService.createProductStatusNotice(product, oldStatus, targetStatus, loginUser.getUsername());
+            } catch (Exception e) {
+                log.warn("创建产品状态变更公告失败，产品ID：{}, 错误：{}", product.getProductId(), e.getMessage());
+                // 公告创建失败不影响主流程，只记录警告日志
+            }
         }
 
         // 更新当前代理商自己的产品状态
-        updateCurrentAgentProduct(product, productUpdateStatusBO.getProductStatus(), currentAgentAccount.getAgentCode());
-        if (loginUser.getUser().isAdmin()) {
+        updateCurrentAgentProduct(product, targetStatus, currentAgentAccount.getAgentCode());
+        if (isAdmin) {
             // 递归下架所有下游代理商的产品
-            updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode(), productUpdateStatusBO.getProductStatus());
+            updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode(), targetStatus);
         }else{
             // 只有下架操作才影响下游代理商
-            if(productUpdateStatusBO.getProductStatus() == 0) {
+            if(targetStatus == 0) {
                 // 递归下架所有下游代理商的产品
-                updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode(),productUpdateStatusBO.getProductStatus());
+                updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode(),targetStatus);
             }
         }
 
@@ -897,6 +900,13 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 ).intValue();
                 productTypeCount.put("other", otherCount);
 
+                int paidCardCount = baseMapper.selectCount(
+                    new LambdaQueryWrapper<Product>()
+                        .eq(Product::getProductType, ProductEnum.PAID_CARD.getStatus())
+                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+                ).intValue();
+                productTypeCount.put("paidCard", paidCardCount);
+
                 // 组合返佣产品数量
                 int combinationCount = baseMapper.selectCount(
                     new LambdaQueryWrapper<Product>()
@@ -906,7 +916,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
                 productTypeCount.put("combination", combinationCount);
 
                 // 计算总产品数量
-                int totalCount = dailySettlementCount + monthlyStatementCount + longTimeCount + otherCount + combinationCount;
+                int totalCount = dailySettlementCount + monthlyStatementCount + longTimeCount + otherCount + paidCardCount + combinationCount;
 
                 result.put("productTypeCount", productTypeCount);
                 result.put("totalCount", totalCount);

@@ -37,8 +37,8 @@
 
 			<div class="form-con">
 				<div class="form">
-					<van-notice-bar
-						v-if="productList.sffftk == 1"
+				<van-notice-bar
+					v-if="Number(productList.productType) === 5"
 						class="paid-notice"
 						color="#8B4513"
 						background="#FFF8F0"
@@ -180,7 +180,7 @@
 								<a @click="protocolVisible2=true">《信息收集公告》</a>
 							</p>
 
-							<p class="paid-tip" v-if="productList.sffftk == 1 && currentStep === 2">
+					<p class="paid-tip" v-if="Number(productList.productType) === 5 && currentStep === 2">
 								<van-checkbox v-model="paidCardConfirmed" checked-color="#4EAAEF"
 									class="checkbox"></van-checkbox>
 								<span>我已了解该产品需支付提卡费用</span>
@@ -228,7 +228,7 @@
 								<a @click="protocolVisible2=true">《信息收集公告》</a>
 							</p>
 
-							<p class="paid-tip" v-if="productList.sffftk == 1">
+					<p class="paid-tip" v-if="Number(productList.productType) === 5">
 								<van-checkbox v-model="paidCardConfirmed" checked-color="#4EAAEF"
 									class="checkbox"></van-checkbox>
 								<span>我已了解该产品需支付提卡费用</span>
@@ -269,7 +269,7 @@
 				:overlay-style="{ backgroundColor: 'rgba(0,0,0,.5)' }">
 				<div class="success-modal-con">
 						<div class="success-modal">
-							<img :src="productList.sffftk == 1 ? './img/fwtk.png' : './img/cg.jpg'" alt="">
+					<img :src="Number(productList.productType) === 5 ? './img/fwtk.png' : './img/cg.jpg'" alt="">
 					</div>
 					<van-icon class="icon" name="close" @click="successModalVisible=false" />
 				</div>

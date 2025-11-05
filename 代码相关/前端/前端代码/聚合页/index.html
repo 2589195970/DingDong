@@ -96,6 +96,10 @@
 						<!-- <div class="paimin">{{dict.index}}</div> -->
 						<div class="imgtup2">
 							<image :src="dict.productMasterMap" class="imgtup1"></image>
+							<!-- 三角标：区分秒商品/月商品 -->
+							<div class="product-type-tag" :class="dict.productType == 1 ? 'tag-month' : 'tag-second'">
+								<span>{{ dict.productType == 1 ? '月' : '秒' }}</span>
+							</div>
 						</div>
 						<div class="imgtup">
 							<div class="textwz">{{dict.productName}}</div>
@@ -128,8 +132,16 @@
 									<div style="word-wrap: break-word; word-break: break-all;">{{dict.productScsm}}</div>
 								</div>
 								<button
-									style="width: 120px; height: 30px; font-size: 14px; background-color: red; color: #fff; border-radius: 23px; flex-shrink: 0;"
-									@click="Receive(dict.h5Url)">{{ Number(dict.sffftk) === 1 ? '付费提卡' : '免费领取' }}</button>
+									:style="{
+										width: '120px',
+										height: '30px',
+										fontSize: '14px',
+								backgroundColor: Number(dict.productType) === 5 ? '#34c759' : 'red',
+										color: '#fff',
+										borderRadius: '23px',
+										flexShrink: 0
+									}"
+								@click="Receive(dict.h5Url)">{{ Number(dict.productType) === 5 ? '付费提卡' : '免费领取' }}</button>
 							</div>
 						</div>
 					</li>
@@ -328,8 +340,11 @@
 		}
 	}
 
-	// 初始化轮播图
-	const carousel = new Carousel(document.querySelector('.carousel'));
+	// 初始化轮播图（仅在首页区域挂载时执行）
+	const carouselContainer = document.querySelector('.carousel');
+	if (carouselContainer) {
+		new Carousel(carouselContainer);
+	}
 </script>
 
 </html>

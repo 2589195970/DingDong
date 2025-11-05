@@ -58,7 +58,7 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-select v-model="queryParams.isNotNullOrderUpstreamId" placeholder="上游单号是否为空" clearable filterable>
+        <el-select v-model="queryParams.isNotNullOrderUpstreamId" placeholder="上游订单是否存在" clearable filterable>
           <el-option v-for="dict in isNotNullOrderUpstreamId" :key="dict.id" :label="dict.name"
                      :value="dict.id" />
         </el-select>
@@ -123,6 +123,7 @@
                         <span v-if="scope.row.productType==2">长期产品</span>
                         <span v-if="scope.row.productType==3">其它</span>
                         <span v-if="scope.row.productType==4">组合返佣</span>
+                        <span v-if="scope.row.productType==5">付费提卡</span>
                     </span><br>
           <span>订单状态：
                         <span v-if="scope.row.orderStatus==-1">失败</span>
@@ -615,11 +616,11 @@ export default {
       },
       isNotNullOrderUpstreamId: [
         {
-          name: "上游单号为空",
+          name: "否",
           id: 0
         },
         {
-          name: "不为空",
+          name: "是",
           id: 1
         },
       ],

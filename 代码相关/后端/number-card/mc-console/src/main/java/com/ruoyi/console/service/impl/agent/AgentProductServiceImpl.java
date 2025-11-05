@@ -8,6 +8,7 @@ import com.ruoyi.common.constant.CacheKeyConstants;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.core.page.PageResultFactory;
+import com.ruoyi.common.enums.ProductEnum;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.bo.AgentProductCardFeeChildrenQueryBO;
 import com.ruoyi.common.order.bo.AgentProductCardFeeOverrideCancelBO;
@@ -36,10 +37,13 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -77,6 +81,8 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
     private static final int BATCH_INSERT_SIZE = 500;
     private static final int OVERRIDE_ACTIVE = 1;
     private static final int OVERRIDE_INACTIVE = 0;
+    private static final int AGENT_CHILD_QUERY_BATCH_SIZE = 100;
+    private static final int CARD_FEE_DEFAULT_MARGIN = 20;
     
     @Resource
     ToolConfigService toolConfigService;
@@ -102,7 +108,6 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
                 agentProductSelectBO.getProductStatus(),
                 agentProductSelectBO.getProductType(),
                 agentProductSelectBO.getProductName(),
-                agentProductSelectBO.getSffftk(),
                 agentAccount.getAgentCode());
         if (totalRows == null || totalRows == BaseConstant.ZERO_INT) {
             return PageResultFactory.createPageResult(new ArrayList<>(), 0L, agentProductSelectBO.getPageSize(), agentProductSelectBO.getPageNo());
@@ -113,7 +118,6 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
                 agentProductSelectBO.getProductStatus(),
                 agentProductSelectBO.getProductType(),
                 agentProductSelectBO.getProductName(),
-                agentProductSelectBO.getSffftk(),
                 agentAccount.getAgentCode(),
                 (agentProductSelectBO.getPageNo() - 1) * agentProductSelectBO.getPageSize(),
                 agentProductSelectBO.getPageSize());
@@ -197,8 +201,9 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         }
         int incomingCardFee = computeIncomingCardFee(product, agentProduct.getParentAgentCode());
         agentProduct.setIncomingCardFee(incomingCardFee);
-        agentProduct.setDownstreamCardFee(incomingCardFee);
-        agentProduct.setCardFeeProfit(BaseConstant.ZERO_INT);
+        int downstreamCardFee = resolveDefaultDownstream(product, incomingCardFee);
+        agentProduct.setDownstreamCardFee(downstreamCardFee);
+        agentProduct.setCardFeeProfit(downstreamCardFee - incomingCardFee);
         agentProduct.setProductSort(BaseConstant.ZERO_INT);
         agentProduct.setCreateTime(System.currentTimeMillis());
         baseMapper.insert(agentProduct);
@@ -406,19 +411,22 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         }
 
         for (AgentProduct child : directChildren) {
-            int childIncoming = safeCardFee(child.getIncomingCardFee());
-            int childProfit = targetDownstream - childIncoming;
+            int normalizedIncoming = targetDownstream;
+            int normalizedDownstream = resolveDefaultDownstream(product, normalizedIncoming);
+            int childProfit = normalizedDownstream - normalizedIncoming;
             baseMapper.update(null, new LambdaUpdateWrapper<AgentProduct>()
-                    .set(AgentProduct::getDownstreamCardFee, targetDownstream)
+                    .set(AgentProduct::getIncomingCardFee, normalizedIncoming)
+                    .set(AgentProduct::getDownstreamCardFee, normalizedDownstream)
                     .set(AgentProduct::getCardFeeProfit, childProfit)
                     .set(AgentProduct::getUpdateTime, now)
                     .eq(AgentProduct::getAgentProductId, child.getAgentProductId()));
 
-            child.setDownstreamCardFee(targetDownstream);
+            child.setIncomingCardFee(normalizedIncoming);
+            child.setDownstreamCardFee(normalizedDownstream);
             child.setCardFeeProfit(childProfit);
             child.setUpdateTime(now);
 
-            refreshChildCardFee(child.getParentProductCode(), child.getAgentCode(), targetDownstream, now);
+            refreshChildCardFee(product, child.getAgentCode(), normalizedDownstream, now);
         }
 
         agentProduct.setDownstreamCardFee(targetDownstream);
@@ -642,11 +650,21 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         if (CollectionUtils.isEmpty(agentAccounts) || product == null || parentAgentAccount == null) {
             return;
         }
+        AgentHierarchySnapshot hierarchySnapshot = buildAgentHierarchy(agentAccounts);
+        Map<String, AgentProduct> existingProductMap = loadExistingAgentProducts(product.getProductCode(), hierarchySnapshot.getAllAgentCodes());
         List<AgentProduct> pendingInsert = new ArrayList<>();
         Set<String> visited = new HashSet<>();
         int parentDownstreamCardFee = resolveParentDownstreamCardFee(parentAgentAccount, product);
         for (AgentAccount agentAccount : agentAccounts) {
-            collectAgentProducts(agentAccount, parentAgentAccount, product, productCommission, parentDownstreamCardFee, pendingInsert, visited);
+            collectAgentProducts(agentAccount,
+                    parentAgentAccount,
+                    product,
+                    productCommission,
+                    parentDownstreamCardFee,
+                    pendingInsert,
+                    visited,
+                    existingProductMap,
+                    hierarchySnapshot.getChildMap());
         }
         batchInsertAgentProducts(pendingInsert);
 
@@ -678,7 +696,9 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
                                       Integer parentCommission,
                                       Integer parentDownstreamCardFee,
                                       List<AgentProduct> pendingInsert,
-                                      Set<String> visited) throws BizException {
+                                      Set<String> visited,
+                                      Map<String, AgentProduct> existingProductMap,
+                                      Map<String, List<AgentAccount>> childAgentMap) throws BizException {
         if (agentAccount == null || parentAgentAccount == null || product == null) {
             return;
         }
@@ -688,16 +708,14 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             return;
         }
 
-        AgentProduct agentProduct = baseMapper.selectOne(new LambdaQueryWrapper<AgentProduct>()
-                .eq(AgentProduct::getAgentCode, agentAccount.getAgentCode())
-                .eq(AgentProduct::getParentProductCode, product.getProductCode())
-                .eq(AgentProduct::getParentAgentCode, parentAgentAccount.getAgentCode()));
+        AgentProduct agentProduct = existingProductMap.get(recordKey);
 
         int currentCommission;
         int downstreamForChildren;
         if (agentProduct == null) {
             agentProduct = buildAgentProduct(agentAccount, parentAgentAccount, product, parentCommission, parentDownstreamCardFee);
             pendingInsert.add(agentProduct);
+            existingProductMap.put(recordKey, agentProduct);
             currentCommission = agentProduct.getProductCommission() == null ? resolveCommission(parentCommission) : agentProduct.getProductCommission();
             downstreamForChildren = safeCardFee(agentProduct.getDownstreamCardFee());
         } else {
@@ -705,14 +723,91 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             downstreamForChildren = determineDownstream(agentProduct, product, parentDownstreamCardFee);
         }
 
-        List<AgentAccount> childAgentAccountList = agentAccountService.list(
-                new LambdaQueryWrapper<AgentAccount>().eq(AgentAccount::getParentAgentCode, agentAccount.getAgentCode()));
+        List<AgentAccount> childAgentAccountList = childAgentMap.get(agentAccount.getAgentCode());
         if (CollectionUtils.isEmpty(childAgentAccountList)) {
             return;
         }
         for (AgentAccount childAgentAccount : childAgentAccountList) {
-            collectAgentProducts(childAgentAccount, agentAccount, product, currentCommission, downstreamForChildren, pendingInsert, visited);
+            collectAgentProducts(childAgentAccount,
+                    agentAccount,
+                    product,
+                    currentCommission,
+                    downstreamForChildren,
+                    pendingInsert,
+                    visited,
+                    existingProductMap,
+                    childAgentMap);
         }
+    }
+
+    private AgentHierarchySnapshot buildAgentHierarchy(List<AgentAccount> rootAgents) {
+        AgentHierarchySnapshot snapshot = new AgentHierarchySnapshot();
+        if (CollectionUtils.isEmpty(rootAgents)) {
+            return snapshot;
+        }
+        Queue<String> pending = new LinkedList<>();
+        Set<String> processedParents = new HashSet<>();
+        for (AgentAccount root : rootAgents) {
+            if (root == null || !StringUtils.hasLength(root.getAgentCode())) {
+                continue;
+            }
+            String agentCode = root.getAgentCode();
+            if (snapshot.getAllAgentCodes().add(agentCode)) {
+                pending.offer(agentCode);
+            }
+        }
+        while (!pending.isEmpty()) {
+            List<String> batch = new ArrayList<>();
+            while (!pending.isEmpty() && batch.size() < AGENT_CHILD_QUERY_BATCH_SIZE) {
+                String parentCode = pending.poll();
+                if (processedParents.add(parentCode)) {
+                    batch.add(parentCode);
+                }
+            }
+            if (CollectionUtils.isEmpty(batch)) {
+                continue;
+            }
+            List<AgentAccount> children = agentAccountService.list(new LambdaQueryWrapper<AgentAccount>()
+                    .in(AgentAccount::getParentAgentCode, batch));
+            if (CollectionUtils.isEmpty(children)) {
+                continue;
+            }
+            Map<String, List<AgentAccount>> grouped = children.stream()
+                    .filter(child -> StringUtils.hasLength(child.getParentAgentCode()))
+                    .collect(Collectors.groupingBy(AgentAccount::getParentAgentCode));
+            for (Map.Entry<String, List<AgentAccount>> entry : grouped.entrySet()) {
+                snapshot.getChildMap()
+                        .computeIfAbsent(entry.getKey(), key -> new ArrayList<>())
+                        .addAll(entry.getValue());
+            }
+            for (AgentAccount child : children) {
+                if (child == null || !StringUtils.hasLength(child.getAgentCode())) {
+                    continue;
+                }
+                if (snapshot.getAllAgentCodes().add(child.getAgentCode())) {
+                    pending.offer(child.getAgentCode());
+                }
+            }
+        }
+        return snapshot;
+    }
+
+    private Map<String, AgentProduct> loadExistingAgentProducts(String productCode, Set<String> agentCodes) {
+        Map<String, AgentProduct> existing = new HashMap<>();
+        if (!StringUtils.hasLength(productCode) || CollectionUtils.isEmpty(agentCodes)) {
+            return existing;
+        }
+        List<AgentProduct> agentProducts = baseMapper.selectList(new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getParentProductCode, productCode)
+                .in(AgentProduct::getAgentCode, agentCodes));
+        if (CollectionUtils.isEmpty(agentProducts)) {
+            return existing;
+        }
+        for (AgentProduct item : agentProducts) {
+            String key = buildAgentProductKey(item.getAgentCode(), item.getParentAgentCode(), item.getParentProductCode());
+            existing.putIfAbsent(key, item);
+        }
+        return existing;
     }
 
     private AgentProduct buildAgentProduct(AgentAccount agentAccount,
@@ -735,8 +830,9 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         agentProduct.setRevenueProductCommission(commission);
         int incomingCardFee = resolveIncomingForChild(product, parentDownstreamCardFee);
         agentProduct.setIncomingCardFee(incomingCardFee);
-        agentProduct.setDownstreamCardFee(incomingCardFee);
-        agentProduct.setCardFeeProfit(BaseConstant.ZERO_INT);
+        int downstreamCardFee = resolveDefaultDownstream(product, incomingCardFee);
+        agentProduct.setDownstreamCardFee(downstreamCardFee);
+        agentProduct.setCardFeeProfit(downstreamCardFee - incomingCardFee);
         agentProduct.setProductSort(BaseConstant.ZERO_INT);
         agentProduct.setCreateTime(System.currentTimeMillis());
         agentProduct.setUpdateTime(null);
@@ -791,9 +887,9 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             return Math.max(agentProduct.getDownstreamCardFee(), BaseConstant.ZERO_INT);
         }
         if (parentDownstreamCardFee != null) {
-            return Math.max(parentDownstreamCardFee, BaseConstant.ZERO_INT);
+            return resolveDefaultDownstream(product, parentDownstreamCardFee);
         }
-        return resolveBaseCardFee(product);
+        return resolveDefaultDownstream(product, resolveBaseCardFee(product));
     }
 
     private int resolveBaseCardFee(Product product) {
@@ -803,8 +899,16 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         return Math.max(product.getBaseCardFee(), BaseConstant.ZERO_INT);
     }
 
+    private int resolveDefaultDownstream(Product product, int incomingFee) {
+        int safeIncoming = Math.max(incomingFee, BaseConstant.ZERO_INT);
+        if (!isCardFeeEnabled(product)) {
+            return safeIncoming;
+        }
+        return safeIncoming + CARD_FEE_DEFAULT_MARGIN;
+    }
+
     private boolean isCardFeeEnabled(Product product) {
-        return product != null && Objects.equals(product.getSffftk(), BaseConstant.ONE_INT);
+        return product != null && Objects.equals(product.getProductType(), ProductEnum.PAID_CARD.getStatus());
     }
 
     private String normalizeAgentCode(String agentCode) {
@@ -853,6 +957,19 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         return fee == null ? BaseConstant.ZERO_INT : Math.max(fee, BaseConstant.ZERO_INT);
     }
 
+    private static final class AgentHierarchySnapshot {
+        private final Map<String, List<AgentAccount>> childMap = new HashMap<>();
+        private final Set<String> allAgentCodes = new HashSet<>();
+
+        Map<String, List<AgentAccount>> getChildMap() {
+            return childMap;
+        }
+
+        Set<String> getAllAgentCodes() {
+            return allAgentCodes;
+        }
+    }
+
     private int resolveCommission(Integer commission) {
         if (commission == null) {
             return BaseConstant.ZERO_INT;
@@ -881,24 +998,39 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
         return agent + "#" + parent + "#" + product;
     }
 
-    private void refreshChildCardFee(String productCode, String parentAgentCode, int newIncoming, long updateTime) {
+    private void refreshChildCardFee(String productCode, String parentAgentCode, int parentDownstream, long updateTime) {
         if (!StringUtils.hasLength(productCode) || !StringUtils.hasLength(parentAgentCode)) {
             return;
         }
+        Product product = productMapper.selectOne(new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductCode, productCode));
+        if (product == null) {
+            return;
+        }
+        refreshChildCardFee(product, parentAgentCode, parentDownstream, updateTime);
+    }
+
+    private void refreshChildCardFee(Product product, String parentAgentCode, int parentDownstream, long updateTime) {
+        if (!StringUtils.hasLength(parentAgentCode)) {
+            return;
+        }
         List<AgentProduct> children = baseMapper.selectList(new LambdaQueryWrapper<AgentProduct>()
-                .eq(AgentProduct::getParentProductCode, productCode)
+                .eq(AgentProduct::getParentProductCode, product.getProductCode())
                 .eq(AgentProduct::getParentAgentCode, parentAgentCode));
         if (CollectionUtils.isEmpty(children)) {
             return;
         }
         for (AgentProduct child : children) {
+            int normalizedIncoming = parentDownstream;
+            int normalizedDownstream = resolveDefaultDownstream(product, normalizedIncoming);
+            int profit = normalizedDownstream - normalizedIncoming;
             baseMapper.update(null, new LambdaUpdateWrapper<AgentProduct>()
-                    .set(AgentProduct::getIncomingCardFee, newIncoming)
-                    .set(AgentProduct::getDownstreamCardFee, newIncoming)
-                    .set(AgentProduct::getCardFeeProfit, BaseConstant.ZERO_INT)
+                    .set(AgentProduct::getIncomingCardFee, normalizedIncoming)
+                    .set(AgentProduct::getDownstreamCardFee, normalizedDownstream)
+                    .set(AgentProduct::getCardFeeProfit, profit)
                     .set(AgentProduct::getUpdateTime, updateTime)
                     .eq(AgentProduct::getAgentProductId, child.getAgentProductId()));
-            refreshChildCardFee(productCode, child.getAgentCode(), newIncoming, updateTime);
+            refreshChildCardFee(product, child.getAgentCode(), normalizedDownstream, updateTime);
         }
     }
 

@@ -242,7 +242,7 @@ new Vue({
         this.productList = res.data;
         this.productList.productTemplateJson = JSON.parse(this.productList.productTemplateJson);
         document.body.style.setProperty('--bgThemeColor', this.productList.productTemplateJson.bgThemeColor);
-        this.paidCardConfirmed = this.productList.sffftk != 1;
+        this.paidCardConfirmed = Number(this.productList.productType) !== 5;
 
         // 解析照片配置
         if (this.productList.photoRequired == 1 && this.productList.photoConfig) {
@@ -642,7 +642,7 @@ new Vue({
         return;
       }
 
-      if (this.productList.sffftk == 1 && !this.paidCardConfirmed) {
+      if (Number(this.productList.productType) === 5 && !this.paidCardConfirmed) {
         vant.Toast('请确认已知晓提卡费用');
         return;
       }
@@ -800,7 +800,6 @@ new Vue({
     },
   }
 });
-
 
 
 

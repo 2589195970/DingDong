@@ -59,9 +59,10 @@
                 <template slot-scope="scope">
                     <p v-if="scope.row.productType==0" style="color: red;">日结秒返</p>
                     <p v-if="scope.row.productType==1" style="color:green;">月结产品</p>
-                    <p v-if="scope.row.productType==2" style="color: red;">长期产品</p>
-                    <p v-if="scope.row.productType==3" style="color:green;">其它</p>
-                    <p v-if="scope.row.productType==4" style="color: red;">组合返佣</p>
+        <p v-if="scope.row.productType==2" style="color: red;">长期产品</p>
+        <p v-if="scope.row.productType==3" style="color:green;">其它</p>
+        <p v-if="scope.row.productType==4" style="color: red;">组合返佣</p>
+        <p v-if="scope.row.productType==5" style="color:#ff8c00;">付费提卡</p>
                 </template>
             </el-table-column>
             <el-table-column label="归属地区" align="center" prop="productGsdq" :show-overflow-tooltip="true" />

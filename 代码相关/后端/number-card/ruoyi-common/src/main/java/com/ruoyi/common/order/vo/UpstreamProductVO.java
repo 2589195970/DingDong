@@ -131,12 +131,6 @@ public class UpstreamProductVO {
     private Integer sfyjfx;
 
     /**
-     * 是否需要付费提卡 0 否 1 是
-     */
-    @ApiModelProperty("是否需要付费提卡 0 否 1 是")
-    private Integer sffftk;
-
-    /**
      * 照片上传配置 JSON格式
      */
     @ApiModelProperty("照片上传配置 JSON格式")
