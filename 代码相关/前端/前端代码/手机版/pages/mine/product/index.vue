@@ -1,6 +1,20 @@
 <template>
 	<view class="page-container">
 		<app-navbar title="下游产品设置"></app-navbar>
+		<!-- 搜索栏 -->
+		<view class="search-container">
+			<u-search
+				:showAction="false"
+				v-model="queryParams.productName"
+				@search="soplist"
+				@clickIcon="soplist"
+				placeholder="搜索产品..."
+				:height="35"
+				bgColor="#f5f6f7"
+				borderColor="#f09b7f"
+				searchIconColor="#f09b7f">
+			</u-search>
+		</view>
 		<view>
 		<view style="background-color: #fff; ">
 			<view class="tab-bar">
@@ -191,6 +205,7 @@
 					pageNo: 1,
 					pageSize: 10000,
 					productType: 1,
+					productName: '', // 搜索关键词
 				},
 				commissionopen: false,
 				frme: {},
@@ -326,6 +341,12 @@
 </script>
 
 <style scoped>
+	/* 搜索栏容器 */
+	.search-container {
+		background-color: #fff;
+		padding: 30rpx 20rpx;
+	}
+
 	/* 容器样式 */
 	.custom-tabs-container {
 		width: 100%;

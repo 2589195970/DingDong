@@ -1144,9 +1144,7 @@ public class AgentProductServiceImpl extends ServiceImpl<AgentProductMapper, Age
             return;
         }
         //拼接二维码包含的url信息
-        StringBuffer stringBuffer = new StringBuffer(h5url);
-        stringBuffer.append("?productCode=").append(product.getProductCode()).append("&agentCode=").append(agentAccount.getAgentCode());
-        String url = qrCodeService.getProductPoster(product.getProductMasterMap(),BaseConstant.BASE_PICTURE_URL,stringBuffer.toString());
+        String url = qrCodeService.getProductPoster(product.getProductMasterMap(),BaseConstant.BASE_PICTURE_URL, h5url + "?productCode=" + product.getProductCode() + "&agentCode=" + agentAccount.getAgentCode());
         product.setProductQrcodeMap(url);
         productMapper.updateById(product);
     }

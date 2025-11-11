@@ -11,6 +11,7 @@ import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.page.PageResult;
 import com.ruoyi.common.core.page.PageResultFactory;
 import com.ruoyi.common.exception.BizException;
+import com.ruoyi.common.enums.OrderEnum;
 import com.ruoyi.common.order.bo.AgentOrderSelectBO;
 import com.ruoyi.common.order.entity.AgentAccount;
 import com.ruoyi.common.order.entity.AgentCommissionJson;
@@ -71,8 +72,9 @@ public class AgentOrderServiceImpl extends ServiceImpl<AgentAccountMapper, Agent
 
         //读取分页
         Page page = new Page(agentOrderSelectBO.getPageNo(), agentOrderSelectBO.getPageSize());
-        Page<Order> orderPage = orderMapper.selectPage(page, new LambdaQueryWrapper<Order>()
+        LambdaQueryWrapper<Order> lambdaQueryWrapper = new LambdaQueryWrapper<Order>()
                 .eq(StringUtils.isNotEmpty(agentOrderSelectBO.getOrderId()), Order::getOrderId, agentOrderSelectBO.getOrderId())
+                .eq(StringUtils.isNotEmpty(agentOrderSelectBO.getOrderUpstreamId()), Order::getOrderUpstreamId, agentOrderSelectBO.getOrderUpstreamId())
                 .eq(StringUtils.isNotEmpty(agentOrderSelectBO.getOrderDownstreamId()), Order::getOrderDownstreamId, agentOrderSelectBO.getOrderDownstreamId())
                 .like(StringUtils.isNotEmpty(agentOrderSelectBO.getCardName()), Order::getCardName, agentOrderSelectBO.getCardName())
                 .eq(StringUtils.isNotEmpty(agentOrderSelectBO.getCardPhone()), Order::getCardPhone, agentOrderSelectBO.getCardPhone())
@@ -81,26 +83,28 @@ public class AgentOrderServiceImpl extends ServiceImpl<AgentAccountMapper, Agent
                 .eq(agentOrderSelectBO.getIsRecharged() != null, Order::getIsRecharged, agentOrderSelectBO.getIsRecharged())
                 .eq(agentOrderSelectBO.getOrderSource() != null, Order::getOrderSource, agentOrderSelectBO.getOrderSource())
                 .eq(agentOrderSelectBO.getOrderCommissionStatus() != null, Order::getOrderCommissionStatus, agentOrderSelectBO.getOrderCommissionStatus())
+                .eq(agentOrderSelectBO.getPhotoStatus() != null, Order::getPhotoStatus, agentOrderSelectBO.getPhotoStatus())
                 .eq(StringUtils.isNotEmpty(agentOrderSelectBO.getAccNumber()), Order::getAccNumber, agentOrderSelectBO.getAccNumber())
                 //此处查的是账号下归属代理的订单 所以只要归属中出现就要查出来
                 .like(StringUtils.isNotEmpty(agentOrderSelectBO.getDownstreamCode()), Order::getDownstreamFatherList, agentOrderSelectBO.getDownstreamCode())
-                // 根据 orderType 参数决定查询范围
-                .and(agentOrderSelectBO.getOrderType() != null, wrapper -> {
-                    if (agentOrderSelectBO.getOrderType() == 0) {
-                        // 查询我的订单
-                        wrapper.eq(Order::getDownstreamCode, agentAccount.getAgentCode());
-                    } else if (agentOrderSelectBO.getOrderType() == 1) {
-                        // 查询代理商订单（下级代理商的订单）
-                        wrapper.like(Order::getDownstreamFatherList, agentAccount.getAgentCode())
-                               .ne(Order::getDownstreamCode, agentAccount.getAgentCode());
-                    }
-                })
-                // 如果 orderType 为空，保持原有逻辑：查询所有相关订单
-                .like(agentOrderSelectBO.getOrderType() == null, Order::getDownstreamFatherList, agentAccount.getAgentCode())
                 //查询时间范围
                 .between((agentOrderSelectBO.getStarTime() != null && agentOrderSelectBO.getEndTime() != null), Order::getCreateTime, agentOrderSelectBO.getStarTime(), agentOrderSelectBO.getEndTime())
-                .orderByDesc(Order::getCreateTime)
-        );
+                .orderByDesc(Order::getCreateTime);
+
+        // 根据 orderType 参数决定查询范围
+        Integer orderType = agentOrderSelectBO.getOrderType();
+        if (orderType == null) {
+            lambdaQueryWrapper.like(Order::getDownstreamFatherList, agentAccount.getAgentCode());
+        } else if (orderType == 0) {
+            // 查询我的订单，只能看到自己下单的记录
+            lambdaQueryWrapper.eq(Order::getDownstreamCode, agentAccount.getAgentCode());
+        } else {
+            // 查询代理商订单：剔除自己的订单，包含所有下级代理订单
+            lambdaQueryWrapper.like(Order::getDownstreamFatherList, agentAccount.getAgentCode())
+                    .ne(Order::getDownstreamCode, agentAccount.getAgentCode());
+        }
+
+        Page<Order> orderPage = orderMapper.selectPage(page, lambdaQueryWrapper);
         Page<AgentOrderSelectVO> agentOrderSelectVOPage = new Page<>();
         BeanUtil.copyProperties(orderPage, agentOrderSelectVOPage);
         if (!CollectionUtils.isEmpty(orderPage.getRecords())) {
@@ -119,6 +123,12 @@ public class AgentOrderServiceImpl extends ServiceImpl<AgentAccountMapper, Agent
                 Product product = productService.getProductNotStatus(order.getProductCode());
                 if(product!=null){
                     agentOrderSelectVO.setProductMasterMap(product.getProductMasterMap());
+                    agentOrderSelectVO.setPhotoConfig(product.getPhotoConfig());
+                    agentOrderSelectVO.setPhotoRequired(product.getPhotoRequired());
+                    agentOrderSelectVO.setSfxysh(product.getSfxysh());
+                }
+                if(order.getPhotoStatus() != null){
+                    agentOrderSelectVO.setPhotoStatusName(OrderEnum.PhotoAuditEnum.getPhotoAuditMessageByStatus(order.getPhotoStatus()));
                 }
                 agentOrderSelectVOS.add(agentOrderSelectVO);
             }

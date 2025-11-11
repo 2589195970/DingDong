@@ -134,16 +134,18 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if (productListBO==null||StrUtil.isBlankIfStr(productListBO.getAgentCode())) {
             throw new BizException("代理商code不存在:{}", productListBO.getAgentCode());
         }
+        String productStatus = StrUtil.isBlankIfStr(productListBO.getProductStatus()) ? BaseConstant.ONE_STRING : StrUtil.trim(productListBO.getProductStatus());
+        String productName = StrUtil.trimToNull(productListBO.getProductName());
         List<ProductListVO> productListVOList;
         if(agentService.isAdminAgent(productListBO.getAgentCode())){
             AgentAccount agentAccount = agentService.getAgentAccountByCode(productListBO.getAgentCode());
-            productListVOList = agentProductMapper.selectAdminAgentProductList(productListBO.getOperatorType());
+            productListVOList = agentProductMapper.selectAdminAgentProductList(productListBO.getOperatorType(),productStatus,productName);
             for (ProductListVO productListVO:productListVOList){
                 productListVO.setAgentCode(agentAccount.getAgentCode());
                 productListVO.setAgentName(agentAccount.getAgentName());
             }
         }else {
-            productListVOList = agentProductMapper.selectAgentProductList(productListBO.getAgentCode(),productListBO.getOperatorType());
+            productListVOList = agentProductMapper.selectAgentProductList(productListBO.getAgentCode(),productListBO.getOperatorType(),productStatus,productName);
         }
 
         if (CollectionUtils.isEmpty(productListVOList)) {

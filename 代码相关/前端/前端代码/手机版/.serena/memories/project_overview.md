@@ -1,0 +1,12 @@
+# 项目概述
+- 叮咚号卡移动端（uni-app）工程，面向代理商用户，提供登录、实名认证、佣金统计、提现等功能。
+- 技术栈：基于 Vue 2 + Vuex，使用 uni-app 运行时，UI 组件来自 uView（`uview-ui`），同时集成 `echarts` 和 `crypto-js`。
+- 目录结构要点：
+  - `pages/`：各业务页面（mine、login、home 等）及对应子目录。
+  - `store/`：Vuex 模块（目前仅 `user`）。
+  - `api/`：后端接口封装。
+  - `utils/`：常量、校验、请求封装、storage、auth 等工具。
+  - `permission.js`：全局导航守卫（uni.addInterceptor）。
+  - `components/`、`plugins/`、`uview-ui/`、`uni_modules/`：组件与插件。
+  - `config.js` / `manifest.json` / `pages.json`：uni-app 配置与路由声明。
+- 运行环境：通常通过 HBuilderX 或 `uni-app-cli` 打包 H5、微信小程序等，依赖 Node/npm 管理前端依赖。

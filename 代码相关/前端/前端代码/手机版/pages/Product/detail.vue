@@ -68,6 +68,7 @@
               :src="xqdata.productDetailMap"
               class="detail-image"
               mode="widthFix"
+              lazy-load="true"
               @error="handleImageError">
             </image>
           </view>

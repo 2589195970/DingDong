@@ -54,6 +54,9 @@
 	import {
 		getCodeImg
 	} from '@/api/login'
+  import constant from '@/utils/constant'
+
+  const realNamePage = constant.REAL_NAME_PAGE || '/pages/mine/realname/index'
 	export default {
 		data() {
 			return {
@@ -69,12 +72,18 @@
 					password: "",
 					code: "",
 					uuid: ""
-				}
+				},
+        redirectTarget: ''
 			}
 		},
 		created() {
 			this.getCode()
 		},
+    onLoad(options) {
+      if (options && options.redirect) {
+        this.redirectTarget = decodeURIComponent(options.redirect)
+      }
+    },
 		methods: {
 			rememberChange(){
 				this.rememberMe=!this.rememberMe;
@@ -149,7 +158,11 @@
 			loginSuccess(result) {
 				// 设置用户信息
 				this.$store.dispatch('GetInfo').then(res => {
-					this.$tab.reLaunch('/pages/index')
+          const agentAccount = this.$store.getters.agentAccount || {}
+          const status = agentAccount.realNameStatus
+          const needsRealName = status === constant.REAL_NAME_STATUS.UNVERIFIED
+          const target = this.redirectTarget || (needsRealName ? realNamePage : '/pages/index')
+					this.$tab.reLaunch(target)
 				})
 			}
 		}

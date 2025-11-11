@@ -62,6 +62,14 @@ public interface AgentExtendUrlService  {
 
     /**
      *
+     * 重置生成推广海报图
+     * @return
+     * @throws BizException
+     */
+    String resetPosterImage(LoginUser loginUser, Integer posterIndex) throws BizException;
+
+    /**
+     *
      * 更新海报图
      * @return
      * @throws BizException

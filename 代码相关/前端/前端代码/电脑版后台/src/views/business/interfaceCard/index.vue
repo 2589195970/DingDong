@@ -132,10 +132,49 @@
             <el-table ref="tables" v-loading="dispositionLoading" :data="listDisposition" row-key="operatorReportId" border lazy height="650"
                 style="font-weight: 700;">
                 <el-table-column label="产品名称" align="center" prop="upstreamProductName" :show-overflow-tooltip="true" />
-                <el-table-column label="关联产品" align="left" prop="territoryCheckType" :show-overflow-tooltip="true">
+                <el-table-column label="关联产品" align="left" prop="productList" width="520">
                     <template slot-scope="scope">
-                        <span v-for="item in scope.row.productList">{{item}}<br></span>
-
+                        <div v-if="scope.row.productList && scope.row.productList.length" class="bind-product-grid">
+                            <el-card v-for="product in scope.row.productList"
+                                     :key="product.productId || product.productCode"
+                                     shadow="never"
+                                     class="bind-product-card">
+                                <div class="bind-card-header">
+                                    <div class="title">
+                                        <span class="dot" :class="product.productStatus === 1 ? 'dot-online' : 'dot-offline'"></span>
+                                        <span class="product-name" :title="product.productName">{{ product.productName || '-' }}</span>
+                                    </div>
+                                    <el-tag size="mini" :type="getProductStatusTag(product)">
+                                        {{ getProductStatusText(product) }}
+                                    </el-tag>
+                                </div>
+                                <div class="bind-card-body">
+                                    <div class="meta-row">
+                                        <i class="el-icon-link"></i>
+                                        <span>编码：{{ product.productCode || '--' }}</span>
+                                    </div>
+<!--                                    <div class="meta-row">-->
+<!--                                        <i class="el-icon-time"></i>-->
+<!--                                        <span>上架时间：{{ product.shelfTime ? formatTimestamp(product.shelfTime) : '&#45;&#45;' }}</span>-->
+<!--                                    </div>-->
+                                </div>
+                                <div class="bind-card-actions">
+                                    <el-button type="primary" plain size="mini" icon="el-icon-top"
+                                               :disabled="product.productStatus === 1"
+                                               :loading="productActionLoading[getProductActionKey(product)]"
+                                               @click="handleProductShelf(product, 1)">
+                                        上架
+                                    </el-button>
+                                    <el-button type="danger" plain size="mini" icon="el-icon-bottom"
+                                               :disabled="product.productStatus === 0"
+                                               :loading="productActionLoading[getProductActionKey(product)]"
+                                               @click="handleProductShelf(product, 0)">
+                                        下架
+                                    </el-button>
+                                </div>
+                            </el-card>
+                        </div>
+                        <el-empty v-else description="暂未关联商品" :image-size="80"></el-empty>
                     </template>
                 </el-table-column>
                 <el-table-column label="参数" align="left" prop="territoryCheckType" :show-overflow-tooltip="true">
@@ -230,6 +269,7 @@
         deleteUpstreamProduct,
         addUpstreamProduct,
         selectUpstreamProductListPage,
+        updateProductStatus,
         updateUpstreamProduct,
         selectUpstreamExplain,
     } from "@/api/monitor/business";
@@ -275,6 +315,8 @@
                 // 表格数据
                 list: [],
                 listDisposition: [],
+                // 记录单个产品上下架的loading状态
+                productActionLoading: {},
                 // 导入文件
 
                 // 是否显示弹出层
@@ -306,6 +348,35 @@
             this.getList();
         },
         methods: {
+            getProductActionKey(product = {}) {
+                if (product.productId) {
+                    return `id_${product.productId}`;
+                }
+                if (product.productCode) {
+                    return `code_${product.productCode}`;
+                }
+                return `tmp_${Math.random().toString(36).slice(2)}`;
+            },
+            getProductStatusTag(product = {}) {
+                const status = Number(product.productStatus);
+                if (status === 1) {
+                    return 'success';
+                }
+                if (status === 0) {
+                    return 'info';
+                }
+                return 'warning';
+            },
+            getProductStatusText(product = {}) {
+                const status = Number(product.productStatus);
+                if (status === 1) {
+                    return '上架中';
+                }
+                if (status === 0) {
+                    return '已下架';
+                }
+                return product.productStatusName || '未知状态';
+            },
             canq(data) {
                 this.chansm={};
                 selectUpstreamExplain(data,'0').then((res) => {
@@ -424,6 +495,48 @@
                 this.opendata.pageNo = 1;
                 this.loadDispositionData();
             },
+            handleProductShelf(product, targetStatus) {
+                if (!product || !product.productId) {
+                    this.$message.error('当前关联商品信息不完整，无法操作');
+                    return;
+                }
+                const actionKey = this.getProductActionKey(product);
+                if (Number(product.productStatus) === Number(targetStatus)) {
+                    return;
+                }
+                const actionText = targetStatus === 1 ? '上架' : '下架';
+                this.$confirm(`确认要${actionText}【${product.productName || product.productCode}】吗？`, '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.$set(this.productActionLoading, actionKey, true);
+                    const payload = {
+                        productId: product.productId,
+                        productStatus: targetStatus
+                    };
+                    updateProductStatus(payload).then(() => {
+                        this.$message({
+                            type: 'success',
+                            message: `${actionText}成功!`
+                        });
+                        this.loadDispositionData();
+                    }).catch((err) => {
+                        console.error(err);
+                        this.$message({
+                            type: 'error',
+                            message: `${actionText}失败，请稍后重试`
+                        });
+                    }).finally(() => {
+                        this.$set(this.productActionLoading, actionKey, false);
+                    });
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: `已取消${actionText}`
+                    });
+                });
+            },
             handleDelete(data) {
                 this.$confirm('确认要删除吗？', '删除', {
                     confirmButtonText: '确定',
@@ -513,5 +626,78 @@
     }
 </script>
 
-<style>
+<style scoped>
+.bind-product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.bind-product-card {
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    padding: 8px 10px 10px;
+    background-color: #fff;
+    min-height: 140px;
+}
+
+.bind-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.bind-card-header .title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: calc(100% - 80px);
+}
+
+.product-name {
+    font-weight: 600;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bind-card-body {
+    font-size: 12px;
+    color: #606266;
+    margin-bottom: 8px;
+}
+
+.meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.meta-row i {
+    color: #999;
+}
+
+.bind-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot-online {
+    background-color: #13ce66;
+    box-shadow: 0 0 4px rgba(19, 206, 102, 0.6);
+}
+
+.dot-offline {
+    background-color: #c0c4cc;
+}
 </style>

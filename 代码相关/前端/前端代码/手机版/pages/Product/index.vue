@@ -19,7 +19,7 @@
       <view class="tab-bar">
         <view v-for="(item, index) in list" :key="index" class="tab-item"
               :class="{ 'active': current === index }" @click="click(index)">
-          <image :src="item.icon" class="tab-icon"/>
+          <image :src="item.icon" class="tab-icon" lazy-load="true"/>
           <text class="tab-text">{{ item.name }}</text>
         </view>
         <!-- 底部滑动条 -->
@@ -43,7 +43,7 @@
       <view class="product-card" v-for="dict in productList" :key="dict.productId">
         <!-- 左侧图片区域 -->
         <view class="product-image-section">
-          <image :src="dict.productMasterMap" class="product-image" mode="aspectFit"></image>
+          <image :src="dict.productMasterMap" class="product-image" mode="aspectFit" lazy-load="true"></image>
           <!-- 左侧底部佣金信息 -->
           <view class="image-bottom-info">
             <view class="commission-area-left">
@@ -108,7 +108,7 @@
     <u-modal :show="commissionopen" @confirm="confirm" ref="uModal" @cancel="cancel" :showCancelButton='true'
              confirmText="保存" :asyncClose="true">
       <view class="qrcode-container">
-        <image :src="fzhi.productQrcodeMap" class="qrcode-image"/>
+        <image :src="fzhi.productQrcodeMap" class="qrcode-image" lazy-load="true"/>
       </view>
     </u-modal>
     <!-- 推广选项弹窗 -->

@@ -37,18 +37,6 @@
                         <span>暂无海报图1</span>
                       </div>
                       <div class="poster-actions">
-                        <el-upload
-                          class="poster-upload"
-                          action=""
-                          :http-request="(file) => uploadPoster(file, 1)"
-                          :show-file-list="false"
-                          accept="image/jpeg,image/jpg,image/png"
-                          :before-upload="beforePosterUpload"
-                        >
-                          <el-button size="mini" type="primary" icon="el-icon-upload">
-                            {{ queryParams1.registerQrcodeMap1 ? '替换' : '上传' }}
-                          </el-button>
-                        </el-upload>
                         <el-button
                           v-if="queryParams1.registerQrcodeMap1"
                           size="mini"
@@ -57,6 +45,15 @@
                           @click="share(queryParams1.registerQrcodeMap1)"
                         >
                           预览
+                        </el-button>
+                        <el-button
+                          size="mini"
+                          type="warning"
+                          icon="el-icon-refresh"
+                          :loading="resetLoading[1]"
+                          @click="handleResetPoster(1)"
+                        >
+                          重置生成
                         </el-button>
                       </div>
                     </div>
@@ -78,18 +75,6 @@
                         <span>暂无海报图2</span>
                       </div>
                       <div class="poster-actions">
-                        <el-upload
-                          class="poster-upload"
-                          action=""
-                          :http-request="(file) => uploadPoster(file, 2)"
-                          :show-file-list="false"
-                          accept="image/jpeg,image/jpg,image/png"
-                          :before-upload="beforePosterUpload"
-                        >
-                          <el-button size="mini" type="primary" icon="el-icon-upload">
-                            {{ queryParams1.registerQrcodeMap2 ? '替换' : '上传' }}
-                          </el-button>
-                        </el-upload>
                         <el-button
                           v-if="queryParams1.registerQrcodeMap2"
                           size="mini"
@@ -98,6 +83,15 @@
                           @click="share(queryParams1.registerQrcodeMap2)"
                         >
                           预览
+                        </el-button>
+                        <el-button
+                          size="mini"
+                          type="warning"
+                          icon="el-icon-refresh"
+                          :loading="resetLoading[2]"
+                          @click="handleResetPoster(2)"
+                        >
+                          重置生成
                         </el-button>
                       </div>
                     </div>
@@ -119,18 +113,6 @@
                         <span>暂无海报图3</span>
                       </div>
                       <div class="poster-actions">
-                        <el-upload
-                          class="poster-upload"
-                          action=""
-                          :http-request="(file) => uploadPoster(file, 3)"
-                          :show-file-list="false"
-                          accept="image/jpeg,image/jpg,image/png"
-                          :before-upload="beforePosterUpload"
-                        >
-                          <el-button size="mini" type="primary" icon="el-icon-upload">
-                            {{ queryParams1.registerQrcodeMap3 ? '替换' : '上传' }}
-                          </el-button>
-                        </el-upload>
                         <el-button
                           v-if="queryParams1.registerQrcodeMap3"
                           size="mini"
@@ -139,6 +121,15 @@
                           @click="share(queryParams1.registerQrcodeMap3)"
                         >
                           预览
+                        </el-button>
+                        <el-button
+                          size="mini"
+                          type="warning"
+                          icon="el-icon-refresh"
+                          :loading="resetLoading[3]"
+                          @click="handleResetPoster(3)"
+                        >
+                          重置生成
                         </el-button>
                       </div>
                     </div>
@@ -209,8 +200,7 @@
 </template>
 
 <script>
-import { getAgentApiVO, getAgentExtendUrlVO, updateCallbackUrl, updatePosterImages } from "@/api/monitor/finance";
-import { getToken } from "@/utils/auth";
+import { getAgentApiVO, getAgentExtendUrlVO, updateCallbackUrl, resetPosterImage } from "@/api/monitor/finance";
 
 export default {
   name: "ApiConfig",
@@ -222,8 +212,11 @@ export default {
       open: false,
       shareOpen: false,
       sharedata: '',
-      uploadUrl: process.env.VUE_APP_BASE_API + "/picture/addPicture",
-      headers: { Authorization: "Bearer " + getToken() }
+      resetLoading: {
+        1: false,
+        2: false,
+        3: false
+      }
     };
   },
   beforeCreate() {
@@ -277,69 +270,45 @@ export default {
       })
     },
 
-    // 上传前校验
-    beforePosterUpload(file) {
-      // 检查文件类型
-      const isImage = file.type === 'image/jpeg' || file.type === 'image/jpg' || file.type === 'image/png';
-      const isLt5M = file.size / 1024 / 1024 < 5;
-
-      if (!isImage) {
-        this.$message.error('只能上传 JPG/PNG 格式的图片!');
-        return false;
-      }
-      if (!isLt5M) {
-        this.$message.error('图片大小不能超过 5MB!');
-        return false;
-      }
-
-      this.$message({
-        message: '正在上传海报图...',
-        type: 'info'
-      });
-
-      return true;
-    },
-
-    // 上传海报图
-    async uploadPoster(uploadFile, posterIndex) {
+    // 重置生成海报图
+    async handleResetPoster(posterIndex) {
       try {
-        // 检查文件类型和大小
-        const isImage = uploadFile.file.type === 'image/jpeg' || uploadFile.file.type === 'image/jpg' || uploadFile.file.type === 'image/png';
-        const isLt5M = uploadFile.file.size / 1024 / 1024 < 5;
+        await this.$confirm(`确认重新生成海报图${posterIndex}吗？`, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        });
+      } catch (cancelError) {
+        return;
+      }
 
-        if (!isImage) {
-          this.$message.error('只能上传 JPG/PNG 格式的图片!');
-          return;
-        }
-        if (!isLt5M) {
-          this.$message.error('图片大小不能超过 5MB!');
-          return;
-        }
+      this.$set(this.resetLoading, posterIndex, true);
 
-        // 创建FormData
-        const formData = new FormData();
-        formData.append('file', uploadFile.file);
-        formData.append('posterIndex', posterIndex);
-
-        // 调用后端接口
-        const response = await updatePosterImages(formData);
+      try {
+        const response = await resetPosterImage(posterIndex);
 
         if (response.code === 200) {
           this.$message({
             type: 'success',
-            message: '海报图上传成功!'
+            message: '海报图已重新生成!'
           });
 
-          // 刷新数据
-          getAgentExtendUrlVO().then((res) => {
+          const key = `registerQrcodeMap${posterIndex}`;
+          if (response.data) {
+            this.$set(this.queryParams1, key, response.data);
+          } else {
+            const res = await getAgentExtendUrlVO();
             this.queryParams1 = { ...res.data };
-          });
+          }
         } else {
-          this.$message.error(response.message || '上传失败');
+          this.$message.error(response.message || '重置失败');
         }
       } catch (error) {
-        console.error('上传失败:', error);
-        this.$message.error('上传失败，请稍后重试');
+        console.error('重置海报图失败:', error);
+        const message = (error && error.message) ? error.message : '重置失败，请稍后重试';
+        this.$message.error(message);
+      } finally {
+        this.$set(this.resetLoading, posterIndex, false);
       }
     }
   }
@@ -455,19 +424,6 @@ export default {
           display: inline-flex !important;
           align-items: center !important;
           justify-content: center !important;
-        }
-
-        .poster-upload {
-          display: inline-block;
-
-          // 重置Element Upload组件的默认样式
-          .el-upload {
-            display: inline-block;
-
-            .el-button {
-              // 继承上面的统一样式
-            }
-          }
         }
       }
     }

@@ -22,7 +22,9 @@ public interface AgentProductMapper extends BaseMapper<AgentProduct> {
      * 查询admin产品列表
      * @return
      */
-    List<ProductListVO> selectAdminAgentProductList(@Param(value = "operatorType") Integer operatorType);
+    List<ProductListVO> selectAdminAgentProductList(@Param(value = "operatorType") Integer operatorType,
+                                                    @Param(value = "productStatus") String productStatus,
+                                                    @Param(value = "productName") String productName);
 
 
     /**
@@ -30,5 +32,8 @@ public interface AgentProductMapper extends BaseMapper<AgentProduct> {
      * @param agentCode
      * @return
      */
-    List<ProductListVO> selectAgentProductList(@Param(value = "agentCode") String agentCode,@Param(value = "operatorType") Integer operatorType);
+    List<ProductListVO> selectAgentProductList(@Param(value = "agentCode") String agentCode,
+                                               @Param(value = "operatorType") Integer operatorType,
+                                               @Param(value = "productStatus") String productStatus,
+                                               @Param(value = "productName") String productName);
 }

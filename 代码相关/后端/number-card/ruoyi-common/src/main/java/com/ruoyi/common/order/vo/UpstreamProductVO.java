@@ -107,10 +107,10 @@ public class UpstreamProductVO {
 
 
     /**
-     * 产品名称列表(关联了这个接口产品的产品库产品列表)
+     * 关联产品列表(产品库中使用该上游产品的商品)
      */
-    @ApiModelProperty("产品名称列表")
-    private List<String> productList;
+    @ApiModelProperty("关联产品列表")
+    private List<ProductBindVO> productList;
 
     /**
      * 是否需要上传照片 0 否 1 是
@@ -136,4 +136,42 @@ public class UpstreamProductVO {
     @ApiModelProperty("照片上传配置 JSON格式")
     private String photoConfig;
 
+    @Data
+    public static class ProductBindVO {
+        /**
+         * 产品ID
+         */
+        @ApiModelProperty("产品ID")
+        private Integer productId;
+
+        /**
+         * 产品编码
+         */
+        @ApiModelProperty("产品编码")
+        private String productCode;
+
+        /**
+         * 产品名称
+         */
+        @ApiModelProperty("产品名称")
+        private String productName;
+
+        /**
+         * 产品状态 0-下架 1-上架
+         */
+        @ApiModelProperty("产品状态 0-下架 1-上架")
+        private Integer productStatus;
+
+        /**
+         * 产品状态文案
+         */
+        @ApiModelProperty("产品状态文案")
+        private String productStatusName;
+
+        /**
+         * 上架时间
+         */
+        @ApiModelProperty("上架时间")
+        private Long shelfTime;
+    }
 }

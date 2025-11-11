@@ -8,6 +8,13 @@ const defaultVipInfo = () => ({
   hasVipRecord: false
 })
 
+const defaultAgentAccount = () => ({
+  realNameStatus: 0,
+  agentCode: '',
+  agentName: '',
+  isRealName: false
+})
+
 const user = {
   state: {
     token: getToken(),
@@ -16,7 +23,8 @@ const user = {
     avatar: '',
     roles: [],
     permissions: [],
-    vipInfo: defaultVipInfo()
+    vipInfo: defaultVipInfo(),
+    agentAccount: defaultAgentAccount()
   },
 
   mutations: {
@@ -36,6 +44,12 @@ const user = {
       state.vipInfo = {
         ...defaultVipInfo(),
         ...(vipInfo || {})
+      }
+    },
+    SET_AGENT_ACCOUNT: (state, agentAccount) => {
+      state.agentAccount = {
+        ...defaultAgentAccount(),
+        ...(agentAccount || {})
       }
     },
     SET_ROLES: (state, roles) => {
@@ -80,6 +94,7 @@ const user = {
           commit('SET_NAME', user.userName)
           commit('SET_AVATAR', avatar)
           commit('SET_VIP_INFO', res.vipInfo)
+          commit('SET_AGENT_ACCOUNT', res.agentAccount)
           resolve(res)
         }).catch(error => {
           reject(error)
@@ -95,6 +110,7 @@ const user = {
           commit('SET_ROLES', [])
           commit('SET_PERMISSIONS', [])
           commit('SET_VIP_INFO', defaultVipInfo())
+          commit('SET_AGENT_ACCOUNT', defaultAgentAccount())
           removeToken()
           resolve()
         }).catch(error => {
@@ -108,6 +124,7 @@ const user = {
       return new Promise(resolve => {
         commit('SET_TOKEN', '')
         commit('SET_VIP_INFO', defaultVipInfo())
+        commit('SET_AGENT_ACCOUNT', defaultAgentAccount())
         removeToken()
         resolve()
       })

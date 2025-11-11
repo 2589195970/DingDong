@@ -264,7 +264,6 @@ public class QrCodeServiceImpl implements QrCodeService {
             g.drawImage(bottomImage, 0, 0, bottomImage.getWidth(), bottomImage.getHeight(), null);
             //生成二维码
             Image qrImage = getQr(content,900,900);
-            //todo 底图上添加二维码
             //将小图片绘到大图片上 .表示你的小图片在大图片上的位置。
             g.drawImage(qrImage, 470, 655, null);
             //设置颜色。
@@ -274,7 +273,6 @@ public class QrCodeServiceImpl implements QrCodeService {
             bottomImage = resizeImageToMatchWidth(bottomImage, topImage.getWidth());
             // 合并图片
             BufferedImage bufImg = mergeImagesVertically(topImage, bottomImage);
-            //todo 上传到七牛云
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(bufImg, "jpg", os);
             //为了避免同名覆盖问题,构建新的文件名
@@ -305,7 +303,6 @@ public class QrCodeServiceImpl implements QrCodeService {
             g.drawImage(bottomImage, 0, 0, bottomImage.getWidth(), bottomImage.getHeight(), null);
             //生成二维码
             Image qrImage = getQr(content,260,260);
-            //todo 底图上添加二维码
             //将小图片绘到大图片上 .表示你的小图片在大图片上的位置。
             g.drawImage(qrImage, 100, 1500, null);
             //设置颜色。
@@ -313,7 +310,6 @@ public class QrCodeServiceImpl implements QrCodeService {
             g.dispose();
             // 调整下方图片尺寸以匹配上方图片宽度
             bottomImage = resizeImageToMatchWidth(bottomImage, bottomImage.getWidth());
-            //todo 上传到七牛云
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(bottomImage, "jpg", os);
             //为了避免同名覆盖问题,构建新的文件名
@@ -345,15 +341,13 @@ public class QrCodeServiceImpl implements QrCodeService {
             g.drawImage(bottomImage, 0, 0, bottomImage.getWidth(), bottomImage.getHeight(), null);
             //生成二维码
             Image qrImage = getQr(content,280,280);
-            //todo 底图上添加二维码
             //将小图片绘到大图片上 .表示你的小图片在大图片上的位置。
-            g.drawImage(qrImage, 270, 815, null);
+            g.drawImage(qrImage, 370, 690, null);
             //设置颜色。
             g.setColor(Color.WHITE);
             g.dispose();
             // 调整下方图片尺寸以匹配上方图片宽度
             bottomImage = resizeImageToMatchWidth(bottomImage, bottomImage.getWidth());
-            //todo 上传到七牛云
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ImageIO.write(bottomImage, "jpg", os);
             //为了避免同名覆盖问题,构建新的文件名

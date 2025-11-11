@@ -34,9 +34,15 @@
         FROM
             t_product p
         WHERE
-        p.product_status = '1'
+        1 = 1
+        <if test="productStatus != null and productStatus != ''">
+            AND p.product_status = #{productStatus}
+        </if>
         <if test="operatorType != null">
             AND p.operator_type = #{operatorType}
+        </if>
+        <if test="productName != null and productName != ''">
+            AND p.product_name LIKE CONCAT('%', #{productName}, '%')
         </if>
         ORDER BY p.product_sort,p.create_time desc
     </select>
@@ -79,8 +85,14 @@
         WHERE
         p.product_status = '1' and
         a.agent_code = #{agentCode}
+        <if test="productStatus != null and productStatus != ''">
+            AND a.product_status = #{productStatus}
+        </if>
         <if test="operatorType != null">
             AND p.operator_type = #{operatorType}
+        </if>
+        <if test="productName != null and productName != ''">
+            AND p.product_name LIKE CONCAT('%', #{productName}, '%')
         </if>
         ORDER BY a.product_sort,a.create_time desc
     </select>

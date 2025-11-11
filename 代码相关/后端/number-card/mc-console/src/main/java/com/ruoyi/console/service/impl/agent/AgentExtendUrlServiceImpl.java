@@ -44,6 +44,9 @@ public class AgentExtendUrlServiceImpl implements AgentExtendUrlService {
     AgentAccountService agentAccountService;
 
     @Resource
+    AgentProductService agentProductService;
+
+    @Resource
     SmsService smsService;
 
     @Resource
@@ -156,6 +159,63 @@ public class AgentExtendUrlServiceImpl implements AgentExtendUrlService {
         // 注释掉缓存删除
         // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_ACCOUNT_USER_ID, agentAccount.getSysUserId());
         // configStringRedisTemplate.delete(cacheKey);
+    }
+
+    /**
+     * 重置生成推广海报图
+     * @param loginUser
+     * @param posterIndex
+     * @return
+     * @throws BizException
+     */
+    public String resetPosterImage(LoginUser loginUser, Integer posterIndex) throws BizException {
+        try {
+            if (posterIndex == null || posterIndex < BaseConstant.ONE_INT || posterIndex > BaseConstant.THREE_INT) {
+                throw new BizException("海报图索引必须在1-3之间");
+            }
+
+            AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(), true);
+            ToolConfig toolConfig = toolConfigService.getToolConfig(BaseConstant.FOUR_INT);
+
+            String templateUrl;
+            Integer number;
+            switch (posterIndex) {
+                case BaseConstant.ONE_INT:
+                    templateUrl = toolConfig.getAccessKey();
+                    number = BaseConstant.ONE_INT;
+                    break;
+                case BaseConstant.TWO_INT:
+                    templateUrl = toolConfig.getSecretKey();
+                    number = BaseConstant.TWO_INT;
+                    break;
+                case BaseConstant.THREE_INT:
+                    templateUrl = toolConfig.getBucket();
+                    number = BaseConstant.THREE_INT;
+                    break;
+                default:
+                    throw new BizException("海报图索引必须在1-3之间");
+            }
+
+            if (StringUtils.isEmpty(templateUrl)) {
+                throw new BizException("系统未配置对应的推广海报模板");
+            }
+
+            agentProductService.addRegisterQrcodeMap(agentAccount, templateUrl, number);
+
+            if (posterIndex == BaseConstant.ONE_INT) {
+                return agentAccount.getRegisterQrcodeMap1();
+            }
+            if (posterIndex == BaseConstant.TWO_INT) {
+                return agentAccount.getRegisterQrcodeMap2();
+            }
+            return agentAccount.getRegisterQrcodeMap3();
+        } catch (BizException e) {
+            log.error("重置推广海报图失败: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("重置推广海报图时发生异常: ", e);
+            throw new BizException("重置推广海报图失败，请稍后重试");
+        }
     }
 
     /**

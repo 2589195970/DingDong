@@ -2,13 +2,11 @@ package com.ruoyi.web.controller.console;
 
 import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.core.page.ResponseEntity;
-import com.ruoyi.common.order.entity.ParentAgentJson;
 import com.ruoyi.console.service.QrCodeService;
 import com.ruoyi.console.service.TestToolService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.velocity.util.ArrayListWrapper;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

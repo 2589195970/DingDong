@@ -6,6 +6,12 @@ Vue.use(vant.Popup);
 Vue.use(vant.Area);
 Vue.use(vant.Radio);
 Vue.use(vant.RadioGroup);
+Vue.use(vant.Search);
+Vue.use(vant.Lazyload, {
+  lazyComponent: true,
+  loading: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgPGNpcmNsZSBmaWxsPSIjZjVmNmY3IiBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiLz4KICAgIDxwYXRoIGQ9Ik0yMCAxMGMtNS41MiAwLTEwIDQuNDgtMTAgMTBzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwLTQuNDgtMTAtMTAtMTB6bTAgMThjLTQuNDEgMC04LTMuNTktOC04czMuNTktOCA4LTggOCAzLjU5IDggOC0zLjU5IDgtOCA4eiIgZmlsbD0iI2NjYyIvPgogIDwvZz4KPC9zdmc+',
+  error: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgPGNpcmNsZSBmaWxsPSIjZjVmNmY3IiBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiLz4KICAgIDxwYXRoIGQ9Ik0yMCAxMGMtNS41MiAwLTEwIDQuNDgtMTAgMTBzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwLTQuNDgtMTAtMTAtMTB6bTUgMTMuNTlMMjIuNDEgMjEgMjUgMTguNDEgMjMuNTkgMTcgMjEgMTkuNTkgMTguNDEgMTcgMTcgMTguNDFsMi41OSAyLjU5LTIuNTkgMi41OUwxOCAyNS40MWwyLjU5LTIuNTlMMjMuNTkgMjUgMjUgMjMuNTl6IiBmaWxsPSIjZmY0NDQ0Ii8+CiAgPC9nPgo8L3N2Zz4='
+});
 axios.interceptors.request.use(
   (config) => {
     if (config.showLoading === false) {
@@ -55,6 +61,11 @@ new Vue({
       arrow: 'arrow-down',
       xianshi: '0',
       productList: {},
+      productTypeTags: {
+        0: { className: 'tag-daily', label: 'M', accentColor: '#1E88E5' },
+        1: { className: 'tag-month', label: 'Y', accentColor: '#FF6B35' },
+        5: { className: 'tag-paid', label: 'F', accentColor: '#34C759' },
+      },
       ddxx: [],
       ddxx1: {},
       phone: '',
@@ -65,6 +76,7 @@ new Vue({
       ShopQrcodeMap: '',
       visitorId: '', // 访客标识
       homeRedirectUrl: '', // 来源回退地址
+      searchKeyword: '', // 搜索关键词
     };
   },
   computed: {
@@ -139,6 +151,17 @@ new Vue({
       this.activeIndex = index;
       this.soplist()
     },
+    onSearch() {
+      this.soplist();
+    },
+    onClear() {
+      this.searchKeyword = '';
+      this.soplist();
+    },
+    onCancel() {
+      this.searchKeyword = '';
+      this.soplist();
+    },
     xiangxidingdan(data) {
       console.log(data);
       this.ddxx1 = data;
@@ -173,10 +196,18 @@ new Vue({
       axios.post(baseUrl + '/product/getAgentProductList', {
         agentCode: this.agentCode,
         operatorType: this.activeIndex - 1 == -1 ? '' : this.activeIndex - 1,
-        productStatus:this.productStatus,
+        productStatus: this.productStatus,
+        productName: this.searchKeyword, // 添加搜索关键词
       }).then(res => {
         this.productList = res.data;
       })
+    },
+    getProductAccent(productType) {
+      // 付费提卡保持绿色，其他免费领取统一使用红色
+      if (Number(productType) === 5) {
+        return '#34C759'; // 付费提卡 - 绿色
+      }
+      return '#FF3B30'; // 免费领取 - 统一红色
     },
 
     /**

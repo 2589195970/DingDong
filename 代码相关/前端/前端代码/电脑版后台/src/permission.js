@@ -9,6 +9,58 @@ import { isRelogin } from '@/utils/request'
 NProgress.configure({ showSpinner: false })
 
 const whiteList = ['/login', '/register', '/forgot-password']
+const realNameEntry = '/finance/personal-info'
+const realNameWhitelist = [realNameEntry]
+let hasShownRealNameTip = false
+
+const isRealNameRoute = (path = '') => realNameWhitelist.some(route => path.startsWith(route))
+
+const resolveRealNameStatus = () => {
+  const account = store.getters.agentAccount || {}
+  if (account.realNameStatus !== undefined && account.realNameStatus !== null) {
+    return Number(account.realNameStatus)
+  }
+  if (account.isRealName !== undefined) {
+    return account.isRealName ? 1 : 0
+  }
+  if (account.yisRealName !== undefined) {
+    return account.yisRealName ? 1 : 0
+  }
+  return null
+}
+
+const needsRealNameVerification = () => {
+  const status = resolveRealNameStatus()
+  if (status === null) {
+    return false
+  }
+  return status === 0
+}
+
+const guardRealName = (to, from, next) => {
+  if (!getToken()) {
+    hasShownRealNameTip = false
+    return false
+  }
+  if (!store.getters.roles || store.getters.roles.length === 0) {
+    return false
+  }
+  if (needsRealNameVerification()) {
+    if (isRealNameRoute(to.path)) {
+      return false
+    }
+    if (!hasShownRealNameTip) {
+      Message.warning('请先完成实名认证')
+      hasShownRealNameTip = true
+    }
+    next({ path: realNameEntry, replace: true })
+    NProgress.done()
+    return true
+  } else {
+    hasShownRealNameTip = false
+  }
+  return false
+}
 
 router.beforeEach((to, from, next) => {
   NProgress.start()
@@ -29,7 +81,9 @@ router.beforeEach((to, from, next) => {
           store.dispatch('GenerateRoutes').then(accessRoutes => {
             // 根据roles权限生成可访问的路由表
             router.addRoutes(accessRoutes) // 动态添加可访问路由表
-            next({ ...to, replace: true }) // hack方法 确保addRoutes已完成
+            if (!guardRealName(to, from, next)) {
+              next({ ...to, replace: true }) // hack方法 确保addRoutes已完成
+            }
           })
         }).catch(err => {
             store.dispatch('LogOut').then(() => {
@@ -38,7 +92,9 @@ router.beforeEach((to, from, next) => {
             })
           })
       } else {
-        next()
+        if (!guardRealName(to, from, next)) {
+          next()
+        }
       }
     }
   } else {

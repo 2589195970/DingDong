@@ -118,4 +118,9 @@ public class CacheKeyConstants {
      * 产品分类统计缓存
      */
     public static final String PRODUCT_CATEGORY_COUNT_API = "PRODUCT_CATEGORY_COUNT_API";
+
+    /**
+     * 代理商注册分布式锁
+     */
+    public static final String AGENT_REGISTER_LOCK = "AGENT_REGISTER_LOCK";
 }

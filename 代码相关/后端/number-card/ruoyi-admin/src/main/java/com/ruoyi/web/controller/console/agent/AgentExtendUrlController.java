@@ -131,6 +131,24 @@ public class AgentExtendUrlController {
     }
 
     /**
+     * 重置推广海报图
+     * @return
+     */
+    @PostMapping("/resetPosterImage")
+    @ApiOperation("重置推广海报图")
+    public ResponseEntity resetPosterImage(@RequestParam("posterIndex") Integer posterIndex) {
+        try {
+            return ResponseEntity.success(agentExtendUrlService.resetPosterImage(getLoginUser(), posterIndex));
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "resetPosterImage", e.getMessage());
+            return ResponseEntity.error(e.getMessage(),null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "resetPosterImage", e.getMessage());
+            return ResponseEntity.error("出错了,请稍候重试:{}", null);
+        }
+    }
+
+    /**
      * 更新海报图 - 直接处理文件上传和数据库更新
      * @return
      */

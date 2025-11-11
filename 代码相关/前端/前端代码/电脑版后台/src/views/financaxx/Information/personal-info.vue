@@ -1,88 +1,116 @@
 <template>
-  <div class="app-container">
-    <div class="profile-header">
-      <h2 class="page-title">个人信息中心</h2>
-      <p class="page-subtitle">管理您的个人资料和账户设置</p>
+  <div class="app-container personal-info-page">
+    <div class="page-header">
+      <div class="page-heading">
+        <h2>个人信息与实名认证</h2>
+        <p>完善资料，保障账户与交易安全</p>
+      </div>
+      <div class="status-pill" :class="`status-pill--${realNameStatus.state}`">
+        <i class="status-dot"></i>
+        <span>{{ realNameStatus.text }}</span>
+      </div>
     </div>
 
     <el-row :gutter="24">
-      <!-- 左侧：用户头像和基本信息 -->
-      <el-col :span="6" :xs="24">
-        <div class="user-profile">
-          <div class="avatar-section">
+      <el-col :span="7" :xs="24">
+        <div class="info-panel">
+          <div class="info-panel__section info-panel__section--center">
             <userAvatar :user="user" />
+            <div class="user-name">{{ user.userName || '未设置' }}</div>
+            <div class="user-meta">{{ agentCodeText }}</div>
           </div>
-          <div class="user-info-card">
-            <div class="info-item">
-              <div class="info-label">
-                <svg-icon icon-class="user" />
-                <span>用户名称</span>
-              </div>
-              <div class="info-value">{{ user.userName || '未设置' }}</div>
+          <div class="info-panel__section">
+            <div class="meta-item">
+              <span class="meta-label">创建日期</span>
+              <span class="meta-value">{{ user.createTime || '未知' }}</span>
             </div>
-            <div class="info-item">
-              <div class="info-label">
-                <svg-icon icon-class="date" />
-                <span>创建日期</span>
-              </div>
-              <div class="info-value">{{ user.createTime || '未知' }}</div>
+            <div class="meta-item">
+              <span class="meta-label">绑定手机号</span>
+              <span class="meta-value">{{ queryParams2.phone || '未绑定' }}</span>
             </div>
+            <div class="meta-item">
+              <span class="meta-label">实名认证</span>
+              <span class="meta-value">{{ realNameStatus.shortText }}</span>
+            </div>
+          </div>
+          <div class="info-panel__section info-panel__section--actions">
+            <el-button
+              v-if="realNameStatus.showAction"
+              size="mini"
+              type="primary"
+              @click="handleRealNameShortcut"
+            >
+              {{ realNameStatus.actionText }}
+            </el-button>
+            <el-button size="mini" type="text" @click="activeTab = 'userinfo'">完善资料</el-button>
+          </div>
+        </div>
+
+        <div class="status-card">
+          <p class="status-card__title">实名认证提醒</p>
+          <p class="status-card__desc">{{ realNameStatus.desc }}</p>
+          <div class="status-card__meta">
+            <span>最近提交</span>
+            <span>{{ queryParams2.auditTime || '-' }}</span>
           </div>
         </div>
       </el-col>
 
-      <!-- 右侧：表单信息 -->
-      <el-col :span="18" :xs="24">
-        <el-tabs v-model="activeTab" class="profile-tabs">
-            <!-- 基本资料 -->
+      <el-col :span="17" :xs="24">
+        <div class="content-card">
+          <el-tabs v-model="activeTab" class="profile-tabs">
             <el-tab-pane label="基本资料" name="userinfo">
               <userInfo :user="user" @refresh="getUserProfile" />
             </el-tab-pane>
 
-            <!-- 修改密码 -->
             <el-tab-pane label="修改密码" name="resetPwd">
               <resetPwd />
             </el-tab-pane>
 
-            <!-- 手机号绑定 -->
             <el-tab-pane label="手机号绑定" name="phone">
-              <el-form label-width="150px" class="demo-ruleForm" :inline="true">
-                <div class="form-content">
-                  <el-form-item label="当前手机号：">
-                    <div v-if="queryParams2.phone">
-                      <span>{{queryParams2.phone}}</span>
-                      &emsp; &emsp;<span @click="clickPhone(queryParams2)" class="clickable-text">点击更换</span>
-                    </div>
-                    <span v-if="!queryParams2.phone">未绑定</span>
-                  </el-form-item>
+              <div class="section-card">
+                <div class="section-card__item">
+                  <span class="section-card__label">当前手机号</span>
+                  <div class="section-card__value">
+                    <template v-if="queryParams2.phone">
+                      <span>{{ queryParams2.phone }}</span>
+                      <el-button type="text" size="mini" @click="clickPhone(queryParams2)">更换</el-button>
+                    </template>
+                    <span v-else>未绑定</span>
+                  </div>
                 </div>
-              </el-form>
+              </div>
             </el-tab-pane>
 
-            <!-- 实名认证 -->
             <el-tab-pane label="实名认证" name="realname">
-              <el-form label-width="150px" class="demo-ruleForm" :inline="true">
-                <div class="form-content">
-                  <el-form-item label="认证状态：">
-                    <div v-if="queryParams2.isRealName === 0">
-                      <span>未实名</span>
-                      &emsp; &emsp; <span @click="clickName" class="clickable-text"> 点击实名</span>
-                    </div>
-                    <div v-else-if="queryParams2.isRealName === 1">
-                      <span>已实名</span>
-                    </div>
-                    <div v-else-if="queryParams2.isRealName === 2 || queryParams2.isRealName === 3">
-                      <span v-if="queryParams2.isRealName === 2">实名认证中</span>
-                      <span v-else-if="queryParams2.isRealName === 3" style="color: red;">实名认证失败</span>
-                      <span @click="clickName1" class="clickable-text"> 更改实名信息</span>
-                    </div>
-                  </el-form-item>
+              <div class="status-callout" :class="`status-callout--${realNameStatus.state}`">
+                <div>
+                  <p class="status-callout__title">{{ realNameStatus.text }}</p>
+                  <p class="status-callout__desc">{{ realNameStatus.desc }}</p>
                 </div>
-              </el-form>
+                <el-button
+                  v-if="realNameStatus.showAction"
+                  size="small"
+                  type="primary"
+                  @click="handleRealNameShortcut"
+                >
+                  {{ realNameStatus.actionText }}
+                </el-button>
+              </div>
+              <p class="status-hint" v-if="realNameStatus.state === 'pending'">
+                完成实名认证后即可查看全部菜单、发起业务及提现操作。
+              </p>
+              <p class="status-hint" v-else-if="realNameStatus.state === 'processing'">
+                审核期间请保持手机畅通，如需补充材料可随时更新信息。
+              </p>
+              <p class="status-hint status-hint--danger" v-else-if="realNameStatus.state === 'danger'">
+                资料未通过审核，可重新提交或联系客服确认原因。
+              </p>
             </el-tab-pane>
           </el-tabs>
-        </el-col>
-      </el-row>
+        </div>
+      </el-col>
+    </el-row>
 
     <!-- 手机号修改弹窗 -->
     <el-dialog :visible.sync="openphone" width="450px" append-to-body :close-on-click-modal="false">
@@ -161,11 +189,53 @@ export default {
       openName: false,
       openphone: false,
       xgai: false,
-      activeTab: "userinfo",
+      activeTab: "realname",
       encryptionConfig: {
         key: 'ADGcp7Kiixe1x3Sn',
       },
     };
+  },
+  computed: {
+    realNameStatus() {
+      const status = Number(this.queryParams2.isRealName)
+      const config = {
+        1: {
+          state: 'success',
+          text: '已完成实名认证',
+          shortText: '已实名',
+          desc: '账号已通过审核，可正常使用系统全部功能。',
+          showAction: false,
+          actionText: ''
+        },
+        2: {
+          state: 'processing',
+          text: '实名认证审核中',
+          shortText: '审核中',
+          desc: '资料已提交，审核期间可随时更新信息。',
+          showAction: true,
+          actionText: '更新资料'
+        },
+        3: {
+          state: 'danger',
+          text: '实名认证失败',
+          shortText: '认证失败',
+          desc: '资料未通过审核，请按照提示重新提交。',
+          showAction: true,
+          actionText: '重新提交'
+        }
+      }
+      return config[status] || {
+        state: 'pending',
+        text: '尚未完成实名认证',
+        shortText: '未实名',
+        desc: '提交实名认证后即可查看全部菜单并发起业务。',
+        showAction: true,
+        actionText: '立即认证'
+      }
+    },
+    agentCodeText() {
+      return this.queryParams2.agentCode ? `代理编码：${this.queryParams2.agentCode}` : '暂无代理编码'
+    }
   },
   created() {
     this.getUser();
@@ -179,8 +249,10 @@ export default {
     },
     getAgentInfo() {
       getAgentInfoVO().then((res) => {
-        this.queryParams2 = Object.assign({}, res.data);
-        console.log(this.queryParams2);
+        this.queryParams2 = Object.assign({}, res.data || {});
+        const status = this.queryParams2.isRealName
+        this.syncAgentAccountStatus(status);
+        this.activeTab = Number(status) === 1 ? 'userinfo' : 'realname'
       });
     },
     getUserProfile() {
@@ -192,6 +264,15 @@ export default {
     clickPhone(data) {
       this.formphone = data;
       this.openphone = true;
+    },
+    handleRealNameShortcut() {
+      this.activeTab = 'realname';
+      const status = Number(this.queryParams2.isRealName);
+      if (status === 2 || status === 3) {
+        this.clickName1();
+      } else {
+        this.clickName();
+      }
     },
 
     // 点击实名认证
@@ -207,6 +288,17 @@ export default {
         this.form = res.data;
         this.xgai = false;
       });
+    },
+
+    syncAgentAccountStatus(status) {
+      const normalized = Number(status != null ? status : 0)
+      const current = this.$store.getters.agentAccount || {}
+      this.$store.commit('SET_AGENT_ACCOUNT', {
+        ...current,
+        realNameStatus: normalized,
+        isRealName: normalized === 1,
+        yisRealName: normalized === 1
+      })
     },
 
     // 获取验证码
@@ -267,7 +359,6 @@ export default {
         // 刷新代理商信息
         getAgentInfoVO().then((res) => {
           this.queryParams2 = Object.assign({}, res.data);
-          console.log(this.queryParams2);
         });
         // 刷新用户基本信息
         this.getUserProfile();
@@ -314,94 +405,165 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-// 页面头部样式
-.profile-header {
-  text-align: center;
-  margin-bottom: 32px;
-  padding: 20px 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16px;
-  color: white;
-
-  .page-title {
-    font-size: 28px;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .page-subtitle {
-    font-size: 16px;
-    margin: 0;
-    opacity: 0.9;
-  }
+.personal-info-page {
+  background-color: #f5f6f8;
+  padding-bottom: 32px;
 }
 
-// 用户资料卡片
-.user-profile {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-  }
-}
-
-.avatar-section {
-  text-align: center;
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 12px;
   margin-bottom: 24px;
 }
 
-.user-info-card {
-  .info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 0;
-    border-bottom: 1px solid #f0f2f5;
+.page-heading {
+  h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: #1f2f3d;
+  }
 
-    &:last-child {
-      border-bottom: none;
-    }
-
-    .info-label {
-      display: flex;
-      align-items: center;
-      color: #606266;
-      font-size: 14px;
-
-      .svg-icon {
-        margin-right: 8px;
-        color: #409EFF;
-        font-size: 16px;
-      }
-
-      span {
-        font-weight: 500;
-      }
-    }
-
-    .info-value {
-      color: #303133;
-      font-weight: 600;
-      font-size: 14px;
-    }
+  p {
+    margin: 6px 0 0;
+    color: #909399;
+    font-size: 14px;
   }
 }
 
-// Tab样式
-.profile-tabs {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  color: #606266;
 
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    background: currentColor;
+  }
+}
+
+.status-pill--pending {
+  background: #fff7e6;
+  color: #d48806;
+  border-color: #ffe7ba;
+}
+
+.status-pill--processing {
+  background: #e6f7ff;
+  color: #1890ff;
+  border-color: #bae7ff;
+}
+
+.status-pill--success {
+  background: #f6ffed;
+  color: #52c41a;
+  border-color: #d9f7be;
+}
+
+.status-pill--danger {
+  background: #fff1f0;
+  color: #f5222d;
+  border-color: #ffccc7;
+}
+
+.info-panel,
+.status-card,
+.content-card {
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.info-panel__section {
+  & + & {
+    border-top: 1px solid #f2f4f5;
+    margin-top: 16px;
+    padding-top: 16px;
+  }
+
+  &--center {
+    text-align: center;
+  }
+
+  &--actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+.user-name {
+  margin-top: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2f3d;
+}
+
+.user-meta {
+  margin-top: 4px;
+  color: #909399;
+  font-size: 13px;
+}
+
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.meta-label {
+  color: #909399;
+  font-size: 13px;
+}
+
+.meta-value {
+  color: #303133;
+  font-weight: 500;
+}
+
+.status-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: #1f2f3d;
+}
+
+.status-card__desc {
+  margin: 0 0 14px;
+  color: #606266;
+  line-height: 1.6;
+  font-size: 13px;
+}
+
+.status-card__meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #909399;
+}
+
+.profile-tabs {
   ::v-deep .el-tabs__header {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
   }
 
   ::v-deep .el-tabs__nav-wrap::after {
@@ -410,91 +572,107 @@ export default {
 
   ::v-deep .el-tabs__item {
     font-size: 15px;
-    font-weight: 500;
     color: #606266;
-    padding: 0 24px;
+    padding: 0 20px;
 
     &.is-active {
-      color: #409EFF;
+      color: #1890ff;
       font-weight: 600;
     }
   }
 
   ::v-deep .el-tabs__active-bar {
-    background: #409EFF;
-    height: 3px;
-    border-radius: 2px;
+    background: #1890ff;
+    height: 2px;
   }
 }
 
-// 表单样式
-.form-content {
-  padding: 16px 0;
+.section-card {
+  border: 1px dashed #e4e7ed;
+  border-radius: 10px;
+  padding: 16px;
 }
 
-::v-deep .el-form-item {
-  margin-bottom: 20px;
-
-  .el-form-item__label {
-    color: #606266;
-    font-weight: 500;
-  }
+.section-card__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-::v-deep .el-input__inner {
-  border-radius: 8px;
-  border: 1px solid #e0e6ed;
-  transition: all 0.3s ease;
-
-  &:focus {
-    border-color: #409EFF;
-    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
-  }
+.section-card__label {
+  color: #909399;
+  font-size: 14px;
 }
 
-// 按钮样式
-::v-deep .el-button {
-  border-radius: 8px;
+.section-card__value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 500;
-  transition: all 0.3s ease;
-
-  &--primary {
-    background: linear-gradient(135deg, #409EFF 0%, #1890ff 100%);
-    border: none;
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
-    }
-  }
+  color: #303133;
 }
 
-// 点击链接样式
-.clickable-text {
-  color: #409EFF;
+.status-callout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  margin-bottom: 12px;
+}
+
+.status-callout__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2f3d;
+}
+
+.status-callout__desc {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #606266;
+}
+
+.status-callout--pending {
+  background: #fffdf6;
+  border-color: #ffe7ba;
+}
+
+.status-callout--processing {
+  background: #f0f9ff;
+  border-color: #bae7ff;
+}
+
+.status-callout--success {
+  background: #f6ffed;
+  border-color: #d9f7be;
+}
+
+.status-callout--danger {
+  background: #fff2f0;
+  border-color: #ffccc7;
+}
+
+.status-hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #909399;
+}
+
+.status-hint--danger {
+  color: #f5222d;
+}
+
+::v-deep .avatar-uploader .el-upload {
+  border: 2px dashed #d9d9d9;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 
   &:hover {
-    color: #1890ff;
-    text-decoration: underline;
-  }
-}
-
-// 上传组件样式
-::v-deep .avatar-uploader {
-  .el-upload {
-    border: 2px dashed #d9d9d9;
-    border-radius: 12px;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-
-    &:hover {
-      border-color: #409EFF;
-      background: rgba(64, 158, 255, 0.02);
-    }
+    border-color: #1890ff;
   }
 }
 
@@ -514,7 +692,6 @@ export default {
   border-radius: 12px;
 }
 
-// 验证码样式
 .login-code {
   width: 25%;
   height: 38px;
@@ -530,28 +707,24 @@ export default {
   transition: all 0.3s ease;
 
   &:hover {
-    background: #409EFF;
-    color: white;
-    border-color: #409EFF;
+    background: #1890ff;
+    color: #fff;
+    border-color: #1890ff;
   }
 }
 
-// 响应式设计
 @media (max-width: 768px) {
-  .profile-header {
-    padding: 16px;
-
-    .page-title {
-      font-size: 24px;
-    }
-
-    .page-subtitle {
-      font-size: 14px;
-    }
+  .status-card,
+  .info-panel,
+  .content-card {
+    padding: 20px;
   }
 
-  .user-profile {
-    margin-bottom: 16px;
+  .status-card__meta,
+  .meta-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
 }
 </style>

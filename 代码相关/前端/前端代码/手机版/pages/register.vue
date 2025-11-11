@@ -26,7 +26,11 @@
         </view>
       </view>
       <view class="action-btn">
-        <button @click="handleRegister()" class="register-btn cu-btn block bg-primary lg round">注册</button>
+        <button
+          @click="handleRegister()"
+          :disabled="registering"
+          class="register-btn cu-btn block bg-primary lg round"
+        >{{ registering ? '注册中...' : '注册' }}</button>
       </view>
     </view>
     <view class="xieyi text-center">
@@ -37,6 +41,9 @@
 
 <script>
   import { getCodeImg, register } from '@/api/login'
+  import constant from '@/utils/constant'
+
+  const realNamePage = constant.REAL_NAME_PAGE || '/pages/mine/realname/index'
 
   export default {
     data() {
@@ -44,6 +51,7 @@
         codeUrl: "",
         captchaEnabled: true,
         globalConfig: getApp().globalData.config,
+        registering: false,
         registerForm: {
           username: "",
           password: "",
@@ -84,28 +92,36 @@
         } else if (this.registerForm.code === "" && this.captchaEnabled) {
           this.$modal.msgError("请输入验证码")
         } else {
+          if (this.registering) {
+            return
+          }
           this.$modal.loading("注册中，请耐心等待...")
           this.register()
         }
       },
       // 用户注册
       async register() {
-        register(this.registerForm).then(res => {
-          this.$modal.closeLoading()
+        this.registering = true
+        try {
+          await register(this.registerForm)
           uni.showModal({
           	title: "系统提示",
-          	content: "恭喜你，您的账号 " + this.registerForm.username + " 注册成功！",
+          	content: "恭喜你，您的账号 " + this.registerForm.username + " 注册成功！请先完成实名认证，以便使用全部功能。",
           	success: function (res) {
           		if (res.confirm) {
-                uni.redirectTo({ url: `/pages/login` });
+                const redirect = encodeURIComponent(realNamePage)
+                uni.redirectTo({ url: `/pages/login?redirect=${redirect}` });
           		}
           	}
           })
-        }).catch(() => {
+        } catch (error) {
           if (this.captchaEnabled) {
             this.getCode()
           }
-        })
+        } finally {
+          this.registering = false
+          this.$modal.closeLoading()
+        }
       }
     }
   }
@@ -165,6 +181,10 @@
       .register-btn {
         margin-top: 40px;
         height: 45px;
+      }
+
+      .register-btn[disabled] {
+        opacity: 0.6;
       }
 
       .xieyi {

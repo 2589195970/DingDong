@@ -1,9 +1,10 @@
 package com.ruoyi.console.service;
 
+import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.entity.AgentAccount;
 import com.ruoyi.common.order.entity.Product;
-import org.springframework.scheduling.annotation.Async;
+import java.util.List;
 
 
 /**
@@ -55,4 +56,26 @@ public interface AgentProductInitService  {
      * 创建 代理商下所有子代理的产品 包括本身
      */
     void addSubAgentProduct(AgentAccount agentAccount,AgentAccount parentAgentAccount, Product product,Integer productCommission) throws BizException;
+
+    /**
+     * 批量创建 代理商下所有子代理的产品 包括本身（异步）
+     */
+    void addSubAgentProducts(Integer isAllAgent,
+                             List<String> targetAgentCodes,
+                             AgentAccount parentAgentAccount,
+                             Product product,
+                             Integer productCommission,
+                             LoginUser loginUser) throws BizException;
+
+    /**
+     * 异步更新指定代理及其下游代理的产品上下架状态
+     */
+    void asyncUpdateAgentProductStatus(String productCode,
+                                       String parentAgentCode,
+                                       Integer productStatus) throws BizException;
+
+    /**
+     * 异步创建提现记录
+     */
+    void addWithdrawalRecordAsync(Long sysUserId, String agentCode) throws BizException;
 }

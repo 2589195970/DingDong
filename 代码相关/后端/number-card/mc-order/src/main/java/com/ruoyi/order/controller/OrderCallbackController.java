@@ -1,5 +1,6 @@
 package com.ruoyi.order.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.ruoyi.common.apis.gth.GthCallbackRequest;
 import com.ruoyi.common.apis.wjk.WjkCallbackRequest;
 import com.ruoyi.common.apis.yqe.YqeCallbackRequest;
@@ -93,11 +94,13 @@ public class OrderCallbackController {
     @ApiOperation("感叹号回调信息处理")
     public String gthCallback(@ModelAttribute GthCallbackRequest request) {
         try {
-            if(request.getEvent_type().equals("product_status")){
-                gthService.updateProductStatus(request);
-            }else {
-                gthService.callback(request);
-            }
+            log.info("感叹号回调信息处理:{}", JSONObject.toJSONString(request));
+            // if(request.getEvent_type().equals("product_status")){
+            //     gthService.updateProductStatus(request);
+            // }else {
+            //     gthService.callback(request);
+            // }
+            gthService.callback(request);
             return "SUCCESS";
         } catch (BizException e) {
             log.info("{}方法异常:{}", "gthCallback", e.getMessage());

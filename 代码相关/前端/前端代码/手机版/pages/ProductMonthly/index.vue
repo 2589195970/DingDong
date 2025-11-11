@@ -19,7 +19,7 @@
       <view class="tab-bar">
         <view v-for="(item, index) in list" :key="index" class="tab-item"
               :class="{ 'active': current === index }" @click="click(index)">
-          <image :src="item.icon" class="tab-icon"/>
+          <image :src="item.icon" class="tab-icon" lazy-load="true"/>
           <text class="tab-text">{{ item.name }}</text>
         </view>
         <!-- 底部滑动条 -->
@@ -42,12 +42,12 @@
       <view class="product-card" v-for="dict in productList" :key="dict.productId">
         <!-- 左侧图片区域 -->
         <view class="product-image-section">
-          <image :src="dict.productMasterMap" class="product-image" mode="aspectFit"></image>
+          <image :src="dict.productMasterMap" class="product-image" mode="aspectFit" lazy-load="true"></image>
           <!-- 左侧底部佣金信息 -->
           <view class="image-bottom-info">
             <view class="commission-area-left">
               <view class="commission-combo">
-                <text class="commission-label">佣金</text>
+                <text class="commission-label">月返</text>
                 <text class="commission-base">¥{{ formatCommission(resolveBaseCommission(dict)) }}</text>
                 <template v-if="shouldShowVipCommission(dict)">
                   <text class="commission-plus">+</text>
@@ -115,7 +115,7 @@
     <u-modal :show="commissionopen" @confirm="confirm" ref="uModal" @cancel="cancel" :showCancelButton='true'
              confirmText="保存" :asyncClose="true">
       <view class="qrcode-container">
-        <image :src="fzhi.productQrcodeMap" class="qrcode-image"/>
+        <image :src="fzhi.productQrcodeMap" class="qrcode-image" lazy-load="true"/>
       </view>
     </u-modal>
     <!-- 推广选项弹窗 -->
@@ -893,40 +893,35 @@ page {
   }
 }
 
-// 响应式适配
+// 响应式适配 - 中等屏幕 (750rpx 以下, 例如 iPhone 11/12/13)
 @media screen and (max-width: 750rpx) {
   .product-card {
-    padding: 20rpx;
+    padding: 18rpx;
   }
 
   .product-image-section {
-    width: 160rpx;
-    margin-right: 20rpx;
+    width: 170rpx;
+    margin-right: 18rpx;
 
     .product-image {
-      height: 120rpx;
+      height: 125rpx;
     }
 
     .image-bottom-info {
       .commission-area-left {
-        .commission-combo {
-          padding: 6rpx 12rpx;
-        }
-
-        .commission-label {
-          font-size: 36rpx;
-        }
-
-        .commission-base {
-          font-size: 36rpx;
-        }
-
+        .commission-label,
+        .commission-base,
         .commission-vip {
-          font-size: 28rpx;
+          font-size: 30rpx;
+        }
+
+        .commission-plus {
+          font-size: 26rpx;
         }
 
         .vip-chip {
-          font-size: 16rpx;
+          font-size: 15rpx;
+          padding: 2rpx 6rpx;
         }
 
         .price-label-left {
@@ -937,12 +932,14 @@ page {
   }
 
   .product-info-section {
-    min-height: 160rpx;
+    min-height: 165rpx;
   }
 
   .product-title-area {
+    margin-bottom: 12rpx;
+
     .product-title {
-      font-size: 28rpx;
+      font-size: 29rpx;
     }
 
     .product-id-text {
@@ -951,36 +948,33 @@ page {
   }
 
   .product-features {
+    margin-bottom: 12rpx;
+
     .features-text {
       font-size: 24rpx;
     }
   }
 
-  .price-area {
-    .commission-price {
-      font-size: 32rpx;
-    }
-
-    .price-label {
-      font-size: 22rpx;
-    }
-  }
-
   .tags-area {
     gap: 6rpx;
+    margin-bottom: 16rpx;
 
     .product-tag {
-      padding: 4rpx 8rpx;
+      padding: 5rpx 10rpx;
 
       .tag-text {
-        font-size: 26rpx;
+        font-size: 20rpx;
       }
     }
   }
 
   .bottom-actions {
+    .right-buttons {
+      gap: 6rpx;
+    }
+
     .action-btn {
-      padding: 10rpx 20rpx;
+      padding: 10rpx 18rpx;
 
       .btn-text {
         font-size: 24rpx;
@@ -989,27 +983,143 @@ page {
   }
 }
 
-// 超小屏幕适配
+// 小屏幕适配 (600rpx 以下, 例如 iPhone SE, 小屏安卓)
 @media screen and (max-width: 600rpx) {
+  .product-card {
+    padding: 16rpx;
+  }
+
   .product-image-section {
-    width: 140rpx;
+    width: 150rpx;
+    margin-right: 16rpx;
 
     .product-image {
-      height: 100rpx;
+      height: 110rpx;
     }
 
     .image-bottom-info {
       .commission-area-left {
         .commission-combo {
-          padding: 4rpx 10rpx;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 2rpx;
+        }
+
+        .commission-label,
+        .commission-base {
+          font-size: 28rpx;
+        }
+
+        .commission-plus {
+          font-size: 24rpx;
+        }
+
+        .commission-vip {
+          font-size: 26rpx;
+        }
+
+        .vip-chip {
+          font-size: 14rpx;
+          padding: 2rpx 5rpx;
+        }
+
+        .price-label-left {
+          font-size: 18rpx;
+          margin-top: 2rpx;
+        }
+      }
+    }
+  }
+
+  .product-info-section {
+    min-height: 150rpx;
+  }
+
+  .product-title-area {
+    margin-bottom: 10rpx;
+
+    .product-title {
+      font-size: 27rpx;
+      line-height: 1.3;
+      word-break: break-all;
+    }
+
+    .product-id-text {
+      font-size: 20rpx;
+    }
+  }
+
+  .product-features {
+    margin-bottom: 10rpx;
+
+    .features-text {
+      font-size: 22rpx;
+      line-height: 1.3;
+    }
+  }
+
+  .tags-area {
+    gap: 5rpx;
+    margin-bottom: 14rpx;
+
+    .product-tag {
+      padding: 4rpx 8rpx;
+
+      .tag-text {
+        font-size: 20rpx;
+      }
+    }
+  }
+
+  .bottom-actions {
+    .right-buttons {
+      gap: 6rpx;
+    }
+
+    .action-btn {
+      padding: 8rpx 14rpx;
+
+      .btn-text {
+        font-size: 22rpx;
+      }
+    }
+  }
+}
+
+// 超小屏幕适配 (500rpx 以下, 例如老款小屏手机)
+@media screen and (max-width: 500rpx) {
+  .product-card {
+    padding: 14rpx;
+  }
+
+  .product-image-section {
+    width: 130rpx;
+    margin-right: 14rpx;
+
+    .product-image {
+      height: 95rpx;
+    }
+
+    .image-bottom-info {
+      .commission-area-left {
+        .commission-combo {
+          flex-direction: column;
+          align-items: center;
+          gap: 4rpx;
         }
 
         .commission-label {
-          font-size: 32rpx;
+          font-size: 20rpx;
+          margin-right: 0;
+          margin-bottom: 2rpx;
         }
 
         .commission-base {
-          font-size: 32rpx;
+          font-size: 26rpx;
+        }
+
+        .commission-plus {
+          font-size: 20rpx;
         }
 
         .commission-vip {
@@ -1017,40 +1127,76 @@ page {
         }
 
         .vip-chip {
-          font-size: 14rpx;
+          font-size: 13rpx;
+          padding: 1rpx 4rpx;
         }
 
         .price-label-left {
-          font-size: 18rpx;
+          font-size: 16rpx;
+          margin-top: 4rpx;
         }
       }
     }
   }
 
   .product-info-section {
-    min-height: 140rpx;
+    min-height: 135rpx;
   }
 
   .product-title-area {
+    margin-bottom: 8rpx;
+
     .product-title {
-      font-size: 26rpx;
-      line-height: 1.3;
+      font-size: 25rpx;
+      line-height: 1.25;
+      word-break: break-all;
+    }
+
+    .product-id-text {
+      font-size: 19rpx;
+    }
+  }
+
+  .product-features {
+    margin-bottom: 8rpx;
+
+    .features-text {
+      font-size: 20rpx;
+      line-height: 1.25;
     }
   }
 
   .tags-area {
-    margin-bottom: 16rpx;
+    gap: 4rpx;
+    margin-bottom: 12rpx;
+
+    .product-tag {
+      padding: 3rpx 6rpx;
+
+      .tag-text {
+        font-size: 18rpx;
+      }
+    }
   }
 
-  .right-buttons {
-    gap: 8rpx;
-  }
+  .bottom-actions {
+    flex-direction: column;
+    align-items: stretch;
 
-  .action-btn {
-    padding: 8rpx 16rpx;
+    .right-buttons {
+      width: 100%;
+      gap: 5rpx;
+      justify-content: space-between;
+    }
 
-    .btn-text {
-      font-size: 22rpx;
+    .action-btn {
+      flex: 1;
+      padding: 8rpx 10rpx;
+      text-align: center;
+
+      .btn-text {
+        font-size: 20rpx;
+      }
     }
   }
 }

@@ -26,6 +26,7 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.console.mapper.AgentAccountMapper;
 import com.ruoyi.console.mapper.ProductMapper;
 import com.ruoyi.console.service.*;
+import com.ruoyi.console.service.SmsService;
 import com.ruoyi.system.mapper.SysUserMapper;
 import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysRoleService;
@@ -35,6 +36,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 import com.ruoyi.console.mapper.VipUserMapper;
 
@@ -69,9 +72,6 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
     @Resource
     ISysRoleService iSysRoleService;
 
-    @Resource
-    WithdrawalRecordService withdrawalRecordService;
-
     @Resource(name = "configStringRedisTemplate")
     StringRedisTemplate configStringRedisTemplate;
 
@@ -84,10 +84,13 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
     ToolConfigService toolConfigService;
 
     @Resource
-    AgentProductService agentProductService;
+    AgentProductInitService agentProductInitService;
 
     @Resource
     private VipUserMapper vipUserMapper;
+
+    @Resource
+    SmsService smsService;
 
 
     /**
@@ -99,6 +102,17 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
     @Transactional(rollbackFor = Exception.class)
     public void addAgentAccount(AgentAccountAddBO agentAccountAddBO) throws BizException {
         log.info("用户注册开始:{}",JSONObject.toJSONString(agentAccountAddBO));
+        String lockKey = null;
+        boolean registerLockAcquired = false;
+        try {
+            if (StringUtils.isNotEmpty(agentAccountAddBO.getPhone())) {
+                lockKey = CacheUtils.generalKey(CacheKeyConstants.AGENT_REGISTER_LOCK, agentAccountAddBO.getPhone());
+                Boolean lockResult = configStringRedisTemplate.opsForValue().setIfAbsent(lockKey, "1", 30, TimeUnit.SECONDS);
+                if (!Boolean.TRUE.equals(lockResult)) {
+                    throw new BizException("当前手机号注册处理中，请勿重复提交");
+                }
+                registerLockAcquired = true;
+            }
         //判断推荐人是否存在
         List<AgentAccount> agentAccountList = baseMapper.selectList(new LambdaQueryWrapper<AgentAccount>().eq(AgentAccount::getAgentCode, agentAccountAddBO.getParentAgentCode()));
         if (CollectionUtils.isEmpty(agentAccountList)) {
@@ -113,9 +127,9 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         smsDTO.setPhoneNumber(agentAccountAddBO.getPhone());
         smsDTO.setSmsTemplateType(BaseConstant.ZERO_INT);
         smsDTO.setSmsCode(agentAccountAddBO.getSmsCode());
-        // if(!smsService.checkSms(smsDTO)){
-        //     throw new BizException("请输入正确的验证码");
-        // }
+        if(!smsService.checkSms(smsDTO)){
+            throw new BizException("请输入正确的验证码");
+        }
         if(!isValidByRegex(agentAccountAddBO.getUserName())){
             throw new BizException("用户名中不能包含特殊字符");
         }
@@ -163,8 +177,8 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         agentAccount.setParentAgentCode(parentAgent.getAgentCode());
         agentAccount.setAgentCode(RandomUtil.randomString(BaseConstant.EIGHT_INT));
         agentAccount.setAgentName(sysUser.getUserName());
-        // 默认新注册代理商处于 1 级，保持与 VIP 初始等级一致
-        agentAccount.setLevel(BaseConstant.ONE_INT);
+        // 默认新注册代理商处于 0 级，保持与 VIP 初始等级一致
+        agentAccount.setLevel(BaseConstant.ZERO_INT);
         agentAccount.setIsRealName(BaseConstant.ZERO_INT);
         agentAccount.setPhone(agentAccountAddBO.getPhone());
         agentAccount.setIsEnabled(BaseConstant.ZERO_INT);
@@ -182,23 +196,14 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         agentAccount.setParentAgentList(JSONObject.toJSONString(parentAgentJsons));
         baseMapper.insert(agentAccount);
         createDefaultVipUser(sysUser, agentAccount);
-        //创建提现相关记录
-        withdrawalRecordService.addWithdrawalRecord(sysUser.getUserId(), agentAccount.getAgentCode());
-        //添加父代理商默认开放产品
-        agentProductService.addRegisterAccountProduct(agentAccount);
-        //添加代理推广海报
-        ToolConfig toolConfig =toolConfigService.getToolConfig(BaseConstant.FOUR_INT);
-        if(StringUtils.isNotEmpty(toolConfig.getAccessKey())){
-            agentProductService.addRegisterQrcodeMap(agentAccount,toolConfig.getAccessKey(),BaseConstant.ONE_INT);
-        }
-        if(StringUtils.isNotEmpty(toolConfig.getSecretKey())){
-            agentProductService.addRegisterQrcodeMap(agentAccount,toolConfig.getSecretKey(),BaseConstant.TWO_INT);
-        }
-        if(StringUtils.isNotEmpty(toolConfig.getBucket())){
-            agentProductService.addRegisterQrcodeMap(agentAccount,toolConfig.getBucket(),BaseConstant.THREE_INT);
-        }
-
+        ToolConfig toolConfig = toolConfigService.getToolConfig(BaseConstant.FOUR_INT);
+        schedulePostRegistrationTasks(sysUser, agentAccount, toolConfig);
         log.info("用户注册成功结束:{}",JSONObject.toJSONString(agentAccountAddBO));
+        } finally {
+            if (registerLockAcquired && StringUtils.isNotEmpty(lockKey)) {
+                configStringRedisTemplate.delete(lockKey);
+            }
+        }
     }
 
     /**
@@ -234,6 +239,60 @@ public class AgentAccountServiceImpl extends ServiceImpl<AgentAccountMapper, Age
         vipUser.setCreateTime(now);
         vipUser.setUpdateTime(now);
         vipUserMapper.insert(vipUser);
+    }
+
+    private void schedulePostRegistrationTasks(SysUser sysUser, AgentAccount agentAccount, ToolConfig toolConfig) {
+        if (sysUser == null || agentAccount == null) {
+            return;
+        }
+        runAfterCommit(() -> runAsyncSafe("init withdrawal record", () -> agentProductInitService.addWithdrawalRecordAsync(sysUser.getUserId(), agentAccount.getAgentCode())));
+        runAfterCommit(() -> runAsyncSafe("dispatch default products", () -> agentProductInitService.addRegisterAccountProduct(agentAccount)));
+        runAfterCommit(() -> dispatchRegisterQrcodeMap(agentAccount, toolConfig));
+    }
+
+    private void dispatchRegisterQrcodeMap(AgentAccount agentAccount, ToolConfig toolConfig) {
+        if (agentAccount == null) {
+            return;
+        }
+        if (toolConfig == null) {
+            log.info("Async task skipped: register qrcode config missing, agentCode={}", agentAccount.getAgentCode());
+            return;
+        }
+        if(StringUtils.isNotEmpty(toolConfig.getAccessKey())){
+            runAsyncSafe("register qrcode one", () -> agentProductInitService.addRegisterQrcodeMap(agentAccount,toolConfig.getAccessKey(),BaseConstant.ONE_INT));
+        }
+        if(StringUtils.isNotEmpty(toolConfig.getSecretKey())){
+            runAsyncSafe("register qrcode two", () -> agentProductInitService.addRegisterQrcodeMap(agentAccount,toolConfig.getSecretKey(),BaseConstant.TWO_INT));
+        }
+        if(StringUtils.isNotEmpty(toolConfig.getBucket())){
+            runAsyncSafe("register qrcode three", () -> agentProductInitService.addRegisterQrcodeMap(agentAccount,toolConfig.getBucket(),BaseConstant.THREE_INT));
+        }
+    }
+
+    private void runAfterCommit(Runnable runnable) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            runnable.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                runnable.run();
+            }
+        });
+    }
+
+    private void runAsyncSafe(String scene, BizRunnable runnable) {
+        try {
+            runnable.run();
+        } catch (BizException ex) {
+            log.error("Async dispatch failed: {}", scene, ex);
+        }
+    }
+
+    @FunctionalInterface
+    private interface BizRunnable {
+        void run() throws BizException;
     }
 
 

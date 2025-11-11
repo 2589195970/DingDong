@@ -30,8 +30,8 @@
             class="el-input__icon input-icon"
           />
         </el-input>
-        <div 
-          class="login-code" 
+        <div
+          class="login-code"
           :class="{ 'disabled': countdown !== '获取验证码' }"
           @click="getCode1"
         >
@@ -116,8 +116,7 @@ export default {
         ],
         userName: [
           { required: true, trigger: "blur", message: "请输入您的用户名" },
-          { min: 2, max: 10, message: '用户名长度必须介于 2 和 10 之间', trigger: 'blur' },
-          { pattern: /^[\u4e00-\u9fa5]+$/, message: "用户名只能输入中文，不允许特殊符号", trigger: "blur" }
+          { min: 2, max: 18, message: '用户名长度必须介于 2 和 18 之间', trigger: 'blur' }
         ],
         password: [
           { required: true, trigger: "blur", message: "请输入您的密码" },
@@ -135,7 +134,6 @@ export default {
     };
   },
   created() {
-    console.log(this.$route.query.aasasa);
     this.getCode();
   },
   methods: {
@@ -193,7 +191,7 @@ export default {
         this.$message.error("请填写手机号");
       }
     },
-    
+
     startCountdown() {
       this.countdown = 60;
       const taskId = setInterval(() => {
@@ -213,11 +211,12 @@ export default {
           this.loading = true;
           register(this.registerForm).then(res => {
             const username = this.registerForm.username;
-            this.$alert("<font color='red'>恭喜你，您的账号 " + username + " 注册成功！</font>", '系统提示', {
+            const redirectPath = '/finance/personal-info'
+            this.$alert("<font color='red'>恭喜你，您的账号 " + username + " 注册成功！</font><br/><span>请先完成实名认证，以便正常使用系统功能。</span>", '系统提示', {
               dangerouslyUseHTMLString: true,
               type: 'success'
             }).then(() => {
-              this.$router.push("/login");
+              this.$router.push({ path: "/login", query: { redirect: redirectPath } });
             }).catch(() => {});
           }).catch(ref=> {
             this.loading = false;
@@ -309,19 +308,19 @@ export default {
   cursor: pointer;
   user-select: none;
   transition: all 0.3s;
-  
+
   &:hover:not(.disabled) {
     background-color: #f5f7fa;
     border-color: #c0c4cc;
   }
-  
+
   &.disabled {
     cursor: not-allowed;
     background-color: #f5f7fa;
     color: #c0c4cc;
     border-color: #e4e7ed;
   }
-  
+
   img {
     cursor: pointer;
     vertical-align: middle;

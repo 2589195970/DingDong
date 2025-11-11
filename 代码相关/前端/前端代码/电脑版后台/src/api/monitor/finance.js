@@ -174,3 +174,12 @@ export function updatePosterImages(data) {
     }]
   })
 }
+
+// 重置推广海报图
+export function resetPosterImage(posterIndex) {
+  return request({
+    url: "/agentExtendUrl/resetPosterImage",
+    method: "post",
+    params: { posterIndex }
+  })
+}

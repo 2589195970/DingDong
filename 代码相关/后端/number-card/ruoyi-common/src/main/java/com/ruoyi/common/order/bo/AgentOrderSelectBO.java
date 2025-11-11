@@ -22,6 +22,12 @@ public class AgentOrderSelectBO extends BaseBO{
     private String orderDownstreamId;
 
     /**
+     * 上游订单号（系统订单号）
+     */
+    @ApiModelProperty("上游订单号（系统订单号）")
+    private String orderUpstreamId;
+
+    /**
      * 下游代理商code
      */
     @ApiModelProperty("下游代理商code")
@@ -84,6 +90,12 @@ public class AgentOrderSelectBO extends BaseBO{
      */
     @ApiModelProperty("订单佣金状态")
     private Integer orderCommissionStatus;
+
+    /**
+     * 照片审核状态
+     */
+    @ApiModelProperty("照片审核状态")
+    private Integer photoStatus;
 
     /**
      * 订单类型：0-我的订单，1-代理商订单，不传则查询所有

@@ -13,6 +13,7 @@
           v-model="queryParams.agentName"
           placeholder="请输入代理名称"
           clearable
+          style="width: 150px"
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
@@ -21,17 +22,18 @@
           v-model="queryParams.agentCode"
           placeholder="请输入代理编码"
           clearable
+          style="width: 150px"
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
       <el-form-item label="启用状态" prop="isEnabled">
-        <el-select v-model="queryParams.isEnabled" placeholder="请选择状态" clearable style="width: 180px">
+        <el-select v-model="queryParams.isEnabled" placeholder="请选择状态" clearable style="width: 150px">
           <el-option label="启用" :value="0" />
           <el-option label="禁用" :value="1" />
         </el-select>
       </el-form-item>
       <el-form-item label="实名状态" prop="isRealName">
-        <el-select v-model="queryParams.isRealName" placeholder="请选择实名状态" clearable style="width: 180px">
+        <el-select v-model="queryParams.isRealName" placeholder="请选择实名状态" clearable style="width: 150px">
           <el-option label="未实名" :value="0" />
           <el-option label="已实名" :value="1" />
         </el-select>

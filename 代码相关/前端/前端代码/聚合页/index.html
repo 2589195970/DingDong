@@ -83,6 +83,17 @@
 				</div>
 				<div class="carousel-indicators"></div>
 			</div>
+			<!-- 简洁搜索框 -->
+			<div style="background: #fff; padding: 20px 15px;">
+				<van-search
+					v-model="searchKeyword"
+					placeholder="搜索产品名称..."
+					@search="onSearch"
+					@clear="onClear"
+					shape="round"
+					background="#fff"
+				/>
+			</div>
 			<div class="kflexc" style="padding: 25px 0px 10px;">
 				<div v-for="(item, index) in items" :key="index" class="li" :class="{ liact: activeIndex === index }"
 					@click="selectItem(index)">

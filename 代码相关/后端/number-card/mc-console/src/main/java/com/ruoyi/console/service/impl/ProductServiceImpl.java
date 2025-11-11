@@ -31,6 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -62,6 +64,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     @Resource
     AgentProductService agentProductService;
+
+    @Resource
+    AgentProductInitService agentProductInitService;
 
     @Resource
     AgentAccountService agentAccountService;
@@ -163,31 +168,45 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             //如果不传默认0
             product.setBalanceConfig(BaseConstant.ZERO_INT);
         }
-        List<AgentAccount> agentAccountList = new ArrayList<>();
-        //查询代理商 如果选择全部代理 列表进行查询
+        Integer targetAllAgentFlag = productAddAndUpdateBO.getIsAllAgent();
+        List<String> targetAgentCodes = CollectionUtils.isEmpty(productAddAndUpdateBO.getAgentCodeList())
+                ? new ArrayList<>()
+                : new ArrayList<>(productAddAndUpdateBO.getAgentCodeList());
+        //查询代理商佣金校验
         if (Objects.equals(productAddAndUpdateBO.getSfyjfx(), BaseConstant.ZERO_INT)
                 && product.getProductCommission() != null
                 && product.getProductCommission() > 0) {
             throw new BizException("当前产品未开启佣金返现，请先将基础佣金调整为0");
-        }
-
-        if(productAddAndUpdateBO.getIsAllAgent()!=null&&productAddAndUpdateBO.getIsAllAgent()==BaseConstant.ONE_INT){
-            //查询所有有效子代理
-            agentAccountList = agentAccountService.selectChildAgentList(loginUser,BaseConstant.ZERO_INT);
-        }else {
-            if(!CollectionUtils.isEmpty(productAddAndUpdateBO.getAgentCodeList())){
-                //查询需要添加代理产品的代理信息
-                agentAccountList = agentAccountService.list(new LambdaQueryWrapper<AgentAccount>().in(AgentAccount::getAgentCode,productAddAndUpdateBO.getAgentCodeList()));
-            }
         }
         //添加产品
         baseMapper.insert(product);
         //生成所有子代理产品记录
         AgentAccount parentAgentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(),true);
         ensureSelfAgentProduct(product, parentAgentAccount);
-        agentProductService.addProductPoster(parentAgentAccount,product);
-        //创建所有子代理的代理商产品
-        agentProductService.addSubAgentProducts(agentAccountList,parentAgentAccount,product,product.getProductCommission());
+        if (parentAgentAccount != null) {
+            log.info("Async dispatch: queue product poster generation, productCode={}, agentCode={}",
+                    product.getProductCode(), parentAgentAccount.getAgentCode());
+            agentProductInitService.addProductPoster(parentAgentAccount, product);
+        } else {
+            log.warn("Async dispatch skipped: parent agent account missing for productCode={}", product.getProductCode());
+        }
+        boolean needDispatchSubAgent = Objects.equals(targetAllAgentFlag, BaseConstant.ONE_INT)
+                || !CollectionUtils.isEmpty(targetAgentCodes);
+        if (!needDispatchSubAgent) {
+            log.info("Async dispatch: no sub agent product creation required for productCode={}", product.getProductCode());
+        } else {
+            log.info("Async dispatch: queue sub agent product creation, productCode={}, parentAgentCode={}, dispatchAll={}, specifiedCount={}",
+                    product.getProductCode(),
+                    parentAgentAccount == null ? "UNKNOWN" : parentAgentAccount.getAgentCode(),
+                    Objects.equals(targetAllAgentFlag, BaseConstant.ONE_INT),
+                    targetAgentCodes.size());
+            agentProductInitService.addSubAgentProducts(targetAllAgentFlag,
+                    targetAgentCodes,
+                    parentAgentAccount,
+                    product,
+                    product.getProductCommission(),
+                    loginUser);
+        }
     }
 
 
@@ -441,17 +460,10 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
         // 更新当前代理商自己的产品状态
         updateCurrentAgentProduct(product, targetStatus, currentAgentAccount.getAgentCode());
-        if (isAdmin) {
-            // 递归下架所有下游代理商的产品
-            updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode(), targetStatus);
-        }else{
-            // 只有下架操作才影响下游代理商
-            if(targetStatus == 0) {
-                // 递归下架所有下游代理商的产品
-                updateDownstreamAgentProducts(product.getProductCode(), currentAgentAccount.getAgentCode(),targetStatus);
-            }
+        boolean needCascadeUpdate = isAdmin || targetStatus == 0;
+        if (needCascadeUpdate) {
+            triggerAsyncAgentProductStatusUpdate(product, currentAgentAccount, targetStatus);
         }
-
     }
 
     /**
@@ -515,35 +527,44 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         );
     }
 
-    /**
-     * 递归下架所有下游代理商的产品
-     * @param productCode 产品编码
-     * @param parentAgentCode 父代理商编码
-     */
-    private void updateDownstreamAgentProducts(String productCode, String parentAgentCode,Integer productStatus) {
-        // 更新当前层级的下游代理商产品状态
-        AgentProduct agentProduct = new AgentProduct();
-        agentProduct.setProductStatus(productStatus);
-        agentProduct.setUpdateTime(System.currentTimeMillis());
-
-        agentProductService.update(agentProduct,
-            new LambdaQueryWrapper<AgentProduct>()
-                .eq(AgentProduct::getParentProductCode, productCode)
-                .eq(AgentProduct::getParentAgentCode, parentAgentCode) // 当前层级的父代理商
-        );
-
-        // 查询当前层级的下游代理商
-        List<AgentAccount> downstreamAgents = agentAccountService.list(
-            new LambdaQueryWrapper<AgentAccount>()
-                .eq(AgentAccount::getParentAgentCode, parentAgentCode)
-        );
-
-        // 递归处理每个下游代理商的下游代理商
-        for (AgentAccount downstreamAgent : downstreamAgents) {
-            updateDownstreamAgentProducts(productCode, downstreamAgent.getAgentCode(),productStatus);
+    private void triggerAsyncAgentProductStatusUpdate(Product product,
+                                                      AgentAccount currentAgentAccount,
+                                                      Integer targetStatus) {
+        if (product == null || currentAgentAccount == null || targetStatus == null) {
+            log.warn("Skip async cascade: invalid arguments product={} agentAccount={} status={}",
+                    product == null ? null : product.getProductCode(),
+                    currentAgentAccount,
+                    targetStatus);
+            return;
         }
+        Runnable cascadeTask = () -> {
+            try {
+                agentProductInitService.asyncUpdateAgentProductStatus(product.getProductCode(),
+                        currentAgentAccount.getAgentCode(), targetStatus);
+            } catch (BizException ex) {
+                log.error("Async cascade dispatch failed immediately productCode={} agentCode={} status={} error={}",
+                        product.getProductCode(),
+                        currentAgentAccount.getAgentCode(),
+                        targetStatus,
+                        ex.getMessage(),
+                        ex);
+            }
+        };
+        runAfterCommit(cascadeTask);
     }
 
+    private void runAfterCommit(Runnable runnable) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            runnable.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                runnable.run();
+            }
+        });
+    }
 
     /**
      * 修改佣金

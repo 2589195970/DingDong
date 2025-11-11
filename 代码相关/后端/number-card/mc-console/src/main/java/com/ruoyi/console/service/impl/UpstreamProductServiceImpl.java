@@ -68,12 +68,17 @@ public class UpstreamProductServiceImpl extends ServiceImpl<UpstreamProductMappe
                 //查询展示列
                 List<Product> productList = productMapper.selectList(new LambdaQueryWrapper<Product>().eq(Product::getUpstreamProductCode,upstreamProduct.getUpstreamProductCode()));
                 if(!CollectionUtils.isEmpty(productList)){
-                    List<String> productStrList = new ArrayList<>();
-                    //标记一下是否上架
-                    for (Product product:productList){
-                        productStrList.add(product.getProductName()+","+ ProductEnum.ProductStatusEnum.getProductByStatus(product.getProductStatus()));
-                    }
-                    upstreamProductVO.setProductList(productStrList);
+                    List<UpstreamProductVO.ProductBindVO> bindVOList = productList.stream().map(product -> {
+                        UpstreamProductVO.ProductBindVO bindVO = new UpstreamProductVO.ProductBindVO();
+                        bindVO.setProductId(product.getProductId());
+                        bindVO.setProductCode(product.getProductCode());
+                        bindVO.setProductName(product.getProductName());
+                        bindVO.setProductStatus(product.getProductStatus());
+                        bindVO.setProductStatusName(ProductEnum.ProductStatusEnum.getProductByStatus(product.getProductStatus()));
+                        bindVO.setShelfTime(product.getShelfTime());
+                        return bindVO;
+                    }).collect(Collectors.toList());
+                    upstreamProductVO.setProductList(bindVOList);
                 }
                 upstreamProductVOList.add(upstreamProductVO);
             }

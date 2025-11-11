@@ -1,6 +1,7 @@
 package com.ruoyi.framework.web.service;
 
 import javax.annotation.Resource;
+import java.util.regex.Pattern;
 
 import com.ruoyi.common.constant.*;
 import com.ruoyi.common.order.bo.SmsSendBO;
@@ -43,6 +44,8 @@ import com.ruoyi.system.service.ISysUserService;
 @Component
 public class SysLoginService
 {
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^1\\d{10}$");
+
     @Autowired
     private TokenService tokenService;
 
@@ -75,15 +78,17 @@ public class SysLoginService
      */
     public String login(String username, String password, String code, String uuid)
     {
+        String loginAccount = username;
         // 验证码校验
-        validateCaptcha(username, code, uuid);
+        validateCaptcha(loginAccount, code, uuid);
         // 登录前置校验
-        loginPreCheck(username, password);
+        loginPreCheck(loginAccount, password);
+        String resolvedUsername = resolveLoginUsername(loginAccount);
         // 用户验证
         Authentication authentication = null;
         try
         {
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(resolvedUsername, password);
             AuthenticationContextHolder.setContext(authenticationToken);
             // 该方法会去调用UserDetailsServiceImpl.loadUserByUsername
             authentication = authenticationManager.authenticate(authenticationToken);
@@ -92,12 +97,12 @@ public class SysLoginService
         {
             if (e instanceof BadCredentialsException)
             {
-                AsyncManager.me().execute(AsyncFactory.recordLogininfor(username, Constants.LOGIN_FAIL, MessageUtils.message("user.password.not.match")));
+                AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginAccount, Constants.LOGIN_FAIL, MessageUtils.message("user.password.not.match")));
                 throw new UserPasswordNotMatchException();
             }
             else
             {
-                AsyncManager.me().execute(AsyncFactory.recordLogininfor(username, Constants.LOGIN_FAIL, e.getMessage()));
+                AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginAccount, Constants.LOGIN_FAIL, e.getMessage()));
                 throw new ServiceException(e.getMessage());
             }
         }
@@ -105,7 +110,7 @@ public class SysLoginService
         {
             AuthenticationContextHolder.clearContext();
         }
-        AsyncManager.me().execute(AsyncFactory.recordLogininfor(username, Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success")));
+        AsyncManager.me().execute(AsyncFactory.recordLogininfor(loginAccount, Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success")));
         LoginUser loginUser = (LoginUser) authentication.getPrincipal();
         recordLoginInfo(loginUser.getUserId());
         // 生成token
@@ -267,5 +272,25 @@ public class SysLoginService
             return true;
         }
         return false;
+    }
+
+    private String resolveLoginUsername(String identifier)
+    {
+        if (!isPhoneNumber(identifier))
+        {
+            return identifier;
+        }
+        SysUser sysUser = userService.selectUserByPhone(identifier);
+        if (sysUser == null)
+        {
+            AsyncManager.me().execute(AsyncFactory.recordLogininfor(identifier, Constants.LOGIN_FAIL, "手机号不存在"));
+            throw new UserPasswordNotMatchException();
+        }
+        return sysUser.getUserName();
+    }
+
+    private boolean isPhoneNumber(String identifier)
+    {
+        return StringUtils.isNotEmpty(identifier) && PHONE_PATTERN.matcher(identifier).matches();
     }
 }

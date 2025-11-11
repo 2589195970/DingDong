@@ -4,6 +4,40 @@
   margin: 0;
   padding: 0;
 }
+
+/* ==================== Vant Search 样式优化 ==================== */
+.van-search {
+  padding: 0 !important;
+}
+
+.van-search__content {
+  background-color: #fff !important;
+  border: 2px solid #e5e5e5 !important;
+  border-radius: 25px !important;
+  padding-left: 20px !important;
+  padding-right: 15px !important;
+}
+
+/* 移除浏览器默认的搜索清除按钮，避免与 Vant 的清除图标重复 */
+.van-search__content input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.van-search__content input[type="search"]::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.van-search__content:focus-within {
+  border-color: #ff6b6b !important;
+}
+
+.van-field__control {
+  font-size: 15px !important;
+}
+
+/* ==================== 原有样式 ==================== */
 #app {
   background-color: #f3f3f3;
 }
