@@ -133,7 +133,7 @@
           <!-- 订单头部 -->
           <view class="order-header">
             <view class="order-id">订单号：{{ item.orderId }}</view>
-            <view class="order-status" :class="getStatusClass(item.orderStatus)">
+            <view class="order-status" :class="statusClassMap[item.orderStatus] || defaultStatusClass">
               {{ getStatusText(item.orderStatus) }}
             </view>
           </view>
@@ -326,7 +326,17 @@ export default {
       // 页面状态
       status: 'loadmore',
       loading: true,
-      list: []
+      list: [],
+
+      // 订单状态样式映射
+      statusClassMap: {
+        '-1': 'status-error',
+        '0': 'status-success',
+        '1': 'status-warning',
+        '2': 'status-info',
+        '4': 'status-success'
+      },
+      defaultStatusClass: 'status-default'
     };
   },
   onLoad() {
@@ -467,7 +477,7 @@ export default {
     // 订单详情
     handleOrderDetail(data) {
       uni.navigateTo({
-        url: `/pages/Order/orderxiangqing?key=${encodeURIComponent(JSON.stringify(data))}`
+        url: `/package-order/orderDetail/index?key=${encodeURIComponent(JSON.stringify(data))}`
       });
     },
 
@@ -481,18 +491,6 @@ export default {
         '4': '已激活'
       };
       return statusMap[status] || '未知状态';
-    },
-
-    // 获取状态样式类
-    getStatusClass(status) {
-      const statusClassMap = {
-        '-1': 'status-error',
-        '0': 'status-success',
-        '1': 'status-warning',
-        '2': 'status-info',
-        '4': 'status-success'
-      };
-      return statusClassMap[status] || 'status-default';
     },
 
     // 时间戳转换

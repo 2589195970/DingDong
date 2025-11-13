@@ -43,7 +43,7 @@
   import { getCodeImg, register } from '@/api/login'
   import constant from '@/utils/constant'
 
-  const realNamePage = constant.REAL_NAME_PAGE || '/pages/mine/realname/index'
+  const realNamePage = constant.REAL_NAME_PAGE || '/package-mine/mine/realname/index'
 
   export default {
     data() {

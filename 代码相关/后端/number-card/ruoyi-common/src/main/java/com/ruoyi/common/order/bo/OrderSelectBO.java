@@ -84,6 +84,12 @@ public class OrderSelectBO extends BaseBO{
     @ApiModelProperty("产品名称")
     private String productName;
 
+    /**
+     * 产品类型
+     */
+    @ApiModelProperty("产品类型")
+    private Integer productType;
+
 
     /**
      * 开始时间

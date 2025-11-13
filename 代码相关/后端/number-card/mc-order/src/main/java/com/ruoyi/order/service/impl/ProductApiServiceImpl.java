@@ -15,6 +15,7 @@ import com.ruoyi.common.order.entity.Product;
 import com.ruoyi.common.order.entity.UpstreamApi;
 import com.ruoyi.common.order.entity.UpstreamProduct;
 import com.ruoyi.common.order.reuqest.APISubmitInfoRequest;
+import com.ruoyi.common.order.reuqest.BaseSubmitOrderRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -65,9 +66,21 @@ public class ProductApiServiceImpl extends ServiceImpl<UpstreamProductMapper, Up
         BaseService baseService = SpringContextUtil.getBean(upstreamApi.getInterfaceClassName());
         Order order = null;
         if(upstreamApi.getIsAsync() == null|| upstreamApi.getIsAsync() == BaseConstant.ZERO_INT){
-            order = baseService.syncSubmitOrder(orderId, JSONObject.parseObject(JSONObject.toJSONString(apiSubmitInfoRequest), (Type) Class.forName(upstreamApi.getParameterClassName())),product,upstreamApi);
+            order = baseService.syncSubmitOrder(orderId, convertSubmitRequest(apiSubmitInfoRequest, upstreamApi),product,upstreamApi);
         }
         return order;
+    }
+
+    @Override
+    public Order resumePendingOrder(Long orderId, APISubmitInfoRequest apiSubmitInfoRequest) throws Exception {
+        Product product = productService.getProduct(apiSubmitInfoRequest.getProductCode());
+        UpstreamApi upstreamApi = upstreamApiService.getUpstreamApi(product.getUpstreamApiCode());
+        BaseService baseService = SpringContextUtil.getBean(upstreamApi.getInterfaceClassName());
+        return baseService.resumePendingOrder(orderId, convertSubmitRequest(apiSubmitInfoRequest, upstreamApi), product, upstreamApi);
+    }
+
+    private BaseSubmitOrderRequest convertSubmitRequest(APISubmitInfoRequest apiSubmitInfoRequest, UpstreamApi upstreamApi) throws Exception {
+        return JSONObject.parseObject(JSONObject.toJSONString(apiSubmitInfoRequest), (Type) Class.forName(upstreamApi.getParameterClassName()));
     }
 
     /**

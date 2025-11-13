@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -142,12 +143,11 @@ public class GthServiceImpl extends BaseServiceImpl implements GthService {
     private String getEncryptionSecret(Order order, GthArgument gthArgument) throws Exception {
         try {
             // 构造请求参数
-            Map<String, Object> params = new HashMap<>();
+            Map<String, Object> params = new LinkedHashMap<>();
+            params.put("order_id", order.getOrderUpstreamId());
             params.put("share_id", gthArgument.getShareId());
-            params.put("order_id", order.getOrderId());
-
             // 生成签名：order_id=xxx&share_id=xxx + apiToken
-            String signString = "order_id=" + order.getOrderId() + "&share_id=" + gthArgument.getShareId() + gthArgument.getApiToken();
+            String signString = "order_id=" + order.getOrderUpstreamId() + "&share_id=" + gthArgument.getShareId() + gthArgument.getApiToken();
             String sign = SecureUtil.md5(signString).toLowerCase();
             params.put("sign", sign);
 

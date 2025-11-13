@@ -168,6 +168,14 @@ public abstract class BaseServiceImpl implements BaseService {
             middleSubmit(order,agentProductBO,upstreamInfo);
             //订单前置拦截校验
             orderCheckService.orderBeforeCheck(request,product,upstreamInfo,order);
+
+            if (needPhotoAuditHold(product)) {
+                log.info("订单{}所属产品需要先审核照片, 暂不推送上游", order.getOrderId());
+                order.setOrderMessage("待照片审核");
+                orderService.updateById(order);
+                return order;
+            }
+
             //订单入库
             order = syncSubmitOrderFlow(request, order, product,upstreamInfo);
         }catch (Exception e){ ;
@@ -176,6 +184,36 @@ public abstract class BaseServiceImpl implements BaseService {
             throw new BizException("提单异常:{}",e.getMessage());
         }
         //订单后处理
+        afterSubmit(order,agentProductBO,upstreamInfo);
+        return order;
+    }
+
+    protected boolean needPhotoAuditHold(Product product) {
+        return product != null
+                && product.getPhotoRequired() != null
+                && product.getPhotoRequired() == BaseConstant.ONE_INT
+                && product.getSfxysh() != null
+                && product.getSfxysh() == BaseConstant.ONE_INT;
+    }
+
+    @Override
+    public Order resumePendingOrder(Long orderId, BaseSubmitOrderRequest request, Product product, UpstreamApi upstreamApi) throws Exception {
+        log.info("订单{}重新处理,订单号:{},产品CODE:{},上游APICODE:{}", JSONObject.toJSONString(request),orderId,product.getProductCode(),upstreamApi.getUpstreamApiCode());
+        Order order = orderService.getById(orderId);
+        if (order == null) {
+            throw new BizException("订单不存在");
+        }
+        AgentProductBO agentProductBO;
+        UpstreamInfo upstreamInfo;
+        try {
+            agentProductBO = productService.getAgentProductBO(product.getProductCode(),request.getAgentCode());
+            upstreamInfo =upstreamApiService.getUpstreamInfo(upstreamApi.getUpstreamApiCode(),agentProductBO.getUpstreamProductCode());
+            orderCheckService.orderBeforeCheck(request,product,upstreamInfo,order);
+            order = syncSubmitOrderFlow(request, order, product,upstreamInfo);
+        }catch (Exception e){
+            orderErrorSave(order,product,upstreamApi,request,e.getMessage());
+            throw new BizException("提单异常:{}",e.getMessage());
+        }
         afterSubmit(order,agentProductBO,upstreamInfo);
         return order;
     }

@@ -80,7 +80,7 @@
                     <p v-if="scope.row.productType==2" style="color: red;">长期产品</p>
                     <p v-if="scope.row.productType==3" style="color:green;">其它</p>
                     <p v-if="scope.row.productType==4" style="color: red;">组合返佣</p>
-                    <p v-if="scope.row.productType==5" style="color:#ff8c00;">付费提卡</p>
+                    <p v-if="scope.row.productType==5" style="color:#ff8c00;">付费产品</p>
                 </template>
             </el-table-column>
             <el-table-column label="推广要求" align="center" prop="productDemand" width="200" />
@@ -106,7 +106,7 @@
                     {{ Number(scope.row.sfyjfx) === 0 ? 0 : scope.row.productCommission }}
                 </template>
             </el-table-column>
-            <el-table-column label="初始话费(元)" align="center" prop="productInitialBalance" :show-overflow-tooltip="true" />
+            <el-table-column label="自带话费(元)" align="center" prop="productInitialBalance" :show-overflow-tooltip="true" />
             <!--<el-table-column label="佣金返现" align="center" prop="sfyjfx">-->
             <!--    <template slot-scope="scope">-->
             <!--        <span v-if="scope.row.sfyjfx == 1">是</span>-->
@@ -248,7 +248,7 @@
                     <el-form-item label="余额配置" prop="name">
                         <el-input v-model="ruleForm.balanceConfig"></el-input>
                     </el-form-item>
-                    <el-form-item label="初始话费余额(元)">
+                    <el-form-item label="自带话费余额(元)">
                         <el-input-number v-model="ruleForm.productInitialBalance" :min="0" :precision="0" />
                     </el-form-item>
                 </div>
@@ -452,7 +452,7 @@
                         id: 1
                     },
                     {
-                        name: '付费提卡',
+                        name: '付费产品',
                         id: 5
                     },
                 ],
@@ -567,19 +567,14 @@
                 })
             },
             upClick(data) {
-                console.log(data);
-
                 selectChildAgentList({}).then((res) => {
-                    console.log(res.data);
                     this.searchType = res.data
                 })
                 selectUpstreamApiListPage({}).then((res) => {
                     this.upstreamApiCode = res.data.rows
-                    console.log(this.upstreamApiCode);
                     data.pageSize=9999;
                     selectUpstreamProductListPage(data).then((res) => {
                         this.upstreamProductCode = res.data.rows
-                        console.log(this.upstreamProductCode);
                     })
                 })
 
@@ -604,6 +599,7 @@
                     photoRequired: data.photoRequired || 0,
                     photoConfig: data.photoConfig || null
                 };
+                console.log(this.photoConfigData)
 
                 this.ruleFormdialog = true;
             },

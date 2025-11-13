@@ -12,7 +12,7 @@ public class SmsConstant {
     /**
      * 请求地址
      */
-    public static final String SMS_UEL = "http://47.100.19.157:8888/sms.aspx?action=send";
+    public static final String SMS_UEL = "http://8.155.150.111:8888/sms.aspx?action=send";
 
     /**
      * 企业ID

@@ -65,7 +65,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- 3. 初始化历史数据
--- 3.1 基础提卡费：仅对 product_type = 5 (付费提卡) 的商品生效，禁止负值
+-- 3.1 基础提卡费：仅对 product_type = 5 (付费产品) 的商品生效，禁止负值
 UPDATE t_product
 SET base_card_fee = GREATEST(COALESCE(base_card_fee, 0), 0)
 WHERE product_type = 5;

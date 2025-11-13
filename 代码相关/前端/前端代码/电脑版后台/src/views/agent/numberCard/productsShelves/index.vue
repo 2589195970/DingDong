@@ -24,9 +24,7 @@
                 <el-select v-model="queryParams.productType" placeholder="请选择结算模式" clearable filterable>
                     <el-option label="日结秒返" value="0"></el-option>
                     <el-option label="月结产品" value="1"></el-option>
-                    <el-option label="长期产品" value="2"></el-option>
-                    <el-option label="其它" value="3"></el-option>
-                    <el-option label="组合返佣" value="4"></el-option>
+                    <el-option label="付费产品" value="5"></el-option>
                 </el-select>
             </el-form-item>
 
@@ -59,7 +57,7 @@
         <p v-if="scope.row.productType==2" style="color: red;">长期产品</p>
         <p v-if="scope.row.productType==3" style="color:green;">其它</p>
         <p v-if="scope.row.productType==4" style="color: red;">组合返佣</p>
-        <p v-if="scope.row.productType==5" style="color:#ff8c00;">付费提卡</p>
+        <p v-if="scope.row.productType==5" style="color:#ff8c00;">付费产品</p>
                 </template>
             </el-table-column>
             <el-table-column label="归属地区" align="center" prop="productGsdq" :show-overflow-tooltip="true" />

@@ -14,6 +14,7 @@ import com.ruoyi.common.order.bo.ProductCopyBO;
 import com.ruoyi.common.order.bo.ProductInitRequest;
 import com.ruoyi.common.order.entity.*;
 import com.ruoyi.common.utils.CacheUtils;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.console.mapper.ProductMapper;
 import com.ruoyi.console.service.*;
 import com.ruoyi.common.constant.BaseConstant;
@@ -96,15 +97,20 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     public PageResult<ProductSelectVO> selectProductListPage(ProductSelectBO productSelectBO,LoginUser loginUser) throws BizException {
         //读取分页
         Page page = new Page(productSelectBO.getPageNo(),productSelectBO.getPageSize());
-        Page<Product> productPage  = baseMapper.selectPage(page,new LambdaQueryWrapper<Product>()
+        LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<Product>()
                 .eq(StringUtils.isNotEmpty(productSelectBO.getProductCode()),Product::getProductCode,productSelectBO.getProductCode())
                 .like(StringUtils.isNotEmpty(productSelectBO.getProductName()),Product::getProductName,productSelectBO.getProductName())
                 .eq(productSelectBO.getOperatorType()!=null,Product::getOperatorType,productSelectBO.getOperatorType())
                 .eq(productSelectBO.getProductType()!=null,Product::getProductType,productSelectBO.getProductType())
                 .eq(StringUtils.isNotEmpty(productSelectBO.getProductGsdq()),Product::getProductGsdq,productSelectBO.getProductGsdq())
                 .eq(productSelectBO.getProductStatus()!=null,Product::getProductStatus,productSelectBO.getProductStatus())
-                .orderByDesc(Product::getProductSort).orderByDesc(Product::getCreateTime)
-        );
+                .orderByDesc(Product::getProductSort).orderByDesc(Product::getCreateTime);
+        if(StringUtils.isNotEmpty(productSelectBO.getKeyword())){
+            queryWrapper.and(wrapper -> wrapper.like(Product::getProductName,productSelectBO.getKeyword())
+                    .or()
+                    .like(Product::getProductCode,productSelectBO.getKeyword()));
+        }
+        Page<Product> productPage  = baseMapper.selectPage(page,queryWrapper);
         Page<ProductSelectVO> productSelectVOPage  = new Page<>();
         BeanUtil.copyProperties(productPage,productSelectVOPage);
         AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(loginUser.getUserId(),true);
@@ -880,78 +886,155 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     @Override
     public Map<String, Object> getProductCategoryCount() throws BizException {
         Map<String, Object> result = new HashMap<>();
-        // 注释掉缓存查询，直接从数据库查询
-        // String cacheKey = CacheUtils.generalKey(CacheKeyConstants.PRODUCT_CATEGORY_COUNT_API);
-        // String json = configStringRedisTemplate.opsForValue().get(cacheKey);
+        Map<String, Integer> productTypeCount = initProductTypeCount();
+        int totalCount = 0;
 
-        // if (StrUtil.isBlankIfStr(json)) {
-            // 查询各产品类型的产品数量
-            Map<String, Integer> productTypeCount = new HashMap<>();
+        Long userId = null;
+        boolean isAdmin = true;
+        try {
+            userId = SecurityUtils.getUserId();
+            isAdmin = SecurityUtils.isAdmin(userId);
+        } catch (Exception e) {
+            isAdmin = true;
+        }
 
-            try {
-                // 日结秒返产品数量
-                int dailySettlementCount = baseMapper.selectCount(
-                    new LambdaQueryWrapper<Product>()
-                        .eq(Product::getProductType, ProductEnum.DAILY_SETTLEMENT.getStatus())
-                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
-                ).intValue();
-                productTypeCount.put("dailySettlement", dailySettlementCount);
-
-                // 月结产品数量
-                int monthlyStatementCount = baseMapper.selectCount(
-                    new LambdaQueryWrapper<Product>()
-                        .eq(Product::getProductType, ProductEnum.MONTHLY_STATEMENT.getStatus())
-                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
-                ).intValue();
-                productTypeCount.put("monthlyStatement", monthlyStatementCount);
-
-                // 长期产品数量
-                int longTimeCount = baseMapper.selectCount(
-                    new LambdaQueryWrapper<Product>()
-                        .eq(Product::getProductType, ProductEnum.LONG_TIME.getStatus())
-                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
-                ).intValue();
-                productTypeCount.put("longTime", longTimeCount);
-
-                // 其他产品数量
-                int otherCount = baseMapper.selectCount(
-                    new LambdaQueryWrapper<Product>()
-                        .eq(Product::getProductType, ProductEnum.OTHER.getStatus())
-                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
-                ).intValue();
-                productTypeCount.put("other", otherCount);
-
-                int paidCardCount = baseMapper.selectCount(
-                    new LambdaQueryWrapper<Product>()
-                        .eq(Product::getProductType, ProductEnum.PAID_CARD.getStatus())
-                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
-                ).intValue();
-                productTypeCount.put("paidCard", paidCardCount);
-
-                // 组合返佣产品数量
-                int combinationCount = baseMapper.selectCount(
-                    new LambdaQueryWrapper<Product>()
-                        .eq(Product::getProductType, ProductEnum.COMBINATION.getStatus())
-                        .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
-                ).intValue();
-                productTypeCount.put("combination", combinationCount);
-
-                // 计算总产品数量
-                int totalCount = dailySettlementCount + monthlyStatementCount + longTimeCount + otherCount + paidCardCount + combinationCount;
-
-                result.put("productTypeCount", productTypeCount);
-                result.put("totalCount", totalCount);
-
-                // 注释掉缓存写入
-                // configStringRedisTemplate.opsForValue().set(cacheKey, JSONObject.toJSONString(result), 10, TimeUnit.MINUTES);
-            } catch (Exception e) {
-                throw new BizException(e.getMessage());
+        try {
+            if (isAdmin) {
+                // 全量产品统计
+                totalCount = fillAllProductCounts(productTypeCount);
+            } else {
+                AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(userId, true);
+                if (agentAccount != null) {
+                    totalCount = fillAgentProductCounts(productTypeCount, agentAccount.getAgentCode());
+                }
             }
-        // } else {
-        //     result = JSONObject.parseObject(json, Map.class);
-        // }
+        } catch (Exception e) {
+            throw new BizException(e.getMessage());
+        }
 
+        result.put("productTypeCount", productTypeCount);
+        result.put("totalCount", totalCount);
         return result;
+    }
+
+    private int fillAllProductCounts(Map<String, Integer> productTypeCount) {
+        int totalCount = 0;
+
+        int dailySettlementCount = baseMapper.selectCount(
+            new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductType, ProductEnum.DAILY_SETTLEMENT.getStatus())
+                .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+        ).intValue();
+        productTypeCount.put("dailySettlement", dailySettlementCount);
+        totalCount += dailySettlementCount;
+
+        int monthlyStatementCount = baseMapper.selectCount(
+            new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductType, ProductEnum.MONTHLY_STATEMENT.getStatus())
+                .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+        ).intValue();
+        productTypeCount.put("monthlyStatement", monthlyStatementCount);
+        totalCount += monthlyStatementCount;
+
+        int longTimeCount = baseMapper.selectCount(
+            new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductType, ProductEnum.LONG_TIME.getStatus())
+                .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+        ).intValue();
+        productTypeCount.put("longTime", longTimeCount);
+        totalCount += longTimeCount;
+
+        int otherCount = baseMapper.selectCount(
+            new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductType, ProductEnum.OTHER.getStatus())
+                .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+        ).intValue();
+        productTypeCount.put("other", otherCount);
+        totalCount += otherCount;
+
+        int paidCardCount = baseMapper.selectCount(
+            new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductType, ProductEnum.PAID_CARD.getStatus())
+                .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+        ).intValue();
+        productTypeCount.put("paidCard", paidCardCount);
+        totalCount += paidCardCount;
+
+        int combinationCount = baseMapper.selectCount(
+            new LambdaQueryWrapper<Product>()
+                .eq(Product::getProductType, ProductEnum.COMBINATION.getStatus())
+                .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+        ).intValue();
+        productTypeCount.put("combination", combinationCount);
+        totalCount += combinationCount;
+
+        return totalCount;
+    }
+
+    private int fillAgentProductCounts(Map<String, Integer> productTypeCount, String agentCode) {
+        if (StringUtils.isEmpty(agentCode)) {
+            return 0;
+        }
+        List<AgentProduct> agentProducts = agentProductService.list(
+            new LambdaQueryWrapper<AgentProduct>()
+                .eq(AgentProduct::getAgentCode, agentCode)
+                .eq(AgentProduct::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+        );
+        if (CollectionUtils.isEmpty(agentProducts)) {
+            return 0;
+        }
+
+        Set<String> productCodes = agentProducts.stream()
+            .map(AgentProduct::getParentProductCode)
+            .filter(StringUtils::isNotEmpty)
+            .collect(Collectors.toSet());
+        if (CollectionUtils.isEmpty(productCodes)) {
+            return 0;
+        }
+
+        List<Product> productList = baseMapper.selectList(
+            new LambdaQueryWrapper<Product>()
+                .in(Product::getProductCode, productCodes)
+                .eq(Product::getProductStatus, ProductEnum.ProductStatusEnum.YES.getStatus())
+        );
+        if (CollectionUtils.isEmpty(productList)) {
+            return 0;
+        }
+
+        for (Product product : productList) {
+            incrementProductTypeCount(productTypeCount, product.getProductType());
+        }
+        return productTypeCount.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    private Map<String, Integer> initProductTypeCount() {
+        Map<String, Integer> productTypeCount = new HashMap<>();
+        productTypeCount.put("dailySettlement", 0);
+        productTypeCount.put("monthlyStatement", 0);
+        productTypeCount.put("longTime", 0);
+        productTypeCount.put("other", 0);
+        productTypeCount.put("combination", 0);
+        productTypeCount.put("paidCard", 0);
+        return productTypeCount;
+    }
+
+    private void incrementProductTypeCount(Map<String, Integer> productTypeCount, Integer productType) {
+        if (productType == null) {
+            return;
+        }
+        if (ProductEnum.DAILY_SETTLEMENT.getStatus().equals(productType)) {
+            productTypeCount.computeIfPresent("dailySettlement", (k, v) -> v + 1);
+        } else if (ProductEnum.MONTHLY_STATEMENT.getStatus().equals(productType)) {
+            productTypeCount.computeIfPresent("monthlyStatement", (k, v) -> v + 1);
+        } else if (ProductEnum.LONG_TIME.getStatus().equals(productType)) {
+            productTypeCount.computeIfPresent("longTime", (k, v) -> v + 1);
+        } else if (ProductEnum.OTHER.getStatus().equals(productType)) {
+            productTypeCount.computeIfPresent("other", (k, v) -> v + 1);
+        } else if (ProductEnum.COMBINATION.getStatus().equals(productType)) {
+            productTypeCount.computeIfPresent("combination", (k, v) -> v + 1);
+        } else if (ProductEnum.PAID_CARD.getStatus().equals(productType)) {
+            productTypeCount.computeIfPresent("paidCard", (k, v) -> v + 1);
+        }
     }
 
     private void ensureSelfAgentProduct(Product product, AgentAccount agentAccount) throws BizException {

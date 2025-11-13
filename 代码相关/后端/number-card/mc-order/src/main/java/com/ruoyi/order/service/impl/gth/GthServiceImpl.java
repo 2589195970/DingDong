@@ -156,16 +156,13 @@ public class GthServiceImpl extends BaseServiceImpl implements GthService {
      */
     public void updateProductStatus(BaseNotifyRequest notifyRequest) throws Exception {
         GthCallbackRequest request = (GthCallbackRequest) notifyRequest;
-        log.info("感叹号商品上下架回调信息处理:{}", JSONObject.toJSONString(request));
         productService.updateProductStatus(request.getProduct_status(), request.getProduct_code());
-
     }
-
-
 
 
     /**
      * 订单处理
+     *
      * @param request
      * @param order
      * @param product
@@ -177,17 +174,29 @@ public class GthServiceImpl extends BaseServiceImpl implements GthService {
     public Order syncSubmitOrderFlow(BaseSubmitOrderRequest request, Order order, Product product, UpstreamInfo upstreamInfo) throws Exception {
         try {
             order.setUpstreamPushTime(System.currentTimeMillis());
-            //提交订单信息
+            // 提交订单信息
             GthSubmitOrderResponse apiSubmitOrder = apiSubmitOrder(request, order, product, upstreamInfo);
             order.setOrderStatus(OrderEnum.APPLY.getStatus());
             order.setOrderMessage(OrderEnum.APPLY.getMessage());
             order.setOrderUpstreamId(apiSubmitOrder.getId());
-            //记录一些感叹号特有的参数
+            // 记录一些感叹号特有的参数
             JSONObject jsonObject = org.springframework.util.StringUtils.hasLength(order.getJsonParam()) ? JSONObject.parseObject(order.getJsonParam()) : new JSONObject();
             jsonObject.put("GthSubmitOrderResponse", JSONObject.toJSONString(apiSubmitOrder));
             order.setJsonParam(jsonObject.toJSONString());
             if (product.getSfxysh() == 0) {
                 order.setPhotoStatus(0);
+            }
+            if (StringUtils.isNotEmpty(request.getIdCardFrontUrl())) {
+                order.setIdCardFrontUrl(request.getIdCardFrontUrl());
+            }
+            if (StringUtils.isNotEmpty(request.getIdCardBackUrl())) {
+                order.setIdCardBackUrl(request.getIdCardBackUrl());
+            }
+            if (StringUtils.isNotEmpty(request.getPersonPhotoUrl())) {
+                order.setPersonPhotoUrl(request.getPersonPhotoUrl());
+            }
+            if (StringUtils.isNotEmpty(request.getCustomPhotoUrl())) {
+                order.setCustomPhotoUrl(request.getCustomPhotoUrl());
             }
             orderService.updateById(order);
             return order;

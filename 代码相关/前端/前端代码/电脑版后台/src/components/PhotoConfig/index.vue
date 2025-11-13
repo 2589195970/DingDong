@@ -251,12 +251,53 @@ export default {
   },
   created() {
     this.isInitializing = true;
-    this.loadPhotoConfig(true); // true表示需要触发emitChange
+    const initializedFromProps = this.initializeFromProps();
+    if (!initializedFromProps) {
+      this.loadPhotoConfig(true); // true表示需要触发emitChange
+    }
     this.$nextTick(() => {
       this.isInitializing = false;
     });
   },
   methods: {
+    // 根据父组件入参初始化数据
+    initializeFromProps() {
+      const incomingValue = this.value || {};
+      const hasIncomingData =
+        incomingValue.photoConfig !== undefined || incomingValue.photoRequired !== undefined;
+
+      if (!hasIncomingData) {
+        return false;
+      }
+
+      this.localPhotoRequired = incomingValue.photoRequired || 0;
+      this.localPhotoConfig = incomingValue.photoConfig || null;
+
+      if (this.localPhotoRequired !== 1) {
+        this.editablePhotoTypes = [];
+        return true;
+      }
+
+      if (this.localPhotoConfig) {
+        try {
+          const parsedConfig =
+            typeof this.localPhotoConfig === "string"
+              ? JSON.parse(this.localPhotoConfig)
+              : this.localPhotoConfig;
+          this.editablePhotoTypes = parsedConfig || [];
+          return true;
+        } catch (error) {
+          console.error("解析照片配置失败:", error);
+          if (this.$message) {
+            this.$message.error("解析照片配置失败，已加载默认配置");
+          }
+          this.localPhotoConfig = null;
+          this.editablePhotoTypes = [];
+        }
+      }
+
+      return false;
+    },
     // 加载默认照片配置
     async loadPhotoConfig(shouldEmitChange = true) {
       // 如果不需要上传照片，直接返回

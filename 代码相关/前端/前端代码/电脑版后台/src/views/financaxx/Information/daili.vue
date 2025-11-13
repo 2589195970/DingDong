@@ -111,7 +111,7 @@
           {{ formatTimestamp(scope.row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="320" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" width="360" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button type="text" size="mini" @click="openVipDialog(scope.row)">设置VIP</el-button>
           <el-button type="text" size="mini" @click="openBalanceDialog(scope.row)">调整余额</el-button>
@@ -121,6 +121,7 @@
           <el-button type="text" size="mini" @click="handleToggleStatus(scope.row)">
             {{ scope.row.isEnabled === 0 ? '禁用' : '启用' }}
           </el-button>
+          <el-button type="text" size="mini" @click="handleLoginFree(scope.row)">免密登录</el-button>
           <el-button type="text" size="mini" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
@@ -180,10 +181,12 @@ import {
   deleteAgentAccount,
   updateBalance,
   updateAgentStatus,
-  updateAgentEncryptStatus
+  updateAgentEncryptStatus,
+  loginFreePassword
 } from '@/api/monitor/business'
 import { listVipConfig } from '@/api/vip/config'
 import { listVipUser, addVipUser, setVipLevel } from '@/api/vip/user'
+import { setToken } from '@/utils/auth'
 
 const amountValidator = (rule, value, callback) => {
   const num = Number(value)
@@ -465,6 +468,30 @@ export default {
           this.getList()
         })
         .catch(() => {})
+    },
+    async handleLoginFree(agent) {
+      const target = this.resolveAgent(agent)
+      if (!target) {
+        return
+      }
+      if (!target.phone) {
+        this.$message.warning('该代理缺少手机号，无法免密登录')
+        return
+      }
+      try {
+        const res = await loginFreePassword({ username: target.phone })
+        const token = res && res.token
+        if (!token) {
+          this.$message.error('免密登录失败，未返回token')
+          return
+        }
+        setToken(token)
+        this.$message.success('免密登录成功，正在跳转')
+        this.$router.push('/login')
+        this.$router.go(0)
+      } catch (error) {
+        console.error('handleLoginFree error', error)
+      }
     },
     openVipDialog(agent) {
       const target = this.resolveAgent(agent)

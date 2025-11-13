@@ -30,6 +30,16 @@ public interface ProductApiService {
      Order submitAPISubmitOrder(Long orderId, APISubmitInfoRequest apiSubmitInfoRequest) throws Exception;
 
     /**
+     * 照片审核通过后重新推送订单
+     *
+     * @param orderId 订单ID
+     * @param apiSubmitInfoRequest 下单请求
+     * @return 订单
+     * @throws Exception 业务异常
+     */
+    Order resumePendingOrder(Long orderId, APISubmitInfoRequest apiSubmitInfoRequest) throws Exception;
+
+    /**
      * 获取产品信息
      *
      * @param productCode 产品编码

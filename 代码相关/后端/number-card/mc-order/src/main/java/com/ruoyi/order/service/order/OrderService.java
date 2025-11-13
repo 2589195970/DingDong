@@ -45,10 +45,24 @@ public interface OrderService extends IService<Order> {
      Order selectOrderById(Long orderId) throws BizException;
 
      /**
-      * 更新订单信息（照片修改专用）
+     * 更新订单信息（照片修改专用）
+     * @param updateBO 订单更新业务对象
+     * @throws BizException 业务异常
+     */
+     void updateOrderInfo(OrderUpdateBO updateBO) throws BizException;
+
+     /**
+      * 已提交订单更新照片信息（会同步上游）
       * @param updateBO 订单更新业务对象
       * @throws BizException 业务异常
       */
-     void updateOrderInfo(OrderUpdateBO updateBO) throws BizException;
+     void updateSubmittedOrderPhotos(OrderUpdateBO updateBO) throws Exception;
+
+     /**
+      * 照片审核通过后触发订单提交
+      * @param orderId 订单ID
+      * @throws BizException 业务异常
+      */
+     void submitAfterPhotoAudit(Long orderId) throws Exception;
 
 }

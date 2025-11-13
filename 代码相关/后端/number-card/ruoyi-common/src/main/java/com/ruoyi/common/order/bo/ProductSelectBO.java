@@ -45,4 +45,10 @@ public class ProductSelectBO extends BaseBO{
     @ApiModelProperty("产品状态 0 下架 1上架")
     private Integer productStatus;
 
+    /**
+     * 统一搜索关键字（模糊匹配编码或名称）
+     */
+    @ApiModelProperty("搜索关键字")
+    private String keyword;
+
 }

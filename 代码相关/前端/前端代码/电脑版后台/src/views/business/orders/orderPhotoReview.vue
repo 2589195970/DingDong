@@ -123,7 +123,7 @@
                         <span v-if="scope.row.productType==2">长期产品</span>
                         <span v-if="scope.row.productType==3">其它</span>
                         <span v-if="scope.row.productType==4">组合返佣</span>
-                        <span v-if="scope.row.productType==5">付费提卡</span>
+                        <span v-if="scope.row.productType==5">付费产品</span>
                     </span><br>
           <span>订单状态：
                         <span v-if="scope.row.orderStatus==-1">失败</span>
@@ -218,10 +218,23 @@
         <el-row>
           <el-col :span="24">
             <el-form-item label="新产品">
-              <el-select v-model="form.productCode" placeholder="新产品" clearable filterable
-                         style="width: 240px">
-                <el-option v-for="dict in productCodeList " :key="dict.productCode"
-                           :label="dict.productName" :value="dict.productCode" />
+              <el-select
+                v-model="form.productCode"
+                placeholder="新产品"
+                clearable
+                filterable
+                remote
+                reserve-keyword
+                :remote-method="handleProductSearch"
+                :loading="productSelectLoading"
+                style="width: 240px"
+              >
+                <el-option
+                  v-for="dict in productCodeList"
+                  :key="dict.productCode"
+                  :label="dict.productName"
+                  :value="dict.productCode"
+                />
               </el-select>
             </el-form-item>
           </el-col>
@@ -417,7 +430,7 @@
     </el-dialog>
 
     <!-- 照片审核弹窗 -->
-    <el-dialog :title="photoAudit.title" :visible.sync="photoAudit.open" width="1024px" append-to-body>
+    <el-dialog :title="photoAudit.title" :visible.sync="photoAudit.open" width="1240px" append-to-body>
       <el-form ref="photoAuditForm" :model="photoAudit.form" :rules="photoAudit.rules" label-width="120px">
         <el-form-item label="订单信息">
           <el-input v-model="photoAudit.orderInfo" disabled></el-input>
@@ -600,6 +613,8 @@ export default {
       cambiareform: [],
       upstreamApiCode: [],
       productCodeList: [],
+      productSelectLoading: false,
+      productSearchTimer: null,
       searchType: [],
       // 导入文件
       openCommission: false,
@@ -800,6 +815,12 @@ export default {
       this.downstreamCode = res.data
     })
   },
+  beforeDestroy() {
+    if (this.productSearchTimer) {
+      clearTimeout(this.productSearchTimer);
+      this.productSearchTimer = null;
+    }
+  },
   methods: {
     // 时间戳转换
     formatTimestamp(timestamp) {
@@ -852,9 +873,37 @@ export default {
     handleCommission(data) {
       this.openCommission = true;
       this.form = data;
-      selectProductListPage({}).then((res) => {
-        this.productCodeList = res.data.rows;
-      })
+      this.fetchProductOptions("");
+    },
+    handleProductSearch(keyword) {
+      if (this.productSearchTimer) {
+        clearTimeout(this.productSearchTimer);
+      }
+      this.productSearchTimer = setTimeout(() => {
+        this.fetchProductOptions(keyword);
+      }, 300);
+    },
+    fetchProductOptions(keyword = "") {
+      this.productSelectLoading = true;
+      const params = {
+        pageNo: 1,
+        pageSize: 20,
+      };
+      const trimmedKeyword = (keyword || "").trim();
+      if (trimmedKeyword) {
+        params.keyword = trimmedKeyword;
+      }
+      selectProductListPage(params)
+        .then((res) => {
+          if (res && res.data && res.data.rows) {
+            this.productCodeList = res.data.rows;
+          } else {
+            this.productCodeList = [];
+          }
+        })
+        .finally(() => {
+          this.productSelectLoading = false;
+        });
     },
     selectOrderBalanceClick(data) {
       selectOrderBalance({"orderId":data.orderId}).then((res) => {
@@ -1420,7 +1469,7 @@ export default {
 
 .photo-view-container {
   display: flex;
-  gap: 50px;
+  gap: 12px;
   flex-wrap: wrap;
   justify-content: center;
   margin-bottom: 30px;

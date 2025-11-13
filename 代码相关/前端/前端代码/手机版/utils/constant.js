@@ -5,7 +5,7 @@ const constant = {
    permissions: 'vuex_permissions',
    agentAccount: 'vuex_agent_account',
    vipInfo: 'vuex_vip_info',
-   REAL_NAME_PAGE: '/pages/mine/realname/index',
+   REAL_NAME_PAGE: '/package-mine/mine/realname/index',
 
    // 实名认证状态常量 (与数据库定义保持一致)
    REAL_NAME_STATUS: {

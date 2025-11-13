@@ -30,6 +30,7 @@ import com.ruoyi.common.order.entity.*;
 import com.ruoyi.common.order.reuqest.ApiCommonNotifyRequest;
 import com.ruoyi.common.order.reuqest.OrderSubmitRequest;
 import com.ruoyi.common.order.vo.OrderSelectVO;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.console.mapper.AgentAccountMapper;
 import com.ruoyi.console.mapper.OrderLogMapper;
@@ -41,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -113,6 +115,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(1L, true);
         //读取分页
         Page page = new Page(orderSelectBO.getPageNo(), orderSelectBO.getPageSize());
+        String productTypeValue = orderSelectBO.getProductType() == null ? null : orderSelectBO.getProductType().toString();
         LambdaQueryWrapper<Order> lambdaQueryWrapper= new LambdaQueryWrapper<Order>()
                 .eq(StringUtils.isNotEmpty(orderSelectBO.getOrderId()), Order::getOrderId, orderSelectBO.getOrderId())
                 .eq(StringUtils.isNotEmpty(orderSelectBO.getOrderUpstreamId()), Order::getOrderUpstreamId, orderSelectBO.getOrderUpstreamId())
@@ -121,6 +124,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 .eq(StringUtils.isNotEmpty(orderSelectBO.getCardPhone()), Order::getCardPhone, orderSelectBO.getCardPhone())
                 .eq(StringUtils.isNotEmpty(orderSelectBO.getCardId()), Order::getCardId, orderSelectBO.getCardId())
                 .eq(orderSelectBO.getOrderStatus() != null, Order::getOrderStatus, orderSelectBO.getOrderStatus())
+                .eq(productTypeValue != null, Order::getProductType, productTypeValue)
                 .eq(StringUtils.isNotEmpty(orderSelectBO.getUpstreamApi()), Order::getUpstreamApi, orderSelectBO.getUpstreamApi())
                 .eq(orderSelectBO.getIsRecharged() != null, Order::getIsRecharged, orderSelectBO.getIsRecharged())
                 .eq(StringUtils.isNotEmpty(orderSelectBO.getAccNumber()), Order::getCardPhone, orderSelectBO.getAccNumber())
@@ -544,7 +548,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     public Map<String, Object> getOrderStatistics() throws BizException {
         Map<String, Object> result = new HashMap<>();
-        
+        DashboardScope dashboardScope = buildDashboardScope();
+
         // 获取当前时间戳
         long now = System.currentTimeMillis();
         
@@ -570,23 +575,23 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         
         try {
             // 今日统计
-            Map<String, Object> todayStats = getPeriodStatistics(todayStart, todayEnd);
+            Map<String, Object> todayStats = getPeriodStatistics(todayStart, todayEnd, dashboardScope);
             result.put("today", todayStats);
-            
+
             // 昨日统计
-            Map<String, Object> yesterdayStats = getPeriodStatistics(yesterdayStart, yesterdayEnd);
+            Map<String, Object> yesterdayStats = getPeriodStatistics(yesterdayStart, yesterdayEnd, dashboardScope);
             result.put("yesterday", yesterdayStats);
-            
+
             // 本月统计
-            Map<String, Object> thisMonthStats = getPeriodStatistics(thisMonthStart, thisMonthEnd);
+            Map<String, Object> thisMonthStats = getPeriodStatistics(thisMonthStart, thisMonthEnd, dashboardScope);
             result.put("thisMonth", thisMonthStats);
-            
+
             // 上月统计
-            Map<String, Object> lastMonthStats = getPeriodStatistics(lastMonthStart, lastMonthEnd);
+            Map<String, Object> lastMonthStats = getPeriodStatistics(lastMonthStart, lastMonthEnd, dashboardScope);
             result.put("lastMonth", lastMonthStats);
-            
+
             // 本年度统计
-            Map<String, Object> thisYearStats = getPeriodStatistics(thisYearStart, thisYearEnd);
+            Map<String, Object> thisYearStats = getPeriodStatistics(thisYearStart, thisYearEnd, dashboardScope);
             result.put("thisYear", thisYearStats);
             
         } catch (Exception e) {
@@ -605,7 +610,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     public Map<String, Object> getTodayAgentOrderRanking() throws BizException {
         Map<String, Object> result = new HashMap<>();
-        
+        DashboardScope dashboardScope = buildDashboardScope();
+
         try {
             // 获取今日开始和结束时间戳
             long todayStart = getTodayStartTimestamp();
@@ -616,16 +622,18 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             QueryWrapper<Order> queryWrapper = new QueryWrapper<>();
             queryWrapper.select(
                 "downstream_name as downstreamName",
-                "COUNT(*) as totalOrders", 
+                "COUNT(*) as totalOrders",
                 "SUM(CASE WHEN order_status = " + OrderEnum.ACTIVATED.getStatus() + " THEN 1 ELSE 0 END) as activatedOrders"
             )
             .ge("create_time", todayStart)
             .le("create_time", todayEnd)
             .isNotNull("downstream_name")
-            .ne("downstream_name", "")
-            .groupBy("downstream_name")
-            .orderByDesc("activatedOrders")
-            .last("LIMIT 10");  // 限制返回Top10
+            .ne("downstream_name", "");
+
+            queryWrapper = applyOrderScope(queryWrapper, dashboardScope);
+            queryWrapper.groupBy("downstream_name")
+                .orderByDesc("activatedOrders");
+            queryWrapper.last("LIMIT 10");  // 限制返回Top10
             
             List<Map<String, Object>> agentRankingList = baseMapper.selectMaps(queryWrapper);
             
@@ -647,7 +655,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      */
     @Override
     public List<Map<String, Object>> getOrderTrend() throws BizException {
-        
+        DashboardScope dashboardScope = buildDashboardScope();
+
         try {
             // 获取30天前的时间戳
             long thirtyDaysAgo = getThirtyDaysAgoTimestamp();
@@ -662,9 +671,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 "SUM(CASE WHEN order_status != " + OrderEnum.INVALID.getStatus() + " THEN 1 ELSE 0 END) as validOrders"
             )
             .ge("create_time", thirtyDaysAgo)
-            .le("create_time", todayEnd)
-            .groupBy("DATE(FROM_UNIXTIME(create_time/1000))")
-            .orderByAsc("orderDate");
+            .le("create_time", todayEnd);
+
+            queryWrapper = applyOrderScope(queryWrapper, dashboardScope);
+            queryWrapper.groupBy("DATE(FROM_UNIXTIME(create_time/1000))")
+                .orderByAsc("orderDate");
             
             List<Map<String, Object>> trendData = baseMapper.selectMaps(queryWrapper);
             
@@ -743,55 +754,55 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     /**
      * 获取指定时间段的统计数据
      */
-    private Map<String, Object> getPeriodStatistics(long startTimestamp, long endTimestamp) {
+    private Map<String, Object> getPeriodStatistics(long startTimestamp, long endTimestamp, DashboardScope dashboardScope) {
         Map<String, Object> stats = new HashMap<>();
-        
+
         try {
             // 订单总数
-            Long totalOrders = baseMapper.selectCount(
-                new LambdaQueryWrapper<Order>()
-                    .ge(Order::getCreateTime, startTimestamp)
-                    .le(Order::getCreateTime, endTimestamp)
-            );
+            LambdaQueryWrapper<Order> totalWrapper = new LambdaQueryWrapper<Order>()
+                .ge(Order::getCreateTime, startTimestamp)
+                .le(Order::getCreateTime, endTimestamp);
+            totalWrapper = applyOrderScope(totalWrapper, dashboardScope);
+            Long totalOrders = baseMapper.selectCount(totalWrapper);
             stats.put("totalOrders", totalOrders);
-            
+
             // 激活订单数（订单状态为已激活）
-            Long activatedOrders = baseMapper.selectCount(
-                new LambdaQueryWrapper<Order>()
-                    .ge(Order::getCreateTime, startTimestamp)
-                    .le(Order::getCreateTime, endTimestamp)
-                    .eq(Order::getOrderStatus, OrderEnum.ACTIVATED.getStatus())
-            );
+            LambdaQueryWrapper<Order> activatedWrapper = new LambdaQueryWrapper<Order>()
+                .ge(Order::getCreateTime, startTimestamp)
+                .le(Order::getCreateTime, endTimestamp)
+                .eq(Order::getOrderStatus, OrderEnum.ACTIVATED.getStatus());
+            activatedWrapper = applyOrderScope(activatedWrapper, dashboardScope);
+            Long activatedOrders = baseMapper.selectCount(activatedWrapper);
             stats.put("activatedOrders", activatedOrders);
             
             // 佣金相关统计（根据订单佣金状态统计）
             // 已结算订单数
-            Long settledOrders = baseMapper.selectCount(
-                new LambdaQueryWrapper<Order>()
-                    .ge(Order::getCreateTime, startTimestamp)
-                    .le(Order::getCreateTime, endTimestamp)
-                    .eq(Order::getOrderStatus, OrderEnum.ACTIVATED.getStatus())
-                    .eq(Order::getOrderCommissionStatus, OrderEnum.OrderCommissionEnum.TYPE_3.getCommissionType())
-            );
+            LambdaQueryWrapper<Order> settledWrapper = new LambdaQueryWrapper<Order>()
+                .ge(Order::getCreateTime, startTimestamp)
+                .le(Order::getCreateTime, endTimestamp)
+                .eq(Order::getOrderStatus, OrderEnum.ACTIVATED.getStatus())
+                .eq(Order::getOrderCommissionStatus, OrderEnum.OrderCommissionEnum.TYPE_3.getCommissionType());
+            settledWrapper = applyOrderScope(settledWrapper, dashboardScope);
+            Long settledOrders = baseMapper.selectCount(settledWrapper);
             stats.put("settledOrders", settledOrders);
             
             // 待结算订单数
-            Long pendingSettlementOrders = baseMapper.selectCount(
-                new LambdaQueryWrapper<Order>()
-                    .ge(Order::getCreateTime, startTimestamp)
-                    .le(Order::getCreateTime, endTimestamp)
-                    .eq(Order::getOrderStatus, OrderEnum.ACTIVATED.getStatus())
-                    .eq(Order::getOrderCommissionStatus, OrderEnum.OrderCommissionEnum.TYPE_1.getCommissionType())
-            );
+            LambdaQueryWrapper<Order> pendingWrapper = new LambdaQueryWrapper<Order>()
+                .ge(Order::getCreateTime, startTimestamp)
+                .le(Order::getCreateTime, endTimestamp)
+                .eq(Order::getOrderStatus, OrderEnum.ACTIVATED.getStatus())
+                .eq(Order::getOrderCommissionStatus, OrderEnum.OrderCommissionEnum.TYPE_1.getCommissionType());
+            pendingWrapper = applyOrderScope(pendingWrapper, dashboardScope);
+            Long pendingSettlementOrders = baseMapper.selectCount(pendingWrapper);
             stats.put("pendingSettlementOrders", pendingSettlementOrders);
             
             // 代理数（统计指定时间段内创建的代理账户数量）
             // 从t_agent_account表中查询create_time在指定时间段内的代理账户数量
-            Long agentCount = agentAccountMapper.selectCount(
-                new LambdaQueryWrapper<AgentAccount>()
-                    .ge(AgentAccount::getCreateTime, startTimestamp)
-                    .le(AgentAccount::getCreateTime, endTimestamp)
-            );
+            LambdaQueryWrapper<AgentAccount> agentWrapper = new LambdaQueryWrapper<AgentAccount>()
+                .ge(AgentAccount::getCreateTime, startTimestamp)
+                .le(AgentAccount::getCreateTime, endTimestamp);
+            agentWrapper = applyAgentScope(agentWrapper, dashboardScope);
+            Long agentCount = agentAccountMapper.selectCount(agentWrapper);
             stats.put("agentCount", agentCount);
             
         } catch (Exception e) {
@@ -806,6 +817,76 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
         
         return stats;
+    }
+
+    private DashboardScope buildDashboardScope() throws BizException {
+        Long userId = null;
+        try {
+            userId = SecurityUtils.getUserId();
+        } catch (Exception e) {
+            return DashboardScope.adminScope();
+        }
+
+        if (SecurityUtils.isAdmin(userId)) {
+            return DashboardScope.adminScope();
+        }
+
+        AgentAccount agentAccount = agentAccountService.getAgentAccountByUserId(userId, true);
+        if (agentAccount == null) {
+            throw new BizException("登录账号未注册代理商");
+        }
+        return DashboardScope.agentScope(agentAccount.getAgentCode());
+    }
+
+    private LambdaQueryWrapper<Order> applyOrderScope(LambdaQueryWrapper<Order> wrapper, DashboardScope dashboardScope) {
+        if (dashboardScope.isAdmin() || StringUtils.isEmpty(dashboardScope.getAgentCode())) {
+            return wrapper;
+        }
+        return wrapper.and(q -> q.eq(Order::getDownstreamCode, dashboardScope.getAgentCode())
+            .or().like(Order::getDownstreamFatherList, dashboardScope.getAgentCode()));
+    }
+
+    private QueryWrapper<Order> applyOrderScope(QueryWrapper<Order> wrapper, DashboardScope dashboardScope) {
+        if (dashboardScope.isAdmin() || StringUtils.isEmpty(dashboardScope.getAgentCode())) {
+            return wrapper;
+        }
+        wrapper.and(q -> q.eq("downstream_code", dashboardScope.getAgentCode())
+            .or().like("downstream_father_list", dashboardScope.getAgentCode()));
+        return wrapper;
+    }
+
+    private LambdaQueryWrapper<AgentAccount> applyAgentScope(LambdaQueryWrapper<AgentAccount> wrapper, DashboardScope dashboardScope) {
+        if (dashboardScope.isAdmin() || StringUtils.isEmpty(dashboardScope.getAgentCode())) {
+            return wrapper;
+        }
+        return wrapper.and(q -> q.eq(AgentAccount::getAgentCode, dashboardScope.getAgentCode())
+            .or().like(AgentAccount::getParentAgentList, dashboardScope.getAgentCode()));
+    }
+
+    private static class DashboardScope {
+        private final boolean admin;
+        private final String agentCode;
+
+        private DashboardScope(boolean admin, String agentCode) {
+            this.admin = admin;
+            this.agentCode = agentCode;
+        }
+
+        public static DashboardScope adminScope() {
+            return new DashboardScope(true, null);
+        }
+
+        public static DashboardScope agentScope(String agentCode) {
+            return new DashboardScope(false, agentCode);
+        }
+
+        public boolean isAdmin() {
+            return admin;
+        }
+
+        public String getAgentCode() {
+            return agentCode;
+        }
     }
     
     /**
@@ -1037,6 +1118,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      * 管理员审核照片
      */
     @Override
+    @Transactional
     public void auditOrderPhotos(PhotoAuditBO photoAuditBO) throws BizException {
         if (photoAuditBO.getOrderId() == null) {
             throw new BizException("订单ID不能为空");
@@ -1093,16 +1175,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (photoAuditBO.getAuditAction() == 1) {
             try {
                 Order updatedOrder = baseMapper.selectById(photoAuditBO.getOrderId());
-                if (updatedOrder != null) {
-                    // 检查是否需要上传照片到上游
-                    if (product.getPhotoRequired() != null && product.getPhotoRequired() == 1) {
-                        log.info("订单{} 管理员审核通过，开始上传到上游API", updatedOrder.getOrderId());
-                        updateOrderPhotosToUpstream(updatedOrder, product);
-                    }
+                if (updatedOrder != null && product.getPhotoRequired() != null && product.getPhotoRequired() == 1 && product.getSfxysh() != null && product.getSfxysh() == 1) {
+                    log.info("订单{} 管理员审核通过，触发上游提单", updatedOrder.getOrderId());
+                    triggerSubmitAfterAudit(photoAuditBO.getOrderId());
                 }
             } catch (Exception e) {
-                log.error("调用上游照片上传功能失败，订单ID: {}, 错误: {}", photoAuditBO.getOrderId(), e.getMessage(), e);
-                // 不抛出异常，避免影响本地数据库更新
+                log.error("审核通过后提单失败，订单ID: {}, 错误: {}", photoAuditBO.getOrderId(), e.getMessage(), e);
             }
         }
     }
@@ -1299,6 +1377,18 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             log.error("订单{} 上游照片更新异常: {}", order.getOrderId(), e.getMessage(), e);
             throw e;
         }
+    }
+
+    private void triggerSubmitAfterAudit(Long orderId) throws Exception {
+        Map<String, Long> payload = new HashMap<>();
+        payload.put("orderId", orderId);
+        String targetUrl;
+        if (submitOrderUrl.endsWith("/submitInfo")) {
+            targetUrl = submitOrderUrl.replace("/submitInfo", "/submitAfterPhotoAudit");
+        } else {
+            targetUrl = submitOrderUrl + "/submitAfterPhotoAudit";
+        }
+        httpClient.postJsonForString(targetUrl, payload, null);
     }
 
     /**

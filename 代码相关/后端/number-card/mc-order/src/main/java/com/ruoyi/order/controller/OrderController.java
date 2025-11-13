@@ -114,4 +114,41 @@ public class OrderController {
         }
     }
 
+    /**
+     * 已提交订单更新照片信息（同步上游）
+     */
+    @PostMapping("/updateSubmittedOrderPhotos")
+    @ApiOperation("已提交订单更新照片")
+    public ResponseEntity updateSubmittedOrderPhotos(@RequestBody OrderUpdateBO updateBO) {
+        try {
+            orderService.updateSubmittedOrderPhotos(updateBO);
+            return ResponseEntity.success();
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "updateSubmittedOrderPhotos", e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "updateSubmittedOrderPhotos", e.getMessage());
+            return ResponseEntity.error("同步上游失败:" + e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 照片审核通过后提交订单
+     */
+    @PostMapping("/submitAfterPhotoAudit")
+    @ApiOperation("照片审核通过后提交订单")
+    public ResponseEntity submitAfterPhotoAudit(@RequestBody Map<String, Long> params) {
+        try {
+            Long orderId = params == null ? null : params.get("orderId");
+            orderService.submitAfterPhotoAudit(orderId);
+            return ResponseEntity.success();
+        } catch (BizException e) {
+            log.info("{}方法异常:{}", "submitAfterPhotoAudit", e.getMessage());
+            return ResponseEntity.error(e.getMessage(), null);
+        } catch (Exception e) {
+            log.info("{}方法异常:{}", "submitAfterPhotoAudit", e.getMessage());
+            return ResponseEntity.error("提交订单失败:" + e.getMessage(), null);
+        }
+    }
+
 }

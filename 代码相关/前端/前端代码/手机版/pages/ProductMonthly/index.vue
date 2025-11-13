@@ -7,7 +7,7 @@
         v-model="queryParams.productName"
         @search="soplist"
         @clickIcon="soplist"
-        placeholder="搜索月结产品..."
+        placeholder="搜索免费品..."
         :height="35"
         bgColor="#f5f6f7"
         borderColor="#f09b7f"
@@ -28,9 +28,28 @@
     </view>
     <!-- 筛选区域 -->
     <view class="filter-container">
-      <u-collapse :value="['Docs guide']">
-        <u-collapse-item title="筛选" name="Docs guide">
-          <u-tabs :list="list2" lineWidth="30" :scrollable="false" lineColor="#f09b7f" @click="click2"></u-tabs>
+      <u-collapse :value="['filter']">
+        <u-collapse-item title="筛选" name="filter">
+          <view class="filter-section">
+            <text class="filter-label">区分</text>
+            <u-tabs
+              :list="divisionTabs"
+              lineWidth="30"
+              :scrollable="false"
+              lineColor="#f09b7f"
+              @click="handleDivisionFilter"
+            ></u-tabs>
+          </view>
+          <view class="filter-section">
+            <text class="filter-label">状态</text>
+            <u-tabs
+              :list="list2"
+              lineWidth="30"
+              :scrollable="false"
+              lineColor="#f09b7f"
+              @click="click2"
+            ></u-tabs>
+          </view>
         </u-collapse-item>
       </u-collapse>
     </view>
@@ -77,10 +96,10 @@
 
           <!-- 标签区域 -->
           <view class="tags-area">
-            <view class="product-tag" :class="getProductTypeClass(dict.productType)">
+            <view class="product-tag" :class="dict.productTypeClass">
               <text class="tag-text">{{ getProductTypeText(dict.productType) }}</text>
             </view>
-            <view class="product-tag" :class="getProductStatusClass(dict.productStatus)">
+            <view class="product-tag" :class="dict.productStatusClass">
               <text class="tag-text">{{ getProductStatusText(dict.productStatus) }}</text>
             </view>
             <view class="product-tag age-tag">
@@ -171,6 +190,16 @@ export default {
         icon: require('@/static/images/home/gd.png'),
         id: 3
       },],
+      divisionTabs: [{
+        name: '全部',
+        id: null
+      }, {
+        name: '月产品',
+        id: 1
+      }, {
+        name: '秒产品',
+        id: 0
+      }],
       list2: [{
         name: '上架中',
         id: 1
@@ -189,8 +218,9 @@ export default {
       queryParams: {
         pageNo: 1,
         pageSize: 10000,
-        productType: 1, // 固定为月结产品
+        productType: null, // 免费品：默认展示全部产品
         productStatus: 1, // 默认查询上架中
+        productName: ''
       },
       commissionopen: false,
       frme: {},
@@ -361,7 +391,7 @@ export default {
     },
     xianqing(data) {
       uni.navigateTo({
-        url: `/pages/Product/detail?key=${encodeURIComponent(JSON.stringify(data))}`
+        url: `/package-product/Product/detail?key=${encodeURIComponent(JSON.stringify(data))}`
       })
     },
     open() {
@@ -387,16 +417,34 @@ export default {
       this.queryParams.productStatus = item.id;
       this.soplist()
     },
+    handleDivisionFilter(item) {
+      this.queryParams.productType = item.id;
+      this.soplist()
+    },
     handleSelect(key, keyPath) {
       console.log(key, keyPath);
     },
     soplist() {
       this.loading = true;
-      agentSelectProductListPage(this.queryParams).then(res => {
+      agentSelectProductListPage(this.queryParams)
+        .then(res => {
+          const rows = res?.data?.rows || [];
+          this.productList = this.decorateProductList(rows);
+        })
+        .catch(error => {
+          console.error('获取产品列表失败:', error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
 
-        this.productList = res.data.rows;
-        this.loading = false;
-      })
+    decorateProductList(rows = []) {
+      return rows.map((item) => ({
+        ...item,
+        productTypeClass: this.getProductTypeClass(item.productType),
+        productStatusClass: this.getProductStatusClass(item.productStatus)
+      }));
     },
 
     // 下架产品
@@ -559,6 +607,22 @@ page {
 .filter-container {
   background-color: #fff;
   margin-bottom: 20rpx;
+}
+
+.filter-section {
+  padding: 12rpx 0 24rpx;
+}
+
+.filter-section:last-child {
+  padding-bottom: 0;
+}
+
+.filter-label {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+  display: inline-block;
 }
 
 // 产品列表

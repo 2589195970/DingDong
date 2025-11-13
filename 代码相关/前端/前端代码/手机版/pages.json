@@ -1,290 +1,177 @@
 { // pages.json
-	"easycom": {
-		"^u-(.*)": "@/uview-ui/components/u-$1/u-$1.vue"
-	},
-	"pages": [{
-			"path": "pages/login",
-			"style": {
-				"navigationBarTitleText": "登录",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/login-sjihao",
-			"style": {
-				"navigationBarTitleText": "登录",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/register",
-			"style": {
-				"navigationBarTitleText": "注册",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/index",
-			"style": {
-				"navigationBarTitleText": "叮咚号卡",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/work/index",
-			"style": {
-				"navigationBarTitleText": "工作台",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/mine/index",
-			"style": {
-				"navigationBarTitleText": "我的",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/mine/avatar/index",
-			"style": {
-				"navigationBarTitleText": "修改头像",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/mine/info/index",
-			"style": {
-				"navigationBarTitleText": "个人信息",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/mine/info/edit",
-			"style": {
-				"navigationBarTitleText": "编辑资料",
-				"navigationStyle": "custom"
-			}
-		},
-	{
-		"path": "pages/mine/commission/index",
-		"style": {
-			"navigationBarTitleText": "权益详情",
-			"navigationStyle": "custom"
-		}
-	},
-		{
-			"path": "pages/mine/product/index",
-			"style": {
-				"navigationBarTitleText": "下游产品设置",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/mine/payouts/index",
-			"style": {
-				"navigationBarTitleText": "佣金提现",
-				"navigationStyle": "custom"
-			}
-		},{
-			"path": "pages/mine/pwd/index",
-			"style": {
-				"navigationBarTitleText": "修改密码",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/mine/setting/index",
-			"style": {
-				"navigationBarTitleText": "应用设置",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/mine/help/index",
-			"style": {
-				"navigationBarTitleText": "常见问题",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/mine/about/index",
-			"style": {
-				"navigationBarTitleText": "推广",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/mine/realname/index",
-			"style": {
-				"navigationBarTitleText": "实名认证",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/common/webview/index",
-			"style": {
-				"navigationBarTitleText": "浏览网页",
-				"navigationStyle": "custom"
-			}
-		}, {
-			"path": "pages/common/textview/index",
-			"style": {
-				"navigationBarTitleText": "浏览文本",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/Product/index",
-			"style": {
-				"navigationBarTitleText": "商品",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/Product/detail",
-			"style": {
-				"navigationBarTitleText": "商品详情",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/ProductMonthly/index",
-			"style": {
-				"navigationBarTitleText": "月结产品",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/ProductInstant/index",
-			"style": {
-				"navigationBarTitleText": "秒结产品",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/ProductPaid/index",
-			"style": {
-				"navigationBarTitleText": "付费品",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/Order/orderxiangqing",
-			"style": {
-				"navigationBarTitleText": "订单详情",
-				"navigationStyle": "custom",
-				"backgroundTextStyle": "dark"
-			}
-		},
-		{
-			"path": "pages/Order/index",
-			"style": {
-				"navigationBarTitleText": "订单",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
-			}
-		},
-		{
-			"path": "pages/home/use",
-			"style": {
-				"navigationBarTitleText": "代理管理",
-				"backgroundColor": "#f1f1f1",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/notice/list",
-			"style": {
-				"navigationBarTitleText": "系统通知",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
-			}
-		},
-		{
-			"path": "pages/notice/detail",
-			"style": {
-				"navigationBarTitleText": "通知详情",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/mine/commission-detail/index",
-			"style": {
-				"navigationBarTitleText": "佣金明细",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
-			}
-		},
-		{
-			"path": "pages/mine/customer-service/index",
-			"style": {
-				"navigationBarTitleText": "我的客服",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/mine/my-agents/index",
-			"style": {
-				"navigationBarTitleText": "我的代理",
-				"navigationStyle": "custom",
-				"enablePullDownRefresh": true
-			}
-		},
-		{
-			"path": "pages/mine/live-connect/index",
-			"style": {
-				"navigationBarTitleText": "直播对接",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/mine/live-connect/create-live",
-			"style": {
-				"navigationBarTitleText": "抖音小黄车直播配置",
-				"navigationStyle": "custom"
-			}
-		},
-		{
-			"path": "pages/mine/visual-data/index",
-			"style": {
-				"navigationBarTitleText": "可视化数据",
-				"navigationStyle": "custom"
-			}
-		}
-	],
-	"tabBar": {
-		"color": "#000000",
-		"selectedColor": "#f09b7f",
-		"borderStyle": "white",
-		"backgroundColor": "#f1f1f1",
-		"list": [{
-				"pagePath": "pages/index",
-				"iconPath": "static/images/tabbar/home.png",
-				"selectedIconPath": "static/images/tabbar/home-1.png",
-				"text": "首页"
-			},
-			{
-				"pagePath": "pages/Order/index",
-				"iconPath": "static/images/tabbar/dingdan.png",
-				"selectedIconPath": "static/images/tabbar/dingdan-1.png",
-				"text": "订单"
-			},
-			{
-				"pagePath": "pages/ProductMonthly/index",
-				"iconPath": "static/images/tabbar/work.png",
-				"selectedIconPath": "static/images/tabbar/work-1.png",
-				"text": "月产品"
-			},
-			{
-				"pagePath": "pages/ProductInstant/index",
-				"iconPath": "static/images/tabbar/work.png",
-				"selectedIconPath": "static/images/tabbar/work-1.png",
-				"text": "秒产品"
-			},
-			{
-				"pagePath": "pages/ProductPaid/index",
-				"iconPath": "static/images/tabbar/work.png",
-				"selectedIconPath": "static/images/tabbar/work-1.png",
-				"text": "付费品"
-			},
-			{
-				"pagePath": "pages/mine/index",
-				"iconPath": "static/images/tabbar/mine.png",
-				"selectedIconPath": "static/images/tabbar/mine-1.png",
-				"text": "我的"
-			}
-		]
-	},
-	"globalStyle": {
-		"navigationBarTextStyle": "black",
-		"navigationBarBackgroundColor": "#FFFFFF"
-	}
+  "easycom": {
+    "^u-(.*)": "@/uview-ui/components/u-$1/u-$1.vue"
+  },
+  "pages": [
+    {
+      "path": "pages/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/login-sjihao",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/register",
+      "style": {
+        "navigationBarTitleText": "注册",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/index",
+      "style": {
+        "navigationBarTitleText": "叮咚号卡",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/Order/index",
+      "style": {
+        "navigationBarTitleText": "订单",
+        "navigationStyle": "custom",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/ProductMonthly/index",
+      "style": {
+        "navigationBarTitleText": "免费品",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/ProductPaid/index",
+      "style": {
+        "navigationBarTitleText": "付费品",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/mineMain/index",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationStyle": "custom"
+      }
+    }
+  ],
+	
+"subPackages": [
+  {
+    "root": "package-work",
+    "pages": [
+      {
+        "path": "work/index",
+        "style": {
+          "navigationBarTitleText": "工作台",
+          "navigationStyle": "custom"
+        }
+      }
+    ]
+  },
+  {
+    "root": "package-mine",
+    "pages": [
+      { "path": "mine/avatar/index", "style": { "navigationBarTitleText": "修改头像", "navigationStyle": "custom" } },
+      { "path": "mine/info/index", "style": { "navigationBarTitleText": "个人信息", "navigationStyle": "custom" } },
+      { "path": "mine/info/edit", "style": { "navigationBarTitleText": "编辑资料", "navigationStyle": "custom" } },
+      { "path": "mine/commission/index", "style": { "navigationBarTitleText": "权益详情", "navigationStyle": "custom" } },
+      { "path": "mine/product/index", "style": { "navigationBarTitleText": "下游产品设置", "navigationStyle": "custom" } },
+      { "path": "mine/payouts/index", "style": { "navigationBarTitleText": "佣金提现", "navigationStyle": "custom" } },
+      { "path": "mine/pwd/index", "style": { "navigationBarTitleText": "修改密码", "navigationStyle": "custom" } },
+      { "path": "mine/setting/index", "style": { "navigationBarTitleText": "应用设置", "navigationStyle": "custom" } },
+      { "path": "mine/help/index", "style": { "navigationBarTitleText": "常见问题", "navigationStyle": "custom" } },
+      { "path": "mine/about/index", "style": { "navigationBarTitleText": "推广", "navigationStyle": "custom" } },
+      { "path": "mine/realname/index", "style": { "navigationBarTitleText": "实名认证", "navigationStyle": "custom" } },
+      { "path": "mine/commission-detail/index", "style": { "navigationBarTitleText": "佣金明细", "navigationStyle": "custom", "enablePullDownRefresh": true } },
+      { "path": "mine/customer-service/index", "style": { "navigationBarTitleText": "我的客服", "navigationStyle": "custom" } },
+      { "path": "mine/my-agents/index", "style": { "navigationBarTitleText": "我的代理", "navigationStyle": "custom", "enablePullDownRefresh": true } },
+      { "path": "mine/live-connect/index", "style": { "navigationBarTitleText": "直播对接", "navigationStyle": "custom" } },
+      { "path": "mine/live-connect/create-live", "style": { "navigationBarTitleText": "抖音小黄车直播配置", "navigationStyle": "custom" } },
+      { "path": "mine/visual-data/index", "style": { "navigationBarTitleText": "可视化数据", "navigationStyle": "custom" } }
+    ]
+  },
+  {
+    "root": "package-common",
+    "pages": [
+      { "path": "common/webview/index", "style": { "navigationBarTitleText": "浏览网页", "navigationStyle": "custom" } },
+      { "path": "common/textview/index", "style": { "navigationBarTitleText": "浏览文本", "navigationStyle": "custom" } }
+    ]
+  },
+  {
+    "root": "package-product",
+    "pages": [
+      { "path": "Product/index", "style": { "navigationBarTitleText": "商品", "navigationStyle": "custom" } },
+      { "path": "Product/detail", "style": { "navigationBarTitleText": "商品详情", "navigationStyle": "custom" } },
+      { "path": "ProductInstant/index", "style": { "navigationBarTitleText": "秒结产品", "navigationStyle": "custom" } }
+    ]
+  },
+  {
+    "root": "package-home",
+    "pages": [
+      { "path": "home/use", "style": { "navigationBarTitleText": "代理管理", "navigationStyle": "custom", "backgroundColor": "#f1f1f1" } }
+    ]
+  },
+  {
+    "root": "package-notice",
+    "pages": [
+      { "path": "notice/list", "style": { "navigationBarTitleText": "系统通知", "navigationStyle": "custom", "enablePullDownRefresh": true } },
+      { "path": "notice/detail", "style": { "navigationBarTitleText": "通知详情", "navigationStyle": "custom" } }
+    ]
+  },
+  {
+    "root": "package-order",
+    "pages": [
+      { "path": "orderDetail/index", "style": { "navigationBarTitleText": "订单详情", "navigationStyle": "custom", "backgroundTextStyle": "dark" } }
+    ]
+  }
+  ],
+  "tabBar": {
+    "color": "#000000",
+    "selectedColor": "#f09b7f",
+    "borderStyle": "white",
+    "backgroundColor": "#f1f1f1",
+    "list": [
+      {
+        "pagePath": "pages/index",
+        "iconPath": "static/images/tabbar/home.png",
+        "selectedIconPath": "static/images/tabbar/home-1.png",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/Order/index",
+        "iconPath": "static/images/tabbar/dingdan.png",
+        "selectedIconPath": "static/images/tabbar/dingdan-1.png",
+        "text": "订单"
+      },
+      {
+        "pagePath": "pages/ProductMonthly/index",
+        "iconPath": "static/images/tabbar/work.png",
+        "selectedIconPath": "static/images/tabbar/work-1.png",
+        "text": "免费品"
+      },
+      {
+        "pagePath": "pages/ProductPaid/index",
+        "iconPath": "static/images/tabbar/work.png",
+        "selectedIconPath": "static/images/tabbar/work-1.png",
+        "text": "付费品"
+      },
+      {
+        "pagePath": "pages/mineMain/index",
+        "iconPath": "static/images/tabbar/mine.png",
+        "selectedIconPath": "static/images/tabbar/mine-1.png",
+        "text": "我的"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#FFFFFF"
+  }
 }

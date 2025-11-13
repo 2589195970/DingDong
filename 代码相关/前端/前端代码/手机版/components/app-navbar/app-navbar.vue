@@ -111,30 +111,31 @@ export default {
     fallbackNavigate() {
       const pages = getCurrentPages();
       const currentPage = pages[pages.length - 1];
-      const currentRoute = currentPage.route;
+      const currentRoute = currentPage.route || '';
+      const normalizedRoute = currentRoute.toLowerCase();
 
       // 根据页面路径判断应该返回的页面
-      if (currentRoute.includes('/mine/')) {
+      if (normalizedRoute.includes('/mine/') || normalizedRoute.includes('/minemain/')) {
         // 个人中心相关页面，返回到个人中心首页
         uni.reLaunch({
-          url: '/pages/mine/index'
+          url: '/pages/mineMain/index'
         });
-      } else if (currentRoute.includes('/Product/')) {
+      } else if (normalizedRoute.includes('/product/')) {
         // 商品相关页面，返回到商品页面
         uni.reLaunch({
-          url: '/pages/Product/index'
+          url: '/package-product/Product/index'
         });
-      } else if (currentRoute.includes('/Order/')) {
+      } else if (normalizedRoute.includes('/order/') || normalizedRoute.includes('/orderdetail/')) {
         // 订单相关页面，返回到订单页面
         uni.reLaunch({
           url: '/pages/Order/index'
         });
-      } else if (currentRoute.includes('/home/')) {
+      } else if (normalizedRoute.includes('/home/')) {
         // 工作台相关页面，返回到首页
         uni.reLaunch({
           url: '/pages/index'
         });
-      } else if (currentRoute.includes('/notice/')) {
+      } else if (normalizedRoute.includes('/notice/')) {
         // 通知相关页面，返回到首页
         uni.reLaunch({
           url: '/pages/index'

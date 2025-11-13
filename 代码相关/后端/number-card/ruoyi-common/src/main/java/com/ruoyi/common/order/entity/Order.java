@@ -399,21 +399,19 @@ public class Order {
 
         //照片审核状态初始化 - 只有当商品需要照片审核时才设置状态
         if (product != null && product.getPhotoRequired() != null && product.getPhotoRequired() == 1) {
+            // 无论是否需要人工审核, 都先把照片信息落库, 便于审核查看
+            order.idCardFrontUrl = request.getIdCardFrontUrl();
+            order.idCardBackUrl = request.getIdCardBackUrl();
+            order.personPhotoUrl = request.getPersonPhotoUrl();
+            order.customPhotoUrl = request.getCustomPhotoUrl();
+
             // 根据订单来源设置不同的初始状态
             if (order.orderSource != null && order.orderSource.equals(OrderEnum.OrderSourceEnum.IMPORT.getSourceType())) {
                 // 导入订单初始化为代理商待提交
                 order.photoStatus = OrderEnum.PhotoAuditEnum.AGENT_PENDING.getStatus();
             } else {
-                //需要提交照片,但是不需要审核
-                if(product.getSfxysh() == 0){
-                    //照片信息
-                    order.idCardFrontUrl = request.getIdCardFrontUrl();
-                    order.idCardBackUrl = request.getIdCardBackUrl();
-                    order.personPhotoUrl = request.getPersonPhotoUrl();
-                    order.customPhotoUrl = request.getCustomPhotoUrl();
-                }else {
-                    //需要提交照片,但是需要审核,所以暂不提交照片
-                    // H5下单（信息流等）初始化为管理员待审核
+                // 需要管理员审核的产品进入管理员待审核
+                if (product.getSfxysh() != null && product.getSfxysh() == 1) {
                     order.photoStatus = OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus();
                 }
             }

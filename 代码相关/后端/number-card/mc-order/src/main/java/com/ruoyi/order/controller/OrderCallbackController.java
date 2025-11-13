@@ -7,6 +7,7 @@ import com.ruoyi.common.apis.yqe.YqeCallbackRequest;
 import com.ruoyi.common.core.page.ResponseEntity;
 import com.ruoyi.common.exception.BizException;
 import com.ruoyi.common.order.reuqest.ApiCommonNotifyRequest;
+import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.order.service.common.CommonService;
 import com.ruoyi.order.service.gth.GthService;
 import com.ruoyi.order.service.wjk.WjkService;
@@ -94,19 +95,22 @@ public class OrderCallbackController {
     @ApiOperation("感叹号回调信息处理")
     public String gthCallback(@ModelAttribute GthCallbackRequest request) {
         try {
+            log.info("{}方法开始执行", "gthCallback");
             log.info("感叹号回调信息处理:{}", JSONObject.toJSONString(request));
-            // if(request.getEvent_type().equals("product_status")){
-            //     gthService.updateProductStatus(request);
-            // }else {
-            //     gthService.callback(request);
-            // }
-            gthService.callback(request);
+            if (StringUtils.isNotEmpty(request.getEvent_type()) && request.getEvent_type().equals("product_status")) {
+                log.info("感叹号商品上下架回调信息处理:{}", JSONObject.toJSONString(request));
+                gthService.updateProductStatus(request);
+            } else {
+                log.info("感叹号订单回调信息处理:{}", JSONObject.toJSONString(request));
+                gthService.callback(request);
+            }
+            log.info("回调处理成功");
             return "SUCCESS";
         } catch (BizException e) {
-            log.info("{}方法异常:{}", "gthCallback", e.getMessage());
+            log.error("{}方法异常:{}", "gthCallback", e.getMessage());
             return "SUCCESS";
         } catch (Exception e) {
-            log.info("{}方法异常:{}", "gthCallback", e.getMessage());
+            log.error("{}方法异常:{}", "gthCallback", e.getMessage());
             return "SUCCESS";
         }
     }

@@ -4,14 +4,15 @@ package com.ruoyi.order.service.impl.order;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.ruoyi.common.constant.BaseConstant;
 import com.ruoyi.common.enums.OrderEnum;
 import com.ruoyi.common.order.bo.OrderListBO;
 import com.ruoyi.common.order.vo.OrderListVO;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.order.mapper.OrderMapper;
 import com.ruoyi.order.service.ProductApiService;
-import com.ruoyi.order.service.order.OrderService;
 import com.ruoyi.order.service.BaseService;
+import com.ruoyi.order.service.order.OrderService;
 import com.ruoyi.common.order.entity.Product;
 import com.ruoyi.common.order.entity.UpstreamApi;
 import com.ruoyi.order.utils.SpringContextUtil;
@@ -124,7 +125,66 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new BizException("订单不存在");
         }
 
-        // 更新照片信息
+        Product product = null;
+        try {
+            product = productApiService.getProduct(order.getProductCode());
+        } catch (Exception e) {
+            log.error("查询产品信息失败,订单ID:{},错误:{}", order.getOrderId(), e.getMessage(), e);
+            throw new BizException("获取产品信息失败,请稍后再试");
+        }
+
+        applyPhotoFields(order, updateBO);
+        order.setUpdateTime(System.currentTimeMillis());
+
+        boolean needManualAudit = product != null
+                && product.getPhotoRequired() != null && product.getPhotoRequired() == BaseConstant.ONE_INT
+                && product.getSfxysh() != null && product.getSfxysh() == BaseConstant.ONE_INT;
+
+        if (needManualAudit) {
+            order.setPhotoStatus(OrderEnum.PhotoAuditEnum.ADMIN_PENDING.getStatus());
+            order.setPhotoUploadTime(System.currentTimeMillis());
+            baseMapper.updateById(order);
+            log.info("订单{} 更新照片成功,等待管理员审核", order.getOrderId());
+            return;
+        }
+
+        baseMapper.updateById(order);
+        log.info("订单{} 更新照片(无需审核)成功,同步上游", order.getOrderId());
+
+        try {
+            updateOrderPhotosToUpstream(order);
+        } catch (Exception e) {
+            log.error("订单{} 同步照片至上游失败: {}", order.getOrderId(), e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void updateSubmittedOrderPhotos(OrderUpdateBO updateBO) throws Exception {
+        if (updateBO == null || updateBO.getOrderId() == null) {
+            throw new BizException("订单ID不能为空");
+        }
+        Order order = baseMapper.selectById(updateBO.getOrderId());
+        if (order == null) {
+            throw new BizException("订单不存在");
+        }
+        if (order.getOrderStatus() == null || order.getOrderStatus() <= OrderEnum.CREATE.getStatus()) {
+            throw new BizException("订单尚未提交,请先完成审核提单");
+        }
+
+        applyPhotoFields(order, updateBO);
+        order.setUpdateTime(System.currentTimeMillis());
+        baseMapper.updateById(order);
+
+        log.info("订单{} 已提交状态下更新照片,开始同步上游", order.getOrderId());
+        try {
+            updateOrderPhotosToUpstream(order);
+        } catch (Exception e) {
+            log.error("订单{} 上游同步照片失败: {}", order.getOrderId(), e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private void applyPhotoFields(Order order, OrderUpdateBO updateBO) {
         if (StringUtils.isNotBlank(updateBO.getIdCardFrontUrl())) {
             order.setIdCardFrontUrl(updateBO.getIdCardFrontUrl());
         }
@@ -137,19 +197,47 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (StringUtils.isNotBlank(updateBO.getCustomPhotoUrl())) {
             order.setCustomPhotoUrl(updateBO.getCustomPhotoUrl());
         }
-        order.setUpdateTime(System.currentTimeMillis());
+    }
 
-        // 更新数据库
-        baseMapper.updateById(order);
-        log.info("更新订单信息成功，订单ID: {}", updateBO.getOrderId());
-
-        // 调用上游API更新照片信息
-        try {
-            updateOrderPhotosToUpstream(order);
-        } catch (Exception e) {
-            log.error("调用上游API更新照片失败，订单ID: {}, 错误: {}", updateBO.getOrderId(), e.getMessage(), e);
-            // 不抛出异常，避免影响本地数据库更新
+    @Override
+    public void submitAfterPhotoAudit(Long orderId) throws Exception {
+        if (orderId == null) {
+            throw new BizException("订单ID不能为空");
         }
+        Order order = baseMapper.selectById(orderId);
+        if (order == null) {
+            throw new BizException("订单不存在");
+        }
+        if (order.getOrderStatus() != null && order.getOrderStatus() > OrderEnum.CREATE.getStatus()) {
+            throw new BizException("订单已提交");
+        }
+        APISubmitInfoRequest apiSubmitInfoRequest = buildSubmitInfoRequest(order);
+        productApiService.resumePendingOrder(order.getOrderId(), apiSubmitInfoRequest);
+    }
+
+    private APISubmitInfoRequest buildSubmitInfoRequest(Order order) {
+        APISubmitInfoRequest request = new APISubmitInfoRequest();
+        request.setOrderDownstreamId(order.getOrderDownstreamId());
+        request.setCardName(order.getCardName());
+        request.setCardPhone(order.getCardPhone());
+        request.setCardId(order.getCardId());
+        request.setReceiverName(order.getReceiverName());
+        request.setProvinceCode(order.getProvinceCode());
+        request.setProvinceName(order.getProvinceName());
+        request.setCityCode(order.getCityCode());
+        request.setCityName(order.getCityName());
+        request.setCountyCode(order.getCountyCode());
+        request.setCountyName(order.getCountyName());
+        request.setCardAddress(order.getCardAddress());
+        request.setProductCode(order.getProductCode());
+        request.setAgentCode(order.getDownstreamCode());
+        request.setJsonParam(order.getJsonParam());
+        request.setOrderSource(order.getOrderSource());
+        request.setIdCardFrontUrl(order.getIdCardFrontUrl());
+        request.setIdCardBackUrl(order.getIdCardBackUrl());
+        request.setPersonPhotoUrl(order.getPersonPhotoUrl());
+        request.setCustomPhotoUrl(order.getCustomPhotoUrl());
+        return request;
     }
 
     /**

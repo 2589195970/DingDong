@@ -47,9 +47,9 @@ public class AgentProductBO {
     private Integer baseCardFee;
 
     /**
-     * 初始话费余额(元)
+     * 自带话费余额(元)
      */
-    @ApiModelProperty("初始话费余额(元)")
+    @ApiModelProperty("自带话费余额(元)")
     private Integer productInitialBalance;
 
 

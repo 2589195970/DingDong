@@ -95,7 +95,7 @@
       </view>
     </view>
 
-    <view class="item1">
+<view class="item1">
       <view style="display: flex;justify-content: space-between;">
         <view class="shu1">
           <u-icon name="list-dot" color="#f09b7f"></u-icon>
@@ -105,7 +105,23 @@
                       activeColor="#f09b7f" style="width: 150px;"></u-subsection>
       </view>
       <view class="orderclass" style="margin-top: 20px;">
-        <div ref="chart" style="width: 120px; height: 120px; min-width: 120px; min-height: 120px;"></div>
+        <view class="chart-circle">
+          <u-circle-progress
+            :percent="chartData.value"
+            :border-width="10"
+            :duration="800"
+            active-color="#f09b7f"
+            inactive-color="#fff2ed"
+            :clockwise="true"
+            :width="120"
+            :stroke-linecap="'round'"
+          >
+            <view class="circle-center">
+              <text class="circle-percent">{{ chartData.value || 0 }}%</text>
+              <text class="circle-label">激活率</text>
+            </view>
+          </u-circle-progress>
+        </view>
         <view class="ordercust activate-stats-text" style="margin-top: 20px; width: 55%; margin-left: 10px;">
           <view class="stats-line">
             <span class="stats-label">年度订单数量</span>
@@ -231,7 +247,6 @@
 
 
 <script>
-import * as echarts from 'echarts';
 import {
   selectWithdrawalAPPStatistics,
   selectAgentOrderAPPStatistics,
@@ -263,8 +278,7 @@ export default {
       agentOrder: {},
       activateOrder: {},
       chartData: {
-        value: 20,
-        total: 100,
+        value: 0
       },
       dailidata: {},
       registrationStats: {
@@ -308,136 +322,11 @@ export default {
     avatar() {
       return this.$store.state.user.avatar
     },
-
-
-    chartOption() {
-      const {
-        value,
-        total
-      } = this.chartData;
-      return {
-        backgroundColor: "#FFF",
-        title: {
-          text: Math.round(value) + '%',
-          x: 'center',
-          y: 'center',
-          textStyle: {
-            color: '#f09b7f',
-            fontSize: '18',
-          }
-        },
-        angleAxis: {
-          axisLine: {
-            show: false,
-          },
-          axisLabel: {
-            show: false,
-          },
-          splitLine: {
-            show: false,
-          },
-          axisTick: {
-            show: false,
-          },
-          min: 0,
-          max: 100,
-          startAngle: 90,
-        },
-        radiusAxis: {
-          type: 'category',
-          axisLine: {
-            show: false,
-          },
-          axisTick: {
-            show: false,
-          },
-          axisLabel: {
-            show: true,
-          },
-          data: [],
-        },
-        polar: {
-          radius: '150%',
-          center: ['50%', '50%'],
-        },
-        series: [{
-          type: 'bar',
-          data: [value],
-          z: 1,
-          coordinateSystem: 'polar',
-          barMaxWidth: 10,
-          name: '采纳率',
-          roundCap: 1,
-          color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [{
-            offset: 0,
-            color: '#f09b7f'
-          },
-            {
-              offset: 0.5,
-              color: '#d87d63'
-            },
-            {
-              offset: 1,
-              color: '#ffc4ae'
-            }
-          ])
-        },
-          {
-            type: 'bar',
-            data: [total],
-            z: 0,
-            silent: true,
-            coordinateSystem: 'polar',
-            barMaxWidth: 10,
-            roundCap: true,
-            color: '#fff2ed',
-            barGap: '-100%',
-          },
-          {
-            type: 'pie',
-            radius: '150%',
-            center: ['50%', '50%'],
-            hoverAnimation: false,
-            startAngle: 180,
-            endAngle: 0,
-            silent: 1,
-            z: 10,
-            data: [{
-              name: '',
-              value: value > 75 ? (25 - (100 - value)) / total : (25 + value) / 100,
-              label: {
-                show: false,
-              },
-              labelLine: {
-                show: false,
-              },
-              itemStyle: {
-                color: 'transparent',
-              },
-            },
-
-              {
-                value: value > 75 ? 1 - (25 - (100 - value)) / total : 1 - (25 + value) / 100,
-                label: {
-                  show: false,
-                },
-                labelLine: {
-                  show: false,
-                },
-                itemStyle: {
-                  color: 'transparent',
-                },
-              },
-            ],
-          }
-        ]
-      };
-    }
   },
   methods: {
     xianqing() {
       uni.navigateTo({
-        url: `/pages/home/use`
+        url: `/package-home/home/use`
       })
     },
     sectionChange(index) {
@@ -482,8 +371,6 @@ export default {
           this.chartData.value = 0;
         }
 
-        console.log('Chart data:', this.chartData);
-        this.initChart();
       }).catch(error => {
         console.error('获取激活统计数据失败:', error);
         // 设置默认值
@@ -493,22 +380,6 @@ export default {
           activatedOrderNumber: 0,
           settledOrderNumber: 0
         };
-      });
-    },
-
-    initChart() {
-      this.$nextTick(() => {
-        const chartElement = this.$refs.chart;
-        if (!chartElement) {
-          console.warn('Chart element not found');
-          return;
-        }
-        try {
-          const myChart = echarts.init(chartElement);
-          myChart.setOption(this.chartOption);
-        } catch (error) {
-          console.error('ECharts initialization failed:', error);
-        }
       });
     },
 
@@ -600,14 +471,14 @@ export default {
     // 点击通知区域跳转到通知列表
     goToNoticeList() {
       uni.navigateTo({
-        url: '/pages/notice/list'
+        url: '/package-notice/notice/list'
       });
     },
 
     // 点击单个通知跳转到详情
     goToNoticeDetail(noticeId) {
       uni.navigateTo({
-        url: `/pages/notice/detail?noticeId=${noticeId}`
+        url: `/package-notice/notice/detail?noticeId=${noticeId}`
       });
     },
 
@@ -695,6 +566,35 @@ export default {
   flex-direction: row;
   justify-content: flex-start;
   align-items: flex-start;
+}
+
+.chart-circle {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-center {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-percent {
+  font-size: 20px;
+  font-weight: 600;
+  color: #f09b7f;
+}
+
+.circle-label {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 2px;
 }
 
 .imgsi-oi {

@@ -211,12 +211,15 @@ public class SysUserController extends BaseController
      */
     @GetMapping("/resetPwdDefault")
     public AjaxResult resetPwdDefault(String userName) throws BizException {
-        if(StringUtils.isEmpty(userName)){
+        if (StringUtils.isEmpty(userName)) {
             throw new BizException("用户名不能为空");
         }
         SysUser sysUser = userService.selectUserByUserName(userName);
+        if (sysUser == null) {
+            throw new BizException("用户已被移除,无法重置密码");
+        }
         LoginUser loginUser = getLoginUser();
-        if(!loginUser.getUser().isAdmin()){
+        if (!loginUser.getUser().isAdmin()) {
             throw new BizException("您无此权限操作");
         }
         sysUser.setPassword(SecurityUtils.encryptPassword("123456"));

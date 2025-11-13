@@ -1,6 +1,6 @@
 SET @current_schema = DATABASE();
 
--- 1. t_product 表新增初始话费余额字段，默认 0
+-- 1. t_product 表新增自带话费余额字段，默认 0
 SELECT COUNT(*) INTO @col_exists
 FROM information_schema.COLUMNS
 WHERE TABLE_SCHEMA = @current_schema
@@ -9,7 +9,7 @@ WHERE TABLE_SCHEMA = @current_schema
 
 SET @ddl = IF(
         @col_exists = 0,
-        'ALTER TABLE t_product ADD COLUMN product_initial_balance INT NOT NULL DEFAULT 0 COMMENT ''初始话费余额(元)'' AFTER base_card_fee',
+        'ALTER TABLE t_product ADD COLUMN product_initial_balance INT NOT NULL DEFAULT 0 COMMENT ''自带话费余额(元)'' AFTER base_card_fee',
         'SELECT ''t_product.product_initial_balance already exists'''
     );
 PREPARE stmt FROM @ddl;

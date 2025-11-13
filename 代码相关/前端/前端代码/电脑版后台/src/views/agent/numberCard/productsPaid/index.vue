@@ -62,10 +62,10 @@
                     <p v-if="scope.row.productType==2" style="color: red;">长期产品</p>
                     <p v-if="scope.row.productType==3" style="color:green;">其它</p>
                     <p v-if="scope.row.productType==4" style="color: red;">组合返佣</p>
-                    <p v-if="scope.row.productType==5" style="color:#ff8c00;">付费提卡</p>
+                    <p v-if="scope.row.productType==5" style="color:#ff8c00;">付费产品</p>
                 </template>
             </el-table-column>
-            <el-table-column label="付费提卡" align="center">
+            <el-table-column label="付费产品" align="center">
                 <template slot-scope="scope">
                     <span v-if="supportsCardFee(scope.row)">是</span>
                     <span v-else>否</span>
@@ -89,7 +89,7 @@
                     <div v-if="supportsCardFee(scope.row)" class="card-fee-cell">
                         <p>上级成本：{{ formatAmount(scope.row.incomingCardFee) }} 元</p>
                         <p>下级卖价：{{ formatAmount(scope.row.downstreamCardFee) }} 元</p>
-                        <p>初始话费：{{ formatAmount(scope.row.productInitialBalance) }} 元</p>
+                        <p>自带话费：{{ formatAmount(scope.row.productInitialBalance) }} 元</p>
                         <p>利润：
                             <span
                                 :class="['card-fee-profit', scope.row.cardFeeProfit > 0 ? 'is-positive' : '']">
@@ -518,7 +518,7 @@
                 agentSelectProductListPage(payload)
                     .then((res) => {
                         const rows = (res.data && res.data.rows) || [];
-                        // 仅保留需要付费提卡的商品，后端未过滤时兜底处理
+                        // 仅保留需要付费产品的商品，后端未过滤时兜底处理
                         const paidRows = rows.filter((item) => this.supportsCardFee(item));
                         this.list = paidRows;
                         const totalRows = Number(res.data && res.data.totalRows);

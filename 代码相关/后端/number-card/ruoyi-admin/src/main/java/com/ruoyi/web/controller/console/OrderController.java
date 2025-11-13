@@ -92,7 +92,7 @@ public class OrderController {
     public ResponseEntity againOrderSubmit(@RequestBody AgainOrderBO againOrderBO) {
         try {
             orderService.againOrderSubmit(againOrderBO);
-            return ResponseEntity.success();
+            return ResponseEntity.success("重推请求已发送，请几分钟后刷新订单列表查看结果");
         } catch (BizException e) {
             log.info("{}方法异常:{}", "againOrderSubmit", e.getMessage());
             return ResponseEntity.error(e.getMessage(),null);

@@ -56,7 +56,7 @@
 	} from '@/api/login'
   import constant from '@/utils/constant'
 
-  const realNamePage = constant.REAL_NAME_PAGE || '/pages/mine/realname/index'
+  const realNamePage = constant.REAL_NAME_PAGE || '/package-mine/mine/realname/index'
 	export default {
 		data() {
 			return {
@@ -99,12 +99,12 @@
 			// 隐私协议
 			handlePrivacy() {
 				let site = this.globalConfig.appInfo.agreements[0]
-				this.$tab.navigateTo(`/pages/common/webview/index?title=${site.title}&url=${site.url}`)
+				this.$tab.navigateTo(`/package-common/common/webview/index?title=${site.title}&url=${site.url}`)
 			},
 			// 用户协议
 			handleUserAgrement() {
 				let site = this.globalConfig.appInfo.agreements[1]
-				this.$tab.navigateTo(`/pages/common/webview/index?title=${site.title}&url=${site.url}`)
+				this.$tab.navigateTo(`/package-common/common/webview/index?title=${site.title}&url=${site.url}`)
 			},
 			// 获取图形验证码
 			getCode() {

@@ -7,10 +7,10 @@ const loginPage = "/pages/login"
   
 // 页面白名单
 const whiteList = [
-  '/pages/login','/pages/login-sjihao','/pages/register', '/pages/common/webview/index'
+  '/pages/login','/pages/login-sjihao','/pages/register', '/package-common/common/webview/index'
 ]
 
-const realNamePage = constant.REAL_NAME_PAGE || '/pages/mine/realname/index'
+const realNamePage = constant.REAL_NAME_PAGE || '/package-mine/mine/realname/index'
 const realNameWhitelist = [realNamePage]
 let hasShownRealNameTip = false
 

@@ -203,9 +203,9 @@ new Vue({
       })
     },
     getProductAccent(productType) {
-      // 付费提卡保持绿色，其他免费领取统一使用红色
+      // 付费产品保持绿色，其他免费领取统一使用红色
       if (Number(productType) === 5) {
-        return '#34C759'; // 付费提卡 - 绿色
+        return '#34C759'; // 付费产品 - 绿色
       }
       return '#FF3B30'; // 免费领取 - 统一红色
     },

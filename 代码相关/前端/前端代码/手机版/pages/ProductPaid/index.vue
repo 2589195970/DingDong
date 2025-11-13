@@ -82,7 +82,7 @@
               <text class="fee-value">{{ formatMoney(dict.baseCardFee) }}</text>
             </view>
             <view class="fee-item">
-              <text class="fee-label">初始话费</text>
+              <text class="fee-label">自带话费</text>
               <text class="fee-value">{{ formatMoney(dict.productInitialBalance) }}</text>
             </view>
           </view>
@@ -92,7 +92,7 @@
             <view class="product-tag paid-tag">
               <text class="tag-text">付费产品</text>
             </view>
-            <view class="product-tag" :class="getProductStatusClass(dict.productStatus)">
+            <view class="product-tag" :class="dict.productStatusClass">
               <text class="tag-text">{{ getProductStatusText(dict.productStatus) }}</text>
             </view>
             <view class="product-tag age-tag">
@@ -202,7 +202,7 @@ export default {
         pageNo: 1,
         pageSize: 10000,
         productStatus: 1, // 默认查询上架中
-        productType: 5, // 仅查询付费提卡产品
+        productType: 5, // 仅查询付费产品产品
       },
       paidCardProductType: 5,
       commissionopen: false,
@@ -360,7 +360,7 @@ export default {
     },
     xianqing(data) {
       uni.navigateTo({
-        url: `/pages/Product/detail?key=${encodeURIComponent(JSON.stringify(data))}`
+        url: `/package-product/Product/detail?key=${encodeURIComponent(JSON.stringify(data))}`
       })
     },
     open() {
@@ -391,11 +391,24 @@ export default {
     },
     soplist() {
       this.loading = true;
-      agentSelectProductListPage(this.queryParams).then(res => {
+      agentSelectProductListPage(this.queryParams)
+        .then(res => {
+          const rows = res?.data?.rows || [];
+          this.productList = this.decorateProductList(rows);
+        })
+        .catch(error => {
+          console.error('获取付费产品列表失败:', error);
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
 
-        this.productList = res.data.rows;
-        this.loading = false;
-      })
+    decorateProductList(rows = []) {
+      return rows.map((item) => ({
+        ...item,
+        productStatusClass: this.getProductStatusClass(item.productStatus)
+      }));
     },
 
     // 下架产品

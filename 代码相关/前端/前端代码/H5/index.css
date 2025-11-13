@@ -366,7 +366,7 @@ body {
 .checkbox .van-checkbox__icon {
   font-size: 18px;
 }
-/* 付费提卡确认勾选 - 与协议框相同样式 */
+/* 付费产品确认勾选 - 与协议框相同样式 */
 .form .paid-tip {
   font-size: 12px;
   color: #717171;
@@ -504,7 +504,7 @@ footer a {
   box-sizing: border-box;
 }
 
-/* 付费提卡顶部提示 - 简洁优雅设计 */
+/* 付费产品顶部提示 - 简洁优雅设计 */
 .paid-notice {
   width: calc(100% - 40px);
   margin: 0 auto 15px;

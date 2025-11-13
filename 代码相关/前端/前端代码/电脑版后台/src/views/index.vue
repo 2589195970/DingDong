@@ -281,7 +281,7 @@
 import ECharts from '@/components/ECharts'
 import { getProductCategoryCount } from '@/api/product'
 import { getOrderStatistics, getTodayAgentOrderRanking, getOrderTrend } from '@/api/order'
-import { listNotice } from '@/api/system/notice'
+import { listNoticeByUserScope } from '@/api/system/notice'
 
 export default {
   name: 'Index',
@@ -853,7 +853,7 @@ export default {
     async getNotificationData() {
       this.notificationLoading = true
       try {
-        const response = await listNotice({
+        const response = await listNoticeByUserScope({
           pageNum: 1,
           pageSize: 6 // 只获取最新的6条通知
         })
@@ -1033,7 +1033,7 @@ export default {
         { value: productTypeCount.monthlyStatement, name: '月结产品' },
         { value: productTypeCount.longTime, name: '长期产品' },
         { value: productTypeCount.other, name: '其他产品' },
-        { value: productTypeCount.paidCard, name: '付费提卡' },
+        { value: productTypeCount.paidCard, name: '付费产品' },
         { value: productTypeCount.combination, name: '组合返佣' }
       ].filter(item => item.value > 0) // 过滤掉数量为0的产品类型
 

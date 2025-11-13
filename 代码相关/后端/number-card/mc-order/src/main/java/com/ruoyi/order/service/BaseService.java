@@ -50,6 +50,19 @@ public interface BaseService {
             throws Exception;
 
     /**
+     * 审核通过后重新推送待审核订单
+     *
+     * @param orderId     订单ID
+     * @param request     原始下单请求
+     * @param product     产品信息
+     * @param upstreamApi 上游API信息
+     * @return 订单
+     * @throws Exception 业务异常
+     */
+    Order resumePendingOrder(Long orderId, BaseSubmitOrderRequest request, Product product, UpstreamApi upstreamApi)
+            throws Exception;
+
+    /**
      * 同步提交订单
      *
      * @param request

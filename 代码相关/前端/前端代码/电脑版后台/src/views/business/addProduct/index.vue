@@ -23,8 +23,7 @@
                 <el-select v-model="ruleForm.productType" placeholder="请选择结算模式">
                     <el-option label="日结秒返" value="0"></el-option>
                     <el-option label="月结产品" value="1"></el-option>
-                    <el-option label="付费提卡" value="5"></el-option>
-                    <!--<el-option label="长期产品" value="2"></el-option>-->
+                    <el-option label="付费产品" value="5"></el-option>
                     <!--<el-option label="其它" value="3"></el-option>-->
                     <!--<el-option label="组合返佣" value="4"></el-option>-->
                 </el-select>
@@ -95,7 +94,7 @@
             <el-form-item label="余额配置" prop="name">
                 <el-input v-model="ruleForm.balanceConfig"></el-input>
             </el-form-item>
-            <el-form-item label="初始话费余额(元)">
+            <el-form-item label="自带话费余额(元)">
                 <el-input-number v-model="ruleForm.productInitialBalance" :min="0" :precision="0" />
             </el-form-item>
         </div>

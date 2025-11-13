@@ -132,49 +132,17 @@
             <el-table ref="tables" v-loading="dispositionLoading" :data="listDisposition" row-key="operatorReportId" border lazy height="650"
                 style="font-weight: 700;">
                 <el-table-column label="产品名称" align="center" prop="upstreamProductName" :show-overflow-tooltip="true" />
-                <el-table-column label="关联产品" align="left" prop="productList" width="520">
+                <el-table-column label="关联产品" align="center" prop="productList" width="150">
                     <template slot-scope="scope">
-                        <div v-if="scope.row.productList && scope.row.productList.length" class="bind-product-grid">
-                            <el-card v-for="product in scope.row.productList"
-                                     :key="product.productId || product.productCode"
-                                     shadow="never"
-                                     class="bind-product-card">
-                                <div class="bind-card-header">
-                                    <div class="title">
-                                        <span class="dot" :class="product.productStatus === 1 ? 'dot-online' : 'dot-offline'"></span>
-                                        <span class="product-name" :title="product.productName">{{ product.productName || '-' }}</span>
-                                    </div>
-                                    <el-tag size="mini" :type="getProductStatusTag(product)">
-                                        {{ getProductStatusText(product) }}
-                                    </el-tag>
-                                </div>
-                                <div class="bind-card-body">
-                                    <div class="meta-row">
-                                        <i class="el-icon-link"></i>
-                                        <span>编码：{{ product.productCode || '--' }}</span>
-                                    </div>
-<!--                                    <div class="meta-row">-->
-<!--                                        <i class="el-icon-time"></i>-->
-<!--                                        <span>上架时间：{{ product.shelfTime ? formatTimestamp(product.shelfTime) : '&#45;&#45;' }}</span>-->
-<!--                                    </div>-->
-                                </div>
-                                <div class="bind-card-actions">
-                                    <el-button type="primary" plain size="mini" icon="el-icon-top"
-                                               :disabled="product.productStatus === 1"
-                                               :loading="productActionLoading[getProductActionKey(product)]"
-                                               @click="handleProductShelf(product, 1)">
-                                        上架
-                                    </el-button>
-                                    <el-button type="danger" plain size="mini" icon="el-icon-bottom"
-                                               :disabled="product.productStatus === 0"
-                                               :loading="productActionLoading[getProductActionKey(product)]"
-                                               @click="handleProductShelf(product, 0)">
-                                        下架
-                                    </el-button>
-                                </div>
-                            </el-card>
-                        </div>
-                        <el-empty v-else description="暂未关联商品" :image-size="80"></el-empty>
+                        <el-button
+                            v-if="scope.row.productList && scope.row.productList.length"
+                            type="primary"
+                            size="small"
+                            icon="el-icon-document"
+                            @click="handleViewProducts(scope.row)">
+                            查看产品({{ scope.row.productList.length }})
+                        </el-button>
+                        <el-empty v-else description="暂未关联商品" :image-size="60"></el-empty>
                     </template>
                 </el-table-column>
                 <el-table-column label="参数" align="left" prop="territoryCheckType" :show-overflow-tooltip="true">
@@ -204,6 +172,109 @@
             </el-table>
             <pagination v-show="totalopen > 0" :total="totalopen" :page.sync="opendata.pageNo"
                 :limit.sync="opendata.pageSize" @pagination="handleClick(opendata)" />
+        </el-dialog>
+
+        <!-- 关联产品详情弹窗 -->
+        <el-dialog
+            title="关联产品管理"
+            :visible.sync="productDetailDialog"
+            width="1024px"
+            append-to-body>
+
+            <!-- 搜索栏 -->
+            <el-form :inline="true" size="small" style="margin-bottom: 12px;">
+                <el-form-item label="产品名称">
+                    <el-input
+                        v-model="productSearch.productName"
+                        placeholder="请输入产品名称"
+                        clearable
+                        style="width: 200px"
+                        @keyup.enter.native="handleProductSearch">
+                    </el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" icon="el-icon-search" size="mini" @click="handleProductSearch">
+                        搜索
+                    </el-button>
+                    <el-button icon="el-icon-refresh" size="mini" @click="resetProductSearch">
+                        重置
+                    </el-button>
+                </el-form-item>
+            </el-form>
+
+            <!-- 产品列表表格 -->
+            <el-table
+                :data="filteredProductList"
+                border
+                height="500"
+                style="width: 100%">
+
+                <el-table-column type="index" label="序号" width="60" align="center"></el-table-column>
+
+                <el-table-column label="产品名称" prop="productName" min-width="180" :show-overflow-tooltip="true">
+                    <template slot-scope="scope">
+                        <span>{{ scope.row.productName || '-' }}</span>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="产品编码" prop="productCode" width="160" align="center">
+                    <template slot-scope="scope">
+                        <span>{{ scope.row.productCode || '--' }}</span>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="状态" prop="productStatus" width="100" align="center">
+                    <template slot-scope="scope">
+                        <el-tag
+                            size="small"
+                            :type="scope.row.productStatus === 1 ? 'success' : 'info'">
+                            {{ scope.row.productStatus === 1 ? '上架中' : '已下架' }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="上架时间" prop="shelfTime" width="160" align="center">
+                    <template slot-scope="scope">
+                        <span>{{ scope.row.shelfTime ? formatTimestamp(scope.row.shelfTime) : '--' }}</span>
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="操作" width="220" align="center" fixed="right">
+                    <template slot-scope="scope">
+                        <el-button
+                            type="success"
+                            size="small"
+                            icon="el-icon-top"
+                            :disabled="scope.row.productStatus === 1"
+                            :loading="productActionLoading[getProductActionKey(scope.row)]"
+                            @click="handleProductShelf(scope.row, 1)"
+                            class="product-action-btn">
+                            上架
+                        </el-button>
+                        <el-button
+                            type="warning"
+                            size="small"
+                            icon="el-icon-bottom"
+                            :disabled="scope.row.productStatus === 0"
+                            :loading="productActionLoading[getProductActionKey(scope.row)]"
+                            @click="handleProductShelf(scope.row, 0)"
+                            class="product-action-btn"
+                            style="margin-left: 8px;">
+                            下架
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+            <!-- 统计信息 -->
+            <div class="product-summary">
+                <span>上架中：<span class="summary-num">{{ onlineCount }}</span> 个</span>
+                <span style="margin-left: 20px;">已下架：<span class="summary-num">{{ offlineCount }}</span> 个</span>
+            </div>
+
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="productDetailDialog = false">关 闭</el-button>
+            </div>
         </el-dialog>
 
         <el-dialog :title="title" :visible.sync="opentianjia" width="500px" append-to-body>
@@ -342,10 +413,46 @@
                     pageNo: 1,
                     pageSize: 10,
                 },
+                // 二级弹窗相关
+                productDetailDialog: false,
+                currentUpstreamProduct: null,
+                currentProductList: [],
+                productSearch: {
+                    productName: ''
+                }
             };
         },
         created() {
             this.getList();
+        },
+        computed: {
+            // 过滤后的产品列表
+            filteredProductList() {
+                if (!this.currentProductList || !this.currentProductList.length) {
+                    return [];
+                }
+
+                if (!this.productSearch.productName) {
+                    return this.currentProductList;
+                }
+
+                return this.currentProductList.filter(product => {
+                    return product.productName &&
+                           product.productName.toLowerCase().includes(
+                               this.productSearch.productName.toLowerCase()
+                           );
+                });
+            },
+
+            // 上架产品数量
+            onlineCount() {
+                return this.currentProductList.filter(p => p.productStatus === 1).length;
+            },
+
+            // 下架产品数量
+            offlineCount() {
+                return this.currentProductList.filter(p => p.productStatus === 0).length;
+            }
         },
         methods: {
             getProductActionKey(product = {}) {
@@ -622,82 +729,53 @@
                 })
             },
 
+            // 打开产品详情弹窗
+            handleViewProducts(row) {
+                this.currentUpstreamProduct = row;
+                this.currentProductList = row.productList || [];
+                this.productSearch.productName = '';
+                this.productDetailDialog = true;
+            },
+
+            // 搜索产品
+            handleProductSearch() {
+                // computed 自动处理过滤
+            },
+
+            // 重置搜索
+            resetProductSearch() {
+                this.productSearch.productName = '';
+            }
+
         },
     }
 </script>
 
 <style scoped>
-.bind-product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 12px;
-}
-
-.bind-product-card {
-    border: 1px solid #f0f0f0;
-    border-radius: 8px;
-    padding: 8px 10px 10px;
-    background-color: #fff;
-    min-height: 140px;
-}
-
-.bind-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-}
-
-.bind-card-header .title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    max-width: calc(100% - 80px);
-}
-
-.product-name {
-    font-weight: 600;
-    max-width: 160px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.bind-card-body {
-    font-size: 12px;
+/* 产品详情弹窗样式 */
+.product-summary {
+    margin-top: 12px;
+    padding: 12px;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    font-size: 14px;
     color: #606266;
-    margin-bottom: 8px;
 }
 
-.meta-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
+.product-summary .summary-num {
+    font-weight: 600;
+    color: #409eff;
+    font-size: 16px;
 }
 
-.meta-row i {
-    color: #999;
+/* 产品操作按钮样式 */
+.product-action-btn {
+    padding: 7px 12px;
+    font-size: 12px;
 }
 
-.bind-card-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.dot-online {
-    background-color: #13ce66;
-    box-shadow: 0 0 4px rgba(19, 206, 102, 0.6);
-}
-
-.dot-offline {
-    background-color: #c0c4cc;
+.product-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 </style>

@@ -35,9 +35,9 @@
           {{ effectiveProduct.sfyjfx ? formatAmount(effectiveProduct.vipFixedCommission) : 0 }}
         </el-descriptions-item>
         <el-descriptions-item label="佣金返现">{{ formatYesNo(effectiveProduct.sfyjfx) }}</el-descriptions-item>
-        <el-descriptions-item label="付费提卡">{{ formatYesNo(Number(effectiveProduct.productType) === paidCardProductType ? 1 : 0) }}</el-descriptions-item>
+        <el-descriptions-item label="付费产品">{{ formatYesNo(Number(effectiveProduct.productType) === paidCardProductType ? 1 : 0) }}</el-descriptions-item>
         <el-descriptions-item label="基础提卡费(元)">{{ formatAmount(effectiveProduct.baseCardFee) }}</el-descriptions-item>
-        <el-descriptions-item label="初始话费余额(元)">{{ formatAmount(effectiveProduct.productInitialBalance) }}</el-descriptions-item>
+        <el-descriptions-item label="自带话费余额(元)">{{ formatAmount(effectiveProduct.productInitialBalance) }}</el-descriptions-item>
         <el-descriptions-item label="上级成本(元)">{{ formatAmount(effectiveProduct.incomingCardFee) }}</el-descriptions-item>
         <el-descriptions-item label="下级卖价(元)">{{ formatAmount(effectiveProduct.downstreamCardFee) }}</el-descriptions-item>
         <el-descriptions-item label="提卡利润(元)">{{ formatAmount(effectiveProduct.cardFeeProfit) }}</el-descriptions-item>
@@ -206,7 +206,7 @@ export default {
         2: '长期产品',
         3: '其它',
         4: '组合返佣',
-        5: '付费提卡'
+        5: '付费产品'
       };
       return map[value] || '--';
     },
